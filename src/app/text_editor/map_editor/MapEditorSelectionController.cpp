@@ -4,6 +4,8 @@
 #include "MapEditorAreaReferenceResolver.h"
 #include "MapEditorLineDecorationItem.h"
 #include "MapEditorObjectDetailsLogic.h"
+#include "MapEditorSceneGeneration.h"
+#include "MapEditorSceneInteractionIndex.h"
 #include "MapEditorSceneInternals.h"
 #include "MapEditorSceneSupport.h"
 #include "MapEditorSourceReferenceResolver.h"
@@ -46,7 +48,7 @@ bool isInteractiveMapSelectionItem(const QGraphicsItem *item)
     if (!(item->flags() & QGraphicsItem::ItemIsSelectable)) {
         return false;
     }
-    if (item->acceptedMouseButtons() == Qt::NoButton) {
+    if (!mapSceneItemParticipatesInPointerSelection(item)) {
         return false;
     }
     return true;
@@ -234,8 +236,10 @@ QGraphicsItem *preferredMapHitItem(const QList<QGraphicsItem *> &hitItems,
                                    const QTransform &viewTransform = QTransform())
 {
     QGraphicsItem *bestItem = nullptr;
+    QGraphicsItem *bestAreaFillItem = nullptr;
     int bestPriority = std::numeric_limits<int>::max();
     qreal bestDistancePixels = std::numeric_limits<qreal>::max();
+    qreal bestAreaFillDistancePixels = std::numeric_limits<qreal>::max();
     bool bestUsesDistanceRanking = false;
     for (QGraphicsItem *item : hitItems) {
         if (!isInteractiveMapSelectionItem(item)) {
@@ -268,6 +272,14 @@ QGraphicsItem *preferredMapHitItem(const QList<QGraphicsItem *> &hitItems,
             }
         }
 
+        if (isMapSceneAreaFillItem(item)) {
+            if (distancePixels < bestAreaFillDistancePixels) {
+                bestAreaFillDistancePixels = distancePixels;
+                bestAreaFillItem = item;
+            }
+            continue;
+        }
+
         const int priority = mapSelectionHitPriority(item);
         const bool betterDistanceRankedPath = usesDistanceRanking
             && ((bestUsesDistanceRanking
@@ -288,7 +300,7 @@ QGraphicsItem *preferredMapHitItem(const QList<QGraphicsItem *> &hitItems,
             }
         }
     }
-    return bestItem;
+    return bestItem != nullptr ? bestItem : bestAreaFillItem;
 }
 
 QList<QGraphicsItem *> expandedMapHitItemsAtScenePosition(QGraphicsScene *scene,
@@ -1196,10 +1208,9 @@ void MapEditorSelectionController::updateGeometrySelectionPresentation()
         }
     }
 
-    const auto sceneItems = context_.scene->items();
-    for (QGraphicsItem *item : sceneItems) {
+    const auto updateItemPresentation = [&](QGraphicsItem *item) {
         if (item == nullptr) {
-            continue;
+            return;
         }
         const int lineNumber = item->data(kMapSceneLineNumberRole).toInt();
         const int subtype = item->data(kMapSceneSelectionSubtypeRole).toInt();
@@ -1224,7 +1235,7 @@ void MapEditorSelectionController::updateGeometrySelectionPresentation()
         }
 
         if (!item->data(kMapSceneSelectionGatedRole).toBool()) {
-            continue;
+            return;
         }
 
         bool visible = lineNumber > 0
@@ -1242,6 +1253,42 @@ void MapEditorSelectionController::updateGeometrySelectionPresentation()
         }
 
         item->setVisible(visible);
+    };
+
+    const int focusedLineNumber = (*context_.selectedObjectKind) == QStringLiteral("line")
+        ? (*context_.selectedObjectLineNumber) : 0;
+    QSet<int> presentedLines = selectedLines;
+    if (focusedLineNumber > 0) {
+        presentedLines.insert(focusedLineNumber);
+    }
+    MapEditorSceneInteractionIndex *index = context_.sceneInteractionIndex;
+    const bool sceneSettled = context_.sceneGeneration == nullptr || context_.sceneGeneration->isSettled();
+    const quint64 generation = context_.sceneGeneration != nullptr ? context_.sceneGeneration->current() : 0;
+    if (index != nullptr && sceneSettled && index->hasSelectionPresentation(context_.scene, generation)) {
+        // Delta update: only lines presented last time or now can change state.
+        QSet<int> affectedLines = presentedLines;
+        affectedLines.unite(index->presentedSelectionLines());
+        const auto &itemsByLine = index->itemsByLine(context_.scene, generation);
+        for (const int lineNumber : std::as_const(affectedLines)) {
+            const auto itemIt = itemsByLine.constFind(lineNumber);
+            if (itemIt == itemsByLine.constEnd()) {
+                continue;
+            }
+            for (QGraphicsItem *item : itemIt.value()) {
+                updateItemPresentation(item);
+            }
+        }
+    } else {
+        for (QGraphicsItem *item : context_.scene->items()) {
+            updateItemPresentation(item);
+        }
+    }
+    if (index != nullptr) {
+        if (sceneSettled) {
+            index->recordSelectionPresentation(context_.scene, generation, presentedLines);
+        } else {
+            index->invalidate();
+        }
     }
 }
 

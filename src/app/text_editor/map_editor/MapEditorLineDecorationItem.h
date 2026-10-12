@@ -4,9 +4,12 @@
 
 #include <QColor>
 #include <QGraphicsPathItem>
+#include <QList>
 #include <QPainterPath>
 #include <QPointF>
+#include <QPolygonF>
 #include <QRectF>
+#include <QTransform>
 #include <QVector>
 
 #include <optional>
@@ -49,10 +52,18 @@ protected:
 
 private:
     void updatePaintBounds();
-    void drawDecorations(QPainter *painter, qreal zoomOutScale);
+    const QList<QPolygonF> &projectedPolygonsForProjection(const QTransform &projection) const;
+    void drawDecorations(QPainter *painter,
+                         qreal zoomOutScale,
+                         const QTransform &projection,
+                         const QList<QPolygonF> &polygons,
+                         const QVector<QVector<qreal>> &cumulativeDistances);
     void drawScreenDecoration(QPainter *painter,
-                         const MapEditorLineDecorationStyle &decoration,
-                         qreal zoomOutScale);
+                              const MapEditorLineDecorationStyle &decoration,
+                              qreal zoomOutScale,
+                              const QTransform &projection,
+                              const QList<QPolygonF> &polygons,
+                              const QVector<QVector<qreal>> &cumulativeDistances);
     void drawTick(QPainter *painter,
                   const MapEditorLineDecorationStyle &decoration,
                   const QPointF &point,
@@ -85,6 +96,10 @@ private:
     QRectF paintBounds_;
     std::optional<QColor> interactionColorOverride_;
     qreal screenPaddingScale_ = 2.0;
+    mutable QTransform projectedPathTransform_;
+    mutable QPainterPath projectedPathSource_;
+    mutable QList<QPolygonF> projectedPathPolygons_;
+    mutable bool projectedPathCacheValid_ = false;
 };
 
 void updateMapEditorScreenSpaceMetrics(QGraphicsScene *scene, const QTransform &viewTransform);

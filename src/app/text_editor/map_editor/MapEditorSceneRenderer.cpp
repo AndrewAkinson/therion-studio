@@ -1132,7 +1132,7 @@ std::optional<WallClipPathCandidate> wallClipPathCandidateForFeature(const MapGe
                                                                      const QRectF &previewBounds)
 {
     QPainterPath path = linePathForFeature(feature, sourceBounds, previewBounds);
-    if (path.elementCount() < 2 || path.boundingRect().isEmpty()) {
+    if (path.elementCount() < 2) {
         return std::nullopt;
     }
 
@@ -1151,7 +1151,7 @@ qreal pointDistanceSquared(const QPointF &first, const QPointF &second)
     return (delta.x() * delta.x()) + (delta.y() * delta.y());
 }
 
-QPainterPath stitchedOpenWallClipPath(QVector<WallClipPathCandidate> candidates)
+QPainterPath stitchedOpenWallClipPath(QVector<WallClipPathCandidate> candidates, bool requireConnectedWalls)
 {
     if (candidates.size() < 2) {
         return QPainterPath();
@@ -1194,6 +1194,9 @@ QPainterPath stitchedOpenWallClipPath(QVector<WallClipPathCandidate> candidates)
         }
 
         const WallClipPathCandidate next = candidates.takeAt(bestIndex);
+        if (requireConnectedWalls && bestDistance > 1.0) {
+            return {};
+        }
         const QPainterPath nextPath = reverseBest ? next.path.toReversed() : next.path;
         stitched.connectPath(nextPath);
         currentEnd = reverseBest ? next.start : next.end;
@@ -1207,17 +1210,177 @@ QPainterPath stitchedOpenWallClipPath(QVector<WallClipPathCandidate> candidates)
     return stitched.boundingRect().isEmpty() ? QPainterPath() : stitched;
 }
 
-QHash<int, QPainterPath> scrapClipPathsForFeatures(const QVector<MapGeometryFeature> &features,
+QPainterPath connectedWallContours(const QVector<WallClipPathCandidate> &walls, qreal tolerance = 1.0,
+                                  bool approximate = false)
+{
+    QVector<QPointF> endpoints;
+    QHash<QPair<qint64, qint64>, QVector<int>> cells;
+    const auto cellFor = [tolerance](const QPointF &point) {
+        return qMakePair(qint64(std::floor(point.x() / tolerance)), qint64(std::floor(point.y() / tolerance)));
+    };
+    for (const auto &wall : walls) {
+        endpoints.append(wall.start);
+        endpoints.append(wall.end);
+    }
+    for (int i = 0; i < endpoints.size(); ++i) {
+        cells[cellFor(endpoints[i])].append(i);
+    }
+    QVector<int> partners(endpoints.size(), -1);
+    QVector<bool> unsafe(endpoints.size(), false);
+    for (int i = 0; i < endpoints.size(); ++i) {
+        const auto cell = cellFor(endpoints[i]);
+        bool ambiguous = false;
+        int coincident = 0;
+        qreal nearest = tolerance * tolerance;
+        for (int dx = -1; dx <= 1; ++dx) {
+            for (int dy = -1; dy <= 1; ++dy) {
+                const auto nearby = cells.value(qMakePair(cell.first + dx, cell.second + dy));
+                if (nearby.size() > 64) {
+                    unsafe[i] = true;
+                    continue;
+                }
+                for (const int j : nearby) {
+                    const qreal distance = pointDistanceSquared(endpoints[i], endpoints[j]);
+                    if (i != j && distance < 1e-12) {
+                        ++coincident;
+                    }
+                    if (i == j || distance > nearest
+                        || (j == (i ^ 1) && distance > 1e-12)) {
+                        continue;
+                    }
+                    if (partners[i] >= 0 && qAbs(distance - nearest) < 1e-12) {
+                        ambiguous = true;
+                    } else {
+                        partners[i] = j;
+                        nearest = distance;
+                        ambiguous = false;
+                    }
+                }
+            }
+        }
+        unsafe[i] = unsafe[i] || coincident > 1;
+        if (ambiguous || unsafe[i]) {
+            partners[i] = -1;
+        }
+    }
+    if (approximate) {
+        struct Gap
+        {
+            int first;
+            int second;
+            qreal squaredDistance;
+        };
+        QVector<Gap> gaps;
+        for (int i = 0; i < endpoints.size(); ++i) {
+            const auto cell = cellFor(endpoints[i]);
+            QVector<Gap> local;
+            for (int dx = -1; dx <= 1; ++dx) {
+                for (int dy = -1; dy <= 1; ++dy) {
+                    const auto nearby = cells.value(qMakePair(cell.first + dx, cell.second + dy));
+                    if (nearby.size() > 64) {
+                        continue;
+                    }
+                    for (const int j : nearby) {
+                        const qreal distance = pointDistanceSquared(endpoints[i], endpoints[j]);
+                        if (j <= i || unsafe[i] || unsafe[j] || (j == (i ^ 1) && distance > 1e-12)
+                            || distance > tolerance * tolerance) {
+                            continue;
+                        }
+                        local.append({i, j, distance});
+                    }
+                }
+            }
+            std::sort(local.begin(), local.end(), [](const Gap &a, const Gap &b) {
+                return a.squaredDistance < b.squaredDistance;
+            });
+            // Dense junctions are not an invitation to create an unbounded candidate graph.
+            for (int k = 0; k < qMin(16, int(local.size())); ++k) {
+                gaps.append(local[k]);
+            }
+        }
+        std::sort(gaps.begin(), gaps.end(), [](const Gap &a, const Gap &b) {
+            if (a.squaredDistance != b.squaredDistance) {
+                return a.squaredDistance < b.squaredDistance;
+            }
+            return a.first != b.first ? a.first < b.first : a.second < b.second;
+        });
+        QVector<int> paired(endpoints.size(), -1);
+        for (int i = 0; i < partners.size(); ++i) {
+            const int j = partners[i];
+            if (j >= 0 && !unsafe[i] && !unsafe[j] && partners[j] == i) {
+                paired[i] = j;
+            }
+        }
+        for (const auto &gap : gaps) {
+            if (paired[gap.first] < 0 && paired[gap.second] < 0) {
+                paired[gap.first] = gap.second;
+                paired[gap.second] = gap.first;
+            }
+        }
+        partners = paired;
+    }
+    QPainterPath contours;
+    contours.setFillRule(Qt::OddEvenFill);
+    QVector<bool> visited(walls.size(), false);
+    for (int first = 0; first < walls.size(); ++first) {
+        if (visited[first]) {
+            continue;
+        }
+        QPainterPath contour;
+        int start = first * 2;
+        const int initial = start;
+        bool closed = false;
+        qreal knownLength = 0;
+        qreal inferredLength = 0;
+        while (!visited[start / 2]) {
+            visited[start / 2] = true;
+            const auto &wall = walls[start / 2];
+            knownLength += wall.length;
+            const QPainterPath path = start % 2 == 0 ? wall.path : wall.path.toReversed();
+            if (contour.isEmpty()) {
+                contour = path;
+            } else {
+                contour.connectPath(path);
+            }
+            const int end = start ^ 1;
+            const int next = partners[end];
+            if (next < 0 || partners[next] != end) {
+                break;
+            }
+            inferredLength += std::sqrt(pointDistanceSquared(endpoints[end], endpoints[next]));
+            if (next == initial) {
+                closed = true;
+                break;
+            }
+            start = next;
+        }
+        if (closed && !contour.boundingRect().isEmpty()
+            && (!approximate || inferredLength <= knownLength * 0.35)) {
+            contour.closeSubpath();
+            contours.addPath(contour);
+        }
+    }
+    return contours;
+}
+
+QHash<int, QPainterPath> buildScrapClipPathsForFeatures(const QVector<MapGeometryFeature> &features,
                                                    const QRectF &sourceBounds,
-                                                   const QRectF &previewBounds)
+                                                   const QRectF &previewBounds,
+                                                   bool requireConnectedWalls,
+                                                   bool approximateMissingContours)
 {
     QHash<int, QVector<WallClipPathCandidate>> openWallsByScrap;
     QHash<int, QVector<QPainterPath>> closedWallsByScrap;
+    QHash<int, QVector<WallClipPathCandidate>> innerOpenWallsByScrap;
+    QHash<int, QVector<QPainterPath>> innerClosedWallsByScrap;
 
     for (const MapGeometryFeature &feature : features) {
+        const QString outline = feature.optionValues.value(QStringLiteral("outline")).trimmed().toLower();
+        const bool wall = feature.label.trimmed().toLower() == QStringLiteral("wall");
         if (feature.kind != MapGeometryFeature::Kind::Line
             || feature.scrapLineNumber <= 0
-            || feature.label.trimmed().toLower() != QStringLiteral("wall")
+            || (!wall && (!requireConnectedWalls || (outline != QStringLiteral("in") && outline != QStringLiteral("out"))))
+            || (requireConnectedWalls && outline == QStringLiteral("none"))
             || feature.lineVertices.size() < 2) {
             continue;
         }
@@ -1227,20 +1390,73 @@ QHash<int, QPainterPath> scrapClipPathsForFeatures(const QVector<MapGeometryFeat
         if (!candidate.has_value()) {
             continue;
         }
+        if (!requireConnectedWalls && candidate->path.boundingRect().isEmpty()) {
+            continue;
+        }
 
         if (feature.closed && feature.lineVertices.size() >= 2) {
             QPainterPath closed = candidate->path;
             closed.closeSubpath();
             closed.setFillRule(Qt::OddEvenFill);
             if (!closed.boundingRect().isEmpty()) {
-                closedWallsByScrap[feature.scrapLineNumber].append(closed);
+                auto &closedWalls = requireConnectedWalls && outline == QStringLiteral("in")
+                    ? innerClosedWallsByScrap : closedWallsByScrap;
+                closedWalls[feature.scrapLineNumber].append(closed);
             }
         } else {
-            openWallsByScrap[feature.scrapLineNumber].append(candidate.value());
+            auto &openWalls = requireConnectedWalls && outline == QStringLiteral("in")
+                ? innerOpenWallsByScrap : openWallsByScrap;
+            openWalls[feature.scrapLineNumber].append(candidate.value());
         }
     }
 
     QHash<int, QPainterPath> clipPathsByScrap;
+    if (requireConnectedWalls) {
+        QSet<int> scraps;
+        for (const auto &feature : features) {
+            if (feature.scrapLineNumber > 0) {
+                scraps.insert(feature.scrapLineNumber);
+            }
+        }
+        for (const int scrap : scraps) {
+            QPainterPath outer = connectedWallContours(openWallsByScrap.value(scrap));
+            for (const auto &path : closedWallsByScrap.value(scrap)) {
+                outer.addPath(path);
+            }
+            if (outer.isEmpty() && approximateMissingContours) {
+                const auto walls = openWallsByScrap.value(scrap);
+                QRectF bounds;
+                for (const auto &wall : walls) {
+                    bounds = bounds.united(wall.path.boundingRect());
+                }
+                // Inference is local to this scrap, limited in both extent and bridge/known-wall ratio.
+                const qreal tolerance = qBound(1.0, std::hypot(bounds.width(), bounds.height()) * 0.20, 12.0);
+                outer = connectedWallContours(walls, tolerance, true);
+            }
+            if (outer.isEmpty()) {
+                continue;
+            }
+            const QRectF bounds = outer.boundingRect();
+            const qreal innerTolerance = approximateMissingContours
+                ? qBound(1.0, std::hypot(bounds.width(), bounds.height()) * 0.20, 12.0) : 1.0;
+            QPainterPath inner = connectedWallContours(innerOpenWallsByScrap.value(scrap),
+                                                      innerTolerance, approximateMissingContours);
+            for (const auto &path : innerClosedWallsByScrap.value(scrap)) {
+                inner.addPath(path);
+            }
+            // An explicit inner outline never creates a colored island without an outer passage.
+            if (!inner.isEmpty()) {
+                if (outer.contains(inner)) {
+                    outer.addPath(inner);
+                } else {
+                    outer = outer.subtracted(inner);
+                }
+            }
+            outer.setFillRule(Qt::OddEvenFill);
+            clipPathsByScrap.insert(scrap, outer);
+        }
+        return clipPathsByScrap;
+    }
     const QList<int> closedScraps = closedWallsByScrap.keys();
     for (const int scrapLineNumber : closedScraps) {
         QPainterPath combined;
@@ -1258,7 +1474,7 @@ QHash<int, QPainterPath> scrapClipPathsForFeatures(const QVector<MapGeometryFeat
         if (clipPathsByScrap.contains(scrapLineNumber)) {
             continue;
         }
-        const QPainterPath stitched = stitchedOpenWallClipPath(openWallsByScrap.value(scrapLineNumber));
+        const QPainterPath stitched = stitchedOpenWallClipPath(openWallsByScrap.value(scrapLineNumber), requireConnectedWalls);
         if (!stitched.boundingRect().isEmpty()) {
             clipPathsByScrap.insert(scrapLineNumber, stitched);
         }
@@ -2105,6 +2321,14 @@ QColor mapEntryAccentForCategory(const QString &category)
     return QColor(QStringLiteral("#7f8ca3"));
 }
 
+QHash<int, QPainterPath> scrapClipPathsForFeatures(
+    const QVector<MapGeometryFeature> &features, const QRectF &sourceBounds, const QRectF &previewBounds,
+    bool requireConnectedWalls, bool approximateMissingContours)
+{
+    return buildScrapClipPathsForFeatures(features, sourceBounds, previewBounds, requireConnectedWalls,
+                                         approximateMissingContours);
+}
+
 QVector<MapSceneEntry> collectMapSceneEntries(const QVector<TherionParsedLine> &parsedLines)
 {
     QVector<MapSceneEntry> entries;
@@ -2268,6 +2492,7 @@ void renderMapWorkspaceScene(QGraphicsScene *scene,
         lineItem->setToolTip(featureTooltip);
         markGeometryItem(lineItem);
         lineItem->setData(kMapSceneLineNumberRole, feature.lineNumber);
+        lineItem->setData(kMapSceneLineTypeRole, feature.label.trimmed().toLower());
         auto styledLineItems = std::make_shared<QVector<StyledPathItemBinding>>();
         auto styledDecorationItems = std::make_shared<QVector<StyledLineDecorationBinding>>();
         auto styledGuideItems = std::make_shared<QVector<StyledPathItemBinding>>();
@@ -2293,6 +2518,7 @@ void renderMapWorkspaceScene(QGraphicsScene *scene,
                 segmentItem->setToolTip(featureTooltip);
                 markGeometryItem(segmentItem);
                 segmentItem->setData(kMapSceneLineNumberRole, feature.lineNumber);
+                segmentItem->setData(kMapSceneLineTypeRole, feature.label.trimmed().toLower());
                 styledLineItems->append(StyledPathItemBinding{styledPathIndex, segmentItem});
             }
         }
@@ -2317,6 +2543,7 @@ void renderMapWorkspaceScene(QGraphicsScene *scene,
             guideItem->setToolTip(featureTooltip);
             markGeometryItem(guideItem);
             guideItem->setData(kMapSceneLineNumberRole, feature.lineNumber);
+            guideItem->setData(kMapSceneLineTypeRole, feature.label.trimmed().toLower());
             guideItem->setData(kMapSceneSelectionSubtypeRole, kMapSceneSelectionSubtypeLineDetail);
             return guideItem;
         };
@@ -2493,6 +2720,7 @@ void renderMapWorkspaceScene(QGraphicsScene *scene,
             markGeometryItem(vertexItem);
             const int anchorSourceVertexIndex = vertex.anchorSourceVertexIndex >= 0 ? vertex.anchorSourceVertexIndex : vertexIndex;
             vertexItem->setData(kMapSceneLineNumberRole, feature.lineNumber);
+            vertexItem->setData(kMapSceneLineTypeRole, feature.label.trimmed().toLower());
             vertexItem->setData(kMapSceneSelectionGatedRole, true);
             vertexItem->setData(kMapSceneSelectionSubtypeRole, kMapSceneSelectionSubtypeLineAnchor);
             vertexItem->setData(kMapSceneOwnerVertexRole, anchorSourceVertexIndex);
@@ -3098,6 +3326,8 @@ void renderMapWorkspaceScene(QGraphicsScene *scene,
                                                                              Qt::RoundJoin),
                                                           areaBrush);
                 scene->addItem(fillItem);
+                // The shared hit resolver handles filled-area selection without blocking underlying geometry.
+                fillItem->setAcceptedMouseButtons(Qt::NoButton);
                 fillItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
                 fillItem->setZValue(areaZ.fill);
                 fillItem->setToolTip(featureTooltip);

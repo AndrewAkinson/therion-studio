@@ -1,4 +1,5 @@
 #include "MapEditorTab.h"
+#include "MapEditorXviBackgroundItem.h"
 
 #include "../InspectorPanel.h"
 #include "MapEditorMagnifierOverlay.h"
@@ -96,6 +97,7 @@ MapEditorTab::MapEditorTab(IFileSystem &fileSystem,
 
 void MapEditorTab::initializeWorkspace()
 {
+    mapAppearance_ = sessionStore_->therionMapAppearance();
     undoStack_ = new QUndoStack(this);
     undoStack_->setUndoLimit(kMapEditorUndoLimit);
     MapEditorUndoArbitrationService::resetOwnership(undoOwnershipState_, undoStack_->index());
@@ -108,6 +110,11 @@ void MapEditorTab::initializeWorkspace()
     sessionStore_->setTherionMapTouchFriendlyControlsEnabled(false);
     buildUi();
     connect(this, &MapEditorTab::zoomStatusChanged, this, [this](int) {
+        for (auto *item : backgroundImageItems_) {
+            if (auto *xvi = dynamic_cast<MapEditorXviBackgroundItem *>(item)) {
+                xvi->refreshPaintBounds();
+            }
+        }
         refreshStatus();
     });
     connect(this, &MapEditorTab::modeStatusChanged, this, [this]() {

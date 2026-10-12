@@ -2,7 +2,9 @@
 
 #include "MapEditorInspectorObjectContext.h"
 
+#include <QMap>
 #include <QModelIndex>
+#include <QPersistentModelIndex>
 #include <QSet>
 
 namespace TherionStudio
@@ -27,6 +29,7 @@ public:
 
 private:
     QString tr(const char *text) const;
+    void rebuildInspectorObjectLineIndex() const;
     void syncInspectorObjectSelectionToLine(int lineNumber, bool scrollToSelection, bool expandAncestors);
     QSet<int> collapsedScrapLineNumbers() const;
     void restoreInspectorObjectExpansion(const QSet<int> &collapsedScrapLines);
@@ -35,5 +38,8 @@ private:
     void collapseAllInspectorObjectScraps();
 
     MapEditorInspectorObjectContext context_;
+    mutable QMap<int, QPersistentModelIndex> inspectorObjectIndexesByLine_;
+    mutable const QStandardItemModel *indexedObjectsModel_ = nullptr;
+    mutable bool inspectorObjectLineIndexValid_ = false;
 };
 }

@@ -34,6 +34,10 @@ MapEditorViewportInputContext MapEditorTab::viewportInputContext()
         .textEditor = textEditor_,
         .scene = mapScene_,
         .view = mapView_,
+        .sceneGeneration = &sceneGeneration_,
+        .sceneInteractionIndex = &sceneInteractionIndex_,
+        .lastInteractionHoverLineNumber = &lastInteractionHoverLineNumber_,
+        .lastInteractionHoverGeneration = &lastInteractionHoverGeneration_,
         .toolbarStatusNote = &toolbarStatusNote_,
         .touchFriendlyControlsEnabled = &touchFriendlyControlsEnabled_,
         .selectModeActive = &selectModeActive_,
@@ -76,6 +80,9 @@ MapEditorViewportInputContext MapEditorTab::viewportInputContext()
         .interactiveDrawHoverSnapGuideScenePoints = &interactiveDrawState_.hoverSnapGuideScenePoints_,
         .drawMode = [this]() {
             return toViewportInteractiveDrawMode(interactiveDrawState_.mode_);
+        },
+        .drawLineType = [this]() {
+            return interactiveDrawState_.pendingInsertFields_.type.trimmed().toLower();
         },
         .translate = [this](const char *text) {
             return tr(text);

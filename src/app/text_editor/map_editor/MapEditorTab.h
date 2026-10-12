@@ -1,5 +1,8 @@
 #pragma once
 
+#include "MapEditorAltitudeUnderlay.h"
+#include "../../../core/MapAppearanceSettings.h"
+
 #include <QColor>
 #include <QString>
 #include <QStringList>
@@ -27,6 +30,7 @@
 #include "MapEditorObjectDetailsLogic.h"
 #include "MapEditorObjectStyleCatalog.h"
 #include "MapEditorSceneGeneration.h"
+#include "MapEditorSceneInteractionIndex.h"
 #include "MapEditorSmartAreaPlanner.h"
 #include "MapEditorUndoArbitrationService.h"
 #include "../../../core/CommandCatalogStore.h"
@@ -143,6 +147,9 @@ public:
     QString statusEncodingText() const;
     QString statusModeText() const;
     QString statusHintText() const;
+    void setAltitudeUnderlayData(bool enabled, const ProjectIndexSnapshot &index,
+                                const ScrapAltitudeStations &stations);
+    void setMapAppearance(const MapAppearanceSettings &appearance);
     int zoomPercent() const;
     MapEditorUndoOwner nextUndoOwner() const;
     MapEditorUndoOwner nextRedoOwner() const;
@@ -206,6 +213,10 @@ public:
     bool testHasMapSceneItemForLine(int lineNumber) const
     {
         return mapItemsByLine_.contains(lineNumber);
+    }
+    void testRefreshMapScene()
+    {
+        refreshMapScene();
     }
 #endif
     void setMagnifierEnabled(bool enabled);
@@ -779,6 +790,16 @@ private:
     bool mapInspectorCollapsed_ = false;
     int mapInspectorPanelExtent_ = 320;
     QGraphicsScene *mapScene_ = nullptr;
+    int lastInteractionHoverLineNumber_ = 0;
+    quint64 lastInteractionHoverGeneration_ = 0;
+    bool altitudeUnderlayEnabled_ = false;
+    MapAppearanceSettings mapAppearance_;
+    ProjectIndexSnapshot altitudeProjectIndex_;
+    ScrapAltitudeStations altitudeStations_;
+    QString altitudeUnderlayHint_;
+    void refreshAltitudeUnderlay();
+    void refreshXviAltitudeColors();
+    void updateXviAltitudeLegend();
     QWidget *mapPaneContainer_ = nullptr;
     QFrame *mapPaneTopSeparator_ = nullptr;
     QSplitter *mapDetailsSplitter_ = nullptr;
@@ -790,6 +811,15 @@ private:
     QCheckBox *mapObjectsAutoCollapseExpandScrapsCheck_ = nullptr;
     QTreeView *mapObjectsTree_ = nullptr;
     QStandardItemModel *mapObjectsModel_ = nullptr;
+    QWidget *xviAltitudeLegend_ = nullptr;
+    QLabel *xviAltitudeLegendTitle_ = nullptr;
+    QLabel *xviAltitudeLegendBar_ = nullptr;
+    QWidget *xviAltitudeLegendTicks_ = nullptr;
+    QLabel *xviAltitudeLegendLow_ = nullptr;
+    QLabel *xviAltitudeLegendMiddle_ = nullptr;
+    QLabel *xviAltitudeLegendHigh_ = nullptr;
+    QLabel *xviAltitudeLegendFallback_ = nullptr;
+    QLabel *xviAltitudeLegendScrapFallback_ = nullptr;
     QTreeView *mapBackgroundLayersTree_ = nullptr;
     QStandardItemModel *mapBackgroundLayersModel_ = nullptr;
     QToolButton *mapBackgroundAddButton_ = nullptr;
@@ -842,6 +872,9 @@ private:
     bool autoFitEnabled_ = true;
     qreal zoomFactor_ = 1.0;
     bool fitBackgroundRequested_ = false;
+    QSize lastResizeFitAvailableSize_;
+    QRectF lastResizeFitGeometryBounds_;
+    bool lastResizeFitIncludedBackground_ = false;
     mutable bool cachedParsedLinesValid_ = false;
     mutable int cachedParsedLinesRevision_ = -1;
     mutable QVector<TherionParsedLine> cachedParsedLines_;
@@ -878,6 +911,7 @@ private:
     bool mapSceneRefreshPending_ = false;
     bool mapSceneRefreshWhenVisiblePending_ = false;
     MapEditorSceneGeneration sceneGeneration_;
+    MapEditorSceneInteractionIndex sceneInteractionIndex_;
     quint64 lastCompletedSceneProjectionGeneration_ = 0;
     QTimer *sourceDrivenMapRefreshTimer_ = nullptr;
     DetachedPaneState detachedPaneState_;

@@ -1,6 +1,10 @@
 #include "MapEditorXviBackgroundItem.h"
+#include "../../../core/MapAppearanceSettings.h"
 
 #include <QBrush>
+#include <QGraphicsScene>
+#include <QGraphicsView>
+#include <QLinearGradient>
 #include <QPainter>
 #include <QPen>
 #include <QSet>
@@ -24,6 +28,19 @@ qreal zoomOutStrokeScale(qreal lod)
 
 constexpr qreal kXviLineTileTargetSize = 256.0;
 constexpr int kXviLineTileMaxAxisCount = 160;
+
+qreal centerlineStrokePadding(const QTransform &transform, qreal width)
+{
+    const qreal lod = qMax<qreal>(0.01, QStyleOptionGraphicsItem::levelOfDetailFromTransform(transform));
+    bool invertible = false;
+    const QTransform inverse = transform.inverted(&invertible);
+    if (!invertible) {
+        return width / 2.0 + 1.0;
+    }
+    const qreal radius = width * zoomOutStrokeScale(lod) / 2.0 + 1.0;
+    const QRectF localStroke = inverse.mapRect(QRectF(-radius, -radius, 2 * radius, 2 * radius));
+    return qMax(localStroke.width(), localStroke.height()) / 2.0;
+}
 
 QRectF lineBounds(const QLineF &line, qreal padding)
 {
@@ -90,6 +107,48 @@ QVector<MapEditorXviLineTile> buildLineTiles(const QVector<QLineF> &lines, const
     return tiles;
 }
 
+QVector<int> exposedLineIndexes(const QVector<QLineF> &lines,
+                                const QVector<MapEditorXviLineTile> &tiles,
+                                const QRectF &clipRect,
+                                const QRectF &paintBounds,
+                                qreal padding)
+{
+    QVector<int> indexes;
+    if (clipRect.contains(paintBounds)) {
+        indexes.reserve(lines.size());
+        for (int index = 0; index < lines.size(); ++index) {
+            indexes.append(index);
+        }
+        return indexes;
+    }
+
+    QSet<int> seen;
+    if (tiles.isEmpty()) {
+        for (int index = 0; index < lines.size(); ++index) {
+            if (lineBounds(lines.at(index), padding).intersects(clipRect)) {
+                indexes.append(index);
+            }
+        }
+        return indexes;
+    }
+
+    for (const MapEditorXviLineTile &tile : tiles) {
+        if (!tile.bounds.adjusted(-padding, -padding, padding, padding).intersects(clipRect)) {
+            continue;
+        }
+        for (const int index : tile.lineIndexes) {
+            if (index < 0 || index >= lines.size() || seen.contains(index)) {
+                continue;
+            }
+            seen.insert(index);
+            if (lineBounds(lines.at(index), padding).intersects(clipRect)) {
+                indexes.append(index);
+            }
+        }
+    }
+    return indexes;
+}
+
 void drawExposedLines(QPainter *painter,
                       const QVector<QLineF> &lines,
                       const QVector<MapEditorXviLineTile> &tiles,
@@ -118,7 +177,7 @@ void drawExposedLines(QPainter *painter,
         QSet<int> seenLineIndexes;
         seenLineIndexes.reserve(qMin<qsizetype>(lines.size(), 4096));
         for (const MapEditorXviLineTile &tile : tiles) {
-            if (!tile.bounds.intersects(clipRect)) {
+            if (!tile.bounds.adjusted(-padding, -padding, padding, padding).intersects(clipRect)) {
                 continue;
             }
             for (const int lineIndex : tile.lineIndexes) {
@@ -244,13 +303,16 @@ MapEditorXviBackgroundItem::MapEditorXviBackgroundItem(QGraphicsItem *parent)
     : QGraphicsPixmapItem(parent)
 {
     setCacheMode(QGraphicsItem::NoCache);
+    setFlag(QGraphicsItem::ItemSendsGeometryChanges);
 }
 
 void MapEditorXviBackgroundItem::setGeometryData(const MapEditorXviLayerGeometryData &geometry)
 {
     prepareGeometryChange();
     geometry_ = geometry;
-    paintBounds_ = geometry_.contentBounds.adjusted(-2.0, -2.0, 2.0, 2.0);
+    centerlineAltitudeColors_.clear();
+    centerlineAltitudeColorsEnabled_ = false;
+    refreshPaintBounds();
     geometry_.gridTiles = buildLineTiles(geometry_.gridLines, paintBounds_);
     geometry_.traverseShotTiles = buildLineTiles(geometry_.traverseShotLines, paintBounds_);
     geometry_.splayShotTiles = buildLineTiles(geometry_.splayShotLines, paintBounds_);
@@ -263,6 +325,69 @@ void MapEditorXviBackgroundItem::setGeometryData(const MapEditorXviLayerGeometry
 const MapEditorXviLayerGeometryData &MapEditorXviBackgroundItem::geometryData() const
 {
     return geometry_;
+}
+
+void MapEditorXviBackgroundItem::setCenterlineAltitudeColors(
+    const QVector<MapEditorXviTraverseColor> &colors, bool enabled)
+{
+    const bool nextEnabled = enabled && colors.size() == geometry_.traverseShotLines.size();
+    if (centerlineAltitudeColorsEnabled_ == nextEnabled
+        && centerlineAltitudeColors_ == colors) {
+        return;
+    }
+    centerlineAltitudeColors_ = colors;
+    centerlineAltitudeColorsEnabled_ = nextEnabled;
+    update();
+}
+
+void MapEditorXviBackgroundItem::setCenterlineAppearance(const QColor &color, qreal width)
+{
+    if (!color.isValid() || !std::isfinite(width)
+        || width < MapAppearanceSettings::minimumCenterlineWidth
+        || width > MapAppearanceSettings::maximumCenterlineWidth) {
+        qWarning("Invalid XVI centerline appearance; keeping previous values.");
+        return;
+    }
+    if (color == centerlineColor_ && width == centerlineWidth_) {
+        return;
+    }
+    centerlineColor_ = color;
+    centerlineWidth_ = width;
+    refreshPaintBounds();
+    update();
+}
+
+void MapEditorXviBackgroundItem::refreshPaintBounds()
+{
+    qreal padding = 2.0;
+    // Keep the original default fit footprint. Wider cosmetic strokes need
+    // view-local padding so zooming out cannot cull their visible edges.
+    if (centerlineWidth_ > 1.8) {
+        padding = centerlineWidth_ / 2.0 + 1.0;
+        if (scene()) {
+            for (auto *view : scene()->views()) {
+                padding = qMax(padding, centerlineStrokePadding(deviceTransform(view->viewportTransform()),
+                                                                centerlineWidth_));
+            }
+        }
+    }
+    const QRectF bounds = geometry_.contentBounds.adjusted(-padding, -padding, padding, padding);
+    if (bounds != paintBounds_) {
+        prepareGeometryChange();
+        paintBounds_ = bounds;
+    }
+}
+
+QVariant MapEditorXviBackgroundItem::itemChange(GraphicsItemChange change, const QVariant &value)
+{
+    const QVariant result = QGraphicsPixmapItem::itemChange(change, value);
+    if (change == QGraphicsItem::ItemSceneHasChanged
+        || change == QGraphicsItem::ItemTransformHasChanged
+        || change == QGraphicsItem::ItemScaleHasChanged
+        || change == QGraphicsItem::ItemRotationHasChanged) {
+        refreshPaintBounds();
+    }
+    return result;
 }
 
 QRectF MapEditorXviBackgroundItem::boundingRect() const
@@ -289,7 +414,11 @@ void MapEditorXviBackgroundItem::paint(QPainter *painter,
         ? QStyleOptionGraphicsItem::levelOfDetailFromTransform(painter->worldTransform())
         : 1.0;
     const qreal zoomOutScale = zoomOutStrokeScale(lod);
-    const qreal exposedPadding = qMax<qreal>(2.0, 8.0 / qMax<qreal>(0.01, lod));
+    qreal exposedPadding = qMax<qreal>(2.0,
+        qMax<qreal>(8.0, centerlineWidth_ / 2.0 + 1.0) / qMax<qreal>(0.01, lod));
+    if (centerlineWidth_ > 1.8) {
+        exposedPadding = qMax(exposedPadding, centerlineStrokePadding(painter->worldTransform(), centerlineWidth_));
+    }
     const QRectF clipRect = (option != nullptr && option->exposedRect.isValid())
         ? option->exposedRect.adjusted(-exposedPadding, -exposedPadding, exposedPadding, exposedPadding)
         : paintBounds_;
@@ -329,19 +458,41 @@ void MapEditorXviBackgroundItem::paint(QPainter *painter,
                                    paintBounds_);
     }
 
-    QPen traverseShotPen(QColor(18, 44, 88, 130));
-    traverseShotPen.setWidthF(1.8 * zoomOutScale);
+    QPen traverseShotPen(centerlineColor_);
+    traverseShotPen.setWidthF(centerlineWidth_ * zoomOutScale);
     traverseShotPen.setCosmetic(true);
     traverseShotPen.setCapStyle(Qt::RoundCap);
     traverseShotPen.setJoinStyle(Qt::RoundJoin);
     painter->setPen(traverseShotPen);
     if (!geometry_.traverseShotLines.isEmpty()) {
-        drawExposedLines(painter,
-                         geometry_.traverseShotLines,
-                         geometry_.traverseShotTiles,
-                         clipRect,
-                         paintBounds_,
-                         exposedPadding);
+        if (!centerlineAltitudeColorsEnabled_) {
+            drawExposedLines(painter,
+                             geometry_.traverseShotLines,
+                             geometry_.traverseShotTiles,
+                             clipRect,
+                             paintBounds_,
+                             exposedPadding);
+        } else {
+            const QVector<int> indexes = exposedLineIndexes(geometry_.traverseShotLines,
+                geometry_.traverseShotTiles, clipRect, paintBounds_, exposedPadding);
+            for (const int index : indexes) {
+                const QLineF &line = geometry_.traverseShotLines.at(index);
+                const MapEditorXviTraverseColor &colors = centerlineAltitudeColors_.at(index);
+                if (colors.hasAltitude) {
+                    QLinearGradient gradient(line.p1(), line.p2());
+                    gradient.setColorAt(0.0, colors.from);
+                    gradient.setColorAt(1.0, colors.to);
+                    QPen altitudePen(QBrush(gradient), centerlineWidth_ * zoomOutScale);
+                    altitudePen.setCosmetic(true);
+                    altitudePen.setCapStyle(Qt::RoundCap);
+                    altitudePen.setJoinStyle(Qt::RoundJoin);
+                    painter->setPen(altitudePen);
+                } else {
+                    painter->setPen(traverseShotPen);
+                }
+                painter->drawLine(line);
+            }
+        }
     }
 
     QPen splayPen(QColor(28, 92, 64, 122));

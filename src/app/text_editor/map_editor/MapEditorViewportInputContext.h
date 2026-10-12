@@ -18,6 +18,8 @@ class QGraphicsView;
 
 namespace TherionStudio
 {
+class MapEditorSceneGeneration;
+class MapEditorSceneInteractionIndex;
 class TextEditorTab;
 
 struct MapEditorViewportInputContext
@@ -25,6 +27,10 @@ struct MapEditorViewportInputContext
     TextEditorTab *textEditor = nullptr;
     QGraphicsScene *scene = nullptr;
     QGraphicsView *view = nullptr;
+    MapEditorSceneGeneration *sceneGeneration = nullptr;
+    MapEditorSceneInteractionIndex *sceneInteractionIndex = nullptr;
+    int *lastInteractionHoverLineNumber = nullptr;
+    quint64 *lastInteractionHoverGeneration = nullptr;
     QString *toolbarStatusNote = nullptr;
     bool *touchFriendlyControlsEnabled = nullptr;
     bool *selectModeActive = nullptr;
@@ -67,6 +73,7 @@ struct MapEditorViewportInputContext
     QVector<QPointF> *interactiveDrawHoverSnapGuideScenePoints = nullptr;
 
     std::function<MapEditorInteractiveDrawMode()> drawMode;
+    std::function<QString()> drawLineType;
     std::function<QString(const char *)> translate;
     std::function<void(bool)> clearInteractiveDrawSession;
     std::function<QPointF(const QPointF &)> sourcePointFromScenePosition;

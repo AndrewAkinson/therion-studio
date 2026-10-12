@@ -80,7 +80,19 @@ void MapEditorTab::fitMapToView(bool includeBackgroundImages)
 
 void MapEditorTab::fitMapToViewAfterViewportResize(bool includeBackgroundImages)
 {
-    MapEditorSceneLifecycleController(sceneLifecycleContext()).fitMapToView(includeBackgroundImages, false);
+    // Scrollbar show/hide resizes the viewport without changing the area available to the view.
+    // Refitting for that resize can flip the scrollbar back forever when the fitted scene range sits
+    // on a scrollbar threshold (event-loop livelock), so only refit when the area or content changes.
+    const QSize availableSize = mapView_ != nullptr ? mapView_->maximumViewportSize() : QSize();
+    const QRectF geometryBounds = mapGeometryFitBounds();
+    if (availableSize == lastResizeFitAvailableSize_ && geometryBounds == lastResizeFitGeometryBounds_
+        && includeBackgroundImages == lastResizeFitIncludedBackground_) {
+        return;
+    }
+    lastResizeFitAvailableSize_ = availableSize;
+    lastResizeFitGeometryBounds_ = geometryBounds;
+    lastResizeFitIncludedBackground_ = includeBackgroundImages;
+    MapEditorSceneLifecycleController(sceneLifecycleContext()).fitMapToView(includeBackgroundImages, false, geometryBounds);
 }
 
 void MapEditorTab::syncZoomFactorFromView()

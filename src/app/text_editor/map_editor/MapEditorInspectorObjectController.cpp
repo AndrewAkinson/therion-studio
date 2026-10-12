@@ -131,6 +131,9 @@ void MapEditorInspectorObjectController::rebuildInspectorObjectsTree()
         return;
     }
 
+    inspectorObjectIndexesByLine_.clear();
+    indexedObjectsModel_ = context_.objectsModel;
+    inspectorObjectLineIndexValid_ = false;
     const bool autoCollapseExpandScraps =
         context_.autoCollapseExpandScraps != nullptr && *context_.autoCollapseExpandScraps;
     const QSet<int> collapsedScrapLines = collapsedScrapLineNumbers();
@@ -186,6 +189,12 @@ void MapEditorInspectorObjectController::rebuildInspectorObjectsTree()
         }
     }
 
+    // Built once per rebuild: per-entry lookups rescanned the whole document and froze large maps.
+    const auto projectionAreaReferences = geometryProjection.has_value()
+        ? mapEditorAreaReferencesByBorderLine(geometryProjection.value())
+        : QHash<int, QVector<MapEditorAreaReference>>();
+    const auto logicalAreaReferences = mapEditorAreaReferencesByBorderLine(logicalCommands);
+
     QSet<int> currentObjectLines;
     QVector<QStandardItem *> parentStack;
     for (const ProjectStructureEntry &entry : entries) {
@@ -240,12 +249,9 @@ void MapEditorInspectorObjectController::rebuildInspectorObjectsTree()
         deleteItem->setData(entry.lineNumber, kInspectorSourceLineRole);
         deleteItem->setData(entry.category, kInspectorObjectCategoryRole);
         if (entry.lineNumber > 0) {
-            QVector<MapEditorAreaReference> areaReferences;
-            if (geometryProjection.has_value()) {
-                areaReferences = mapEditorAreaReferencesForBorderLine(geometryProjection.value(), entry.lineNumber);
-            }
+            QVector<MapEditorAreaReference> areaReferences = projectionAreaReferences.value(entry.lineNumber);
             if (areaReferences.isEmpty()) {
-                areaReferences = mapEditorAreaReferencesForBorderLine(logicalCommands, entry.lineNumber);
+                areaReferences = logicalAreaReferences.value(entry.lineNumber);
             }
             const bool deleteBlockedByAreaReference = !areaReferences.isEmpty();
             deleteItem->setIcon(inspectorActionIcon(QStringLiteral("trash-2")));
@@ -258,8 +264,13 @@ void MapEditorInspectorObjectController::rebuildInspectorObjectsTree()
 
         QStandardItem *parentItem = parentStack.isEmpty() ? context_.objectsModel->invisibleRootItem() : parentStack.last();
         parentItem->appendRow({entryItem, dragItem, visibilityItem, deleteItem});
+        if (entry.lineNumber > 0) {
+            inspectorObjectIndexesByLine_.insert(
+                entry.lineNumber, QPersistentModelIndex(context_.objectsModel->indexFromItem(entryItem)));
+        }
         parentStack.append(entryItem);
     }
+    inspectorObjectLineIndexValid_ = true;
     for (auto it = context_.hiddenObjectLines->begin(); it != context_.hiddenObjectLines->end();) {
         if (!currentObjectLines.contains(*it)) {
             it = context_.hiddenObjectLines->erase(it);
@@ -313,14 +324,15 @@ void MapEditorInspectorObjectController::configureInspectorObjectTreeColumns()
     }
 }
 
-QModelIndex MapEditorInspectorObjectController::findInspectorObjectIndexForLine(int lineNumber) const
+void MapEditorInspectorObjectController::rebuildInspectorObjectLineIndex() const
 {
-    if (context_.objectsModel == nullptr || lineNumber <= 0) {
-        return QModelIndex();
+    inspectorObjectIndexesByLine_.clear();
+    indexedObjectsModel_ = context_.objectsModel;
+    if (context_.objectsModel == nullptr) {
+        inspectorObjectLineIndexValid_ = true;
+        return;
     }
 
-    QModelIndex bestIndex;
-    int bestLineNumber = -1;
     std::function<void(const QModelIndex &)> visitNode = [&](const QModelIndex &parentIndex) {
         const int rowCount = context_.objectsModel->rowCount(parentIndex);
         for (int row = 0; row < rowCount; ++row) {
@@ -328,18 +340,32 @@ QModelIndex MapEditorInspectorObjectController::findInspectorObjectIndexForLine(
             if (!childIndex.isValid()) {
                 continue;
             }
-
-            const int candidateLineNumber = childIndex.data(kInspectorSourceLineRole).toInt();
-            if (candidateLineNumber > 0 && candidateLineNumber <= lineNumber && candidateLineNumber >= bestLineNumber) {
-                bestIndex = childIndex;
-                bestLineNumber = candidateLineNumber;
+            const int lineNumber = childIndex.data(kInspectorSourceLineRole).toInt();
+            if (lineNumber > 0) {
+                inspectorObjectIndexesByLine_.insert(lineNumber, QPersistentModelIndex(childIndex));
             }
-
             visitNode(childIndex);
         }
     };
     visitNode(QModelIndex());
-    return bestIndex;
+    inspectorObjectLineIndexValid_ = true;
+}
+
+QModelIndex MapEditorInspectorObjectController::findInspectorObjectIndexForLine(int lineNumber) const
+{
+    if (context_.objectsModel == nullptr || lineNumber <= 0) {
+        return QModelIndex();
+    }
+    if (!inspectorObjectLineIndexValid_ || indexedObjectsModel_ != context_.objectsModel) {
+        rebuildInspectorObjectLineIndex();
+    }
+
+    auto index = inspectorObjectIndexesByLine_.upperBound(lineNumber);
+    if (index == inspectorObjectIndexesByLine_.constBegin()) {
+        return QModelIndex();
+    }
+    --index;
+    return index.value();
 }
 
 void MapEditorInspectorObjectController::syncInspectorObjectSelectionToLine(int lineNumber)
@@ -399,6 +425,9 @@ void MapEditorInspectorObjectController::setInspectorObjectCurrentIndex(const QM
     }
 
     QItemSelectionModel *selectionModel = context_.objectsTree->selectionModel();
+    if (selectionModel->currentIndex() == index && selectionModel->isSelected(index)) {
+        return;
+    }
     selectionModel->clear();
     context_.objectsTree->setCurrentIndex(QModelIndex());
     selectionModel->select(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);

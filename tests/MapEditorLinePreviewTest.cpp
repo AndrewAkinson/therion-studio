@@ -335,7 +335,7 @@ private slots:
         QApplication::processEvents();
         const QPointF center = decoration->path().pointAtPercent(0.5);
         bool oversized = false;
-        for (qreal scale : {0.5, 1.0, 8.0, 55.0}) {
+        for (qreal scale : {0.5, 1.0, 8.0, 55.0, 100.0}) {
             view.setTransform(QTransform::fromScale(scale, scale));
             updateMapEditorScreenSpaceMetrics(&scene, view.viewportTransform());
             view.centerOn(center);
@@ -568,7 +568,7 @@ private slots:
         int baselineHeight = 0;
         const auto originalPath = decoration->path();
         const int originalCount = scene.items().size();
-        for (qreal scale : {0.5, 1.0, 8.0, 55.0}) {
+        for (qreal scale : {0.5, 1.0, 8.0, 55.0, 100.0}) {
             view.setTransform(QTransform::fromScale(scale, scale));
             updateMapEditorScreenSpaceMetrics(&scene, view.viewportTransform());
             view.centerOn(decoration->path().pointAtPercent(0.9));
@@ -658,7 +658,7 @@ private slots:
         const QPointF anchor = tick->pos();
         const QPointF unrotatedDirection = tick->line().p2() / 18;
         const int itemCount = scene.items().size();
-        for (qreal scale : {0.5, 1.0, 8.0, 55.0}) {
+        for (qreal scale : {0.5, 1.0, 8.0, 55.0, 100.0}) {
             QTransform transform;
             transform.rotate(angle);
             transform.scale(scale, scale);

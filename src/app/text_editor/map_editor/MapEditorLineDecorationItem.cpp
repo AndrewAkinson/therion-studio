@@ -496,6 +496,7 @@ void MapEditorLineDecorationItem::setDecorationPath(const QPainterPath &path)
 {
     prepareGeometryChange();
     setPath(path);
+    projectedPathCacheValid_ = false;
     updatePaintBounds();
 }
 
@@ -559,6 +560,19 @@ void updateMapEditorScreenSpaceMetrics(QGraphicsScene *scene, const QTransform &
     }
 }
 
+const QList<QPolygonF> &MapEditorLineDecorationItem::projectedPolygonsForProjection(
+    const QTransform &projection) const
+{
+    const QPainterPath currentPath = path();
+    if (!projectedPathCacheValid_ || projectedPathSource_ != currentPath || projectedPathTransform_ != projection) {
+        projectedPathPolygons_ = projectedLinePolygons(currentPath, projection);
+        projectedPathSource_ = currentPath;
+        projectedPathTransform_ = projection;
+        projectedPathCacheValid_ = true;
+    }
+    return projectedPathPolygons_;
+}
+
 qreal MapEditorLineDecorationItem::hitDistancePixels(const QPointF &scenePosition,
                                                      const QTransform &viewTransform) const
 {
@@ -573,7 +587,7 @@ qreal MapEditorLineDecorationItem::hitDistancePixels(const QPointF &scenePositio
         return std::numeric_limits<qreal>::max();
     }
 
-    const auto polygons = projectedLinePolygons(path(), deviceTransform(viewTransform));
+    const auto &polygons = projectedPolygonsForProjection(deviceTransform(viewTransform));
     const QPointF screenPosition = viewTransform.map(scenePosition);
     qreal bestDistance = std::numeric_limits<qreal>::max();
     for (const MapEditorLineDecorationStyle &decoration : decorations_) {
@@ -630,7 +644,23 @@ void MapEditorLineDecorationItem::paint(QPainter *painter,
         ? QStyleOptionGraphicsItem::levelOfDetailFromTransform(painter->worldTransform())
         : 1.0;
     const qreal zoomOutScale = zoomOutStrokeScale(lod);
-    drawDecorations(painter, zoomOutScale);
+    const QTransform projection = painter->worldTransform();
+    const QList<QPolygonF> &polygons = projectedPolygonsForProjection(projection);
+    QVector<QVector<qreal>> cumulativeDistances;
+    cumulativeDistances.reserve(polygons.size());
+    for (const QPolygonF &points : polygons) {
+        QVector<qreal> distances;
+        if (!points.isEmpty()) {
+            distances.append(0.0);
+            distances.reserve(points.size());
+            for (int index = 1; index < points.size(); ++index) {
+                const QPointF delta = points[index] - points[index - 1];
+                distances.append(distances.last() + std::hypot(delta.x(), delta.y()));
+            }
+        }
+        cumulativeDistances.append(std::move(distances));
+    }
+    drawDecorations(painter, zoomOutScale, projection, polygons, cumulativeDistances);
 
     const bool selected = (option != nullptr && (option->state & QStyle::State_Selected))
         || data(kMapSceneInteractionSelectionRole).toBool();
@@ -640,31 +670,30 @@ void MapEditorLineDecorationItem::paint(QPainter *painter,
             ? mapEditorInteractionSelectionColor()
             : mapEditorInteractionHoverColor();
         interactionColorOverride_->setAlpha(selected ? 235 : 220);
-        drawDecorations(painter, zoomOutScale);
+        drawDecorations(painter, zoomOutScale, projection, polygons, cumulativeDistances);
         interactionColorOverride_.reset();
     }
     painter->restore();
 }
 
-void MapEditorLineDecorationItem::drawDecorations(QPainter *painter, qreal zoomOutScale)
+void MapEditorLineDecorationItem::drawDecorations(
+    QPainter *painter, qreal zoomOutScale, const QTransform &projection,
+    const QList<QPolygonF> &polygons, const QVector<QVector<qreal>> &cumulativeDistances)
 {
     if (painter == nullptr) {
         return;
     }
 
     for (const MapEditorLineDecorationStyle &decoration : decorations_) {
-        drawScreenDecoration(painter, decoration, zoomOutScale);
+        drawScreenDecoration(painter, decoration, zoomOutScale, projection, polygons, cumulativeDistances);
     }
 }
 
-void MapEditorLineDecorationItem::drawScreenDecoration(QPainter *painter,
-                                                  const MapEditorLineDecorationStyle &decoration,
-                                                  qreal zoomOutScale)
+void MapEditorLineDecorationItem::drawScreenDecoration(
+    QPainter *painter, const MapEditorLineDecorationStyle &decoration, qreal zoomOutScale,
+    const QTransform &projection, const QList<QPolygonF> &polygons,
+    const QVector<QVector<qreal>> &cumulativeDistances)
 {
-    // Flatten once in logical device pixels, then sample only visible markers.
-    // The global distances keep the repetition phase stable while panning.
-    const QTransform projection = painter->worldTransform();
-    const auto polygons = projectedLinePolygons(path(), projection);
     const auto sourceMetrics = decoration.kind == MapEditorLineDecorationKind::SlopeTicks
         ? lineDecorationVertexMetrics(path(), lineVertices_) : QVector<LineDecorationVertexMetric>();
     const bool sourceLengths = std::any_of(sourceMetrics.cbegin(), sourceMetrics.cend(),
@@ -684,15 +713,11 @@ void MapEditorLineDecorationItem::drawScreenDecoration(QPainter *painter,
     painter->setPen(lineDecorationPen(decoration, fallbackColor_, zoomOutScale, interactionColorOverride_));
     painter->setBrush(Qt::NoBrush);
     const int seed = decoration.seed.value_or(fallbackSeed_);
-    for (const auto &points : polygons) {
+    for (qsizetype polylineIndex = 0; polylineIndex < polygons.size(); ++polylineIndex) {
+        const QPolygonF &points = polygons.at(polylineIndex);
+        const QVector<qreal> &distances = cumulativeDistances.at(polylineIndex);
         if (points.size() < 2) {
             continue;
-        }
-        QVector<qreal> distances{0.0};
-        distances.reserve(points.size());
-        for (int index = 1; index < points.size(); ++index) {
-            const QPointF delta = points[index] - points[index - 1];
-            distances.append(distances.last() + std::hypot(delta.x(), delta.y()));
         }
         const qreal length = distances.last();
         if (length <= 0.001) {

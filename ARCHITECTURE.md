@@ -87,6 +87,35 @@ Therion namespace and reference semantics are compatibility-critical. In particu
 
 ## UI Surface Ownership
 
+The optional Map altitude underlay uses `ScrapAltitudeModel` for pure mean/relative
+height and categorical fallback policy. `ProjectAltitudeService`, composed by
+MainWindow, consumes existing asynchronous output inventory and loads bounded
+survey/station-only LOX metadata off-thread; stale generations cannot publish.
+Project-index station resolution exposes the canonical qualified reference rather
+than duplicating namespace resolution in a renderer. `MapEditorAltitudeUnderlay`
+projects cached source station mappings and paints mouse-transparent passage paths;
+Map scene completion and partial-edit completion refresh this presentation only.
+LOX has no reliable absolute-datum declaration here, so this feature reports
+relative entrance heights only. Multiple LOX outputs deliberately use fallback.
+XVI traverse coloring reuses that bounded LOX metadata and project-index resolution:
+its station table supplies endpoint identities, and only uniquely resolved pairs
+receive interpolated palette colors. The drawing's 2D coordinates never imply
+height; unresolved pairs retain the configured centerline color. The sidebar legend
+reports relative numeric heights and explicitly disclaims an absolute datum.
+`ScrapAltitudeModel` normalizes LOX names to project-index lookup keys before
+detecting collisions. Metadata carries output availability/ambiguity/load-failure
+state; the legend reports actual colored/fallback leg counts and the reason,
+without guessing an output or a datum.
+Underlay contour reconstruction is separate from ordinary area clipping: spatially
+indexed reciprocal nearest endpoints form independent closed components, using
+the existing one-preview-unit connection tolerance. Explicit `outline in` paths
+remove fill, `outline none` is excluded, and explicit non-wall outlines participate.
+The presentation reports precise/approximate/unfilled scraps. Approximate fallback
+uses spatially indexed shortest endpoint pairing only for scraps without a precise
+outer contour, with local extent and inferred/known-length budgets. Coincident
+branch junctions are rejected; dense endpoint buckets and candidate counts are
+bounded. No bounding boxes or unrestricted gap bridges replace passage geometry.
+
 The main project sidebar surfaces have distinct responsibilities. `Files`, `Survey`, and `Map` may be presented as tabs in one project navigation sidebar opened from the `Structure` rail entry, but their ownership stays separate:
 
 - `Files`: filesystem/project file operations and file navigation.

@@ -167,14 +167,15 @@ void MapEditorSceneLifecycleController::updateSceneRectForBackgroundBounds()
     mapScene->setSceneRect(mapEditorScrollableSceneRect(backgroundBounds));
 }
 
-void MapEditorSceneLifecycleController::fitMapToView(bool includeBackgroundImages, bool updateCommandSurface)
+void MapEditorSceneLifecycleController::fitMapToView(bool includeBackgroundImages, bool updateCommandSurface,
+                                                      std::optional<QRectF> geometryFitBounds)
 {
     QGraphicsScene *mapScene = scene();
     if (mapScene == nullptr || context_.view == nullptr) {
         return;
     }
 
-    QRectF fitBounds = mapGeometryFitBounds();
+    QRectF fitBounds = geometryFitBounds.has_value() ? *geometryFitBounds : mapGeometryFitBounds();
     const QRectF backgroundBounds = context_.mapBackgroundFitBounds();
     if (backgroundBounds.isValid() && includeBackgroundImages) {
         fitBounds = fitBounds.isValid() ? fitBounds.united(backgroundBounds) : backgroundBounds;
@@ -214,7 +215,7 @@ void MapEditorSceneLifecycleController::applyZoomAtViewportPosition(qreal factor
     }
 
     syncZoomFactorFromView();
-    const qreal targetZoomFactor = qBound(0.1, *context_.zoomFactor * factor, 50.0);
+    const qreal targetZoomFactor = qBound(0.1, *context_.zoomFactor * factor, 200.0);
     if (qFuzzyCompare(targetZoomFactor, *context_.zoomFactor)) {
         return;
     }
@@ -222,10 +223,13 @@ void MapEditorSceneLifecycleController::applyZoomAtViewportPosition(qreal factor
     const qreal appliedFactor = targetZoomFactor / *context_.zoomFactor;
     const QPoint viewportPoint = viewportPosition.toPoint();
     const QPointF scenePointBefore = context_.view->mapToScene(viewportPoint);
+    const auto previousAnchor = context_.view->transformationAnchor();
+    context_.view->setTransformationAnchor(QGraphicsView::NoAnchor);
     context_.view->scale(appliedFactor, appliedFactor);
     const QPointF scenePointAfter = context_.view->mapToScene(viewportPoint);
     const QPointF sceneDelta = scenePointAfter - scenePointBefore;
     context_.view->translate(sceneDelta.x(), sceneDelta.y());
+    context_.view->setTransformationAnchor(previousAnchor);
 
     *context_.autoFitEnabled = false;
     syncZoomFactorFromView();

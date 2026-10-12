@@ -4,6 +4,8 @@
 
 #include "MapEditorInputPolicy.h"
 #include "MapEditorLineDecorationItem.h"
+#include "MapEditorSceneGeneration.h"
+#include "MapEditorSceneInteractionIndex.h"
 #include "MapEditorSceneInternals.h"
 #include "MapEditorSceneSupport.h"
 #include "../../../platform/DiagnosticLogging.h"
@@ -501,7 +503,7 @@ bool isInteractiveMapSelectionItem(const QGraphicsItem *item)
     if (!(item->flags() & QGraphicsItem::ItemIsSelectable)) {
         return false;
     }
-    if (item->acceptedMouseButtons() == Qt::NoButton) {
+    if (!mapSceneItemParticipatesInPointerSelection(item)) {
         return false;
     }
     return true;
@@ -617,6 +619,10 @@ void selectSingleMapHitItem(MapEditorViewportInputContext &context, QGraphicsIte
     }
 }
 
+QRectF sceneProbeRectForViewportRadius(const QGraphicsView *view,
+                                       const QPoint &viewportPosition,
+                                       qreal radiusPixels);
+
 QGraphicsItem *nearestDirectVertexLikeItemForViewportPosition(MapEditorViewportInputContext &context,
                                                               const QPoint &viewportPosition,
                                                               bool requireSelected,
@@ -628,8 +634,8 @@ QGraphicsItem *nearestDirectVertexLikeItemForViewportPosition(MapEditorViewportI
 
     QGraphicsItem *nearestDirectVertexItem = nullptr;
     qreal nearestDistance = std::numeric_limits<qreal>::max();
-    const QList<QGraphicsItem *> allItems = context.scene->items();
-    for (QGraphicsItem *candidate : allItems) {
+    const QList<QGraphicsItem *> candidateItems = context.scene->items();
+    for (QGraphicsItem *candidate : candidateItems) {
         if (candidate == nullptr) {
             continue;
         }
@@ -870,6 +876,44 @@ void setMapInteractionHoverItem(MapEditorViewportInputContext &context, QGraphic
     if (context.scene == nullptr) {
         return;
     }
+    if (context.sceneInteractionIndex != nullptr && context.lastInteractionHoverLineNumber != nullptr
+        && context.lastInteractionHoverGeneration != nullptr
+        && (context.sceneGeneration == nullptr || context.sceneGeneration->isSettled())) {
+        const quint64 generation = context.sceneGeneration != nullptr ? context.sceneGeneration->current() : 0;
+        const int hoveredLineNumber = hoverItem != nullptr
+            ? hoverItem->data(kMapSceneLineNumberRole).toInt() : 0;
+        if (*context.lastInteractionHoverLineNumber == hoveredLineNumber
+            && *context.lastInteractionHoverGeneration == generation) {
+            return;
+        }
+
+        const auto &itemsByLine = context.sceneInteractionIndex->itemsByLine(context.scene, generation);
+        const auto updateLine = [&itemsByLine](int lineNumber, bool hovered) {
+            if (lineNumber <= 0) {
+                return;
+            }
+            const auto itemIt = itemsByLine.constFind(lineNumber);
+            if (itemIt == itemsByLine.constEnd()) {
+                return;
+            }
+            for (QGraphicsItem *item : itemIt.value()) {
+                if (item == nullptr) {
+                    continue;
+                }
+                const bool shouldHover = hovered && isInteractiveMapSelectionItem(item);
+                if (item->data(kMapSceneInteractionHoverRole).toBool() == shouldHover) {
+                    continue;
+                }
+                item->setData(kMapSceneInteractionHoverRole, shouldHover);
+                item->update();
+            }
+        };
+        updateLine(*context.lastInteractionHoverLineNumber, false);
+        updateLine(hoveredLineNumber, true);
+        *context.lastInteractionHoverLineNumber = hoveredLineNumber;
+        *context.lastInteractionHoverGeneration = generation;
+        return;
+    }
 
     for (QGraphicsItem *item : context.scene->items()) {
         if (item == nullptr) {
@@ -881,6 +925,12 @@ void setMapInteractionHoverItem(MapEditorViewportInputContext &context, QGraphic
         }
         item->setData(kMapSceneInteractionHoverRole, shouldHover);
         item->update();
+    }
+    if (context.lastInteractionHoverLineNumber != nullptr && context.lastInteractionHoverGeneration != nullptr) {
+        *context.lastInteractionHoverLineNumber = hoverItem != nullptr
+            ? hoverItem->data(kMapSceneLineNumberRole).toInt() : 0;
+        *context.lastInteractionHoverGeneration = context.sceneGeneration != nullptr
+            ? context.sceneGeneration->current() : 0;
     }
 }
 
@@ -1287,6 +1337,12 @@ std::optional<QPointF> nearestGeometryAnchorSnapPoint(const QGraphicsScene *scen
     return bestPoint;
 }
 
+bool isDrawingWall(const MapEditorViewportInputContext &context)
+{
+    return context.drawMode && context.drawMode() == MapEditorInteractiveDrawMode::Line
+        && context.drawLineType && context.drawLineType() == QStringLiteral("wall");
+}
+
 QPointF snapInteractiveDrawAnchorIfAvailable(const MapEditorViewportInputContext &context,
                                              const QPoint &viewportPoint,
                                              const QPointF &scenePoint)
@@ -1305,6 +1361,12 @@ QPointF snapInteractiveDrawAnchorIfAvailable(const MapEditorViewportInputContext
         return scenePoint;
     }
 
+    if (isDrawingWall(context)) {
+        const auto wallPoint = nearestWallGeometrySnapPoint(context.scene, scenePoint, snapRadius);
+        if (wallPoint) {
+            return *wallPoint;
+        }
+    }
     const std::optional<QPointF> snappedPoint = nearestGeometryAnchorSnapPoint(context.scene, scenePoint, snapRadius);
     return snappedPoint.value_or(scenePoint);
 }
@@ -1332,6 +1394,7 @@ SnapGuideLineCandidate nearestNeighborGeometryLineForSnapGuides(const MapEditorV
 
     qreal bestDistanceSquared = std::numeric_limits<qreal>::max();
     SnapGuideLineCandidate bestCandidate;
+    bool bestIsWall = false;
     const QList<QGraphicsItem *> items = context.scene->items(sceneSearchRectAround(scenePoint, guideRadius),
                                                               Qt::IntersectsItemShape,
                                                               Qt::DescendingOrder);
@@ -1347,8 +1410,7 @@ SnapGuideLineCandidate nearestNeighborGeometryLineForSnapGuides(const MapEditorV
 
         const int subtype = item->data(kMapSceneSelectionSubtypeRole).toInt();
         if (subtype != kMapSceneSelectionSubtypeGeneric
-            && subtype != kMapSceneSelectionSubtypeLineDetail
-            && subtype != kMapSceneSelectionSubtypeAreaFill) {
+            && subtype != kMapSceneSelectionSubtypeLineDetail) {
             continue;
         }
 
@@ -1357,7 +1419,7 @@ SnapGuideLineCandidate nearestNeighborGeometryLineForSnapGuides(const MapEditorV
         stroker.setWidth(guideRadius * 2.0);
         stroker.setCapStyle(Qt::RoundCap);
         stroker.setJoinStyle(Qt::RoundJoin);
-        const QPainterPath guideHitPath = stroker.createStroke(pathItem->path()).united(pathItem->path());
+        const QPainterPath guideHitPath = stroker.createStroke(pathItem->path());
         if (!guideHitPath.contains(localCandidate)) {
             continue;
         }
@@ -1366,10 +1428,13 @@ SnapGuideLineCandidate nearestNeighborGeometryLineForSnapGuides(const MapEditorV
         const qreal deltaX = center.x() - scenePoint.x();
         const qreal deltaY = center.y() - scenePoint.y();
         const qreal distanceSquared = (deltaX * deltaX) + (deltaY * deltaY);
-        if (distanceSquared >= bestDistanceSquared) {
+        const bool preferredWall = isDrawingWall(context) && isMapSceneWallItem(item);
+        if ((bestIsWall && !preferredWall)
+            || (bestIsWall == preferredWall && distanceSquared >= bestDistanceSquared)) {
             continue;
         }
 
+        bestIsWall = preferredWall;
         bestDistanceSquared = distanceSquared;
         bestCandidate.lineNumber = candidateLineNumber;
         bestCandidate.sceneBounds = pathItem->sceneBoundingRect();
@@ -1392,9 +1457,12 @@ QVector<QPointF> snapGuidePointsForNearbyGeometry(const MapEditorViewportInputCo
         return guidePoints;
     }
 
-    const QList<QGraphicsItem *> items = context.scene->items(guideLine.sceneBounds.adjusted(-1.0, -1.0, 1.0, 1.0),
-                                                              Qt::IntersectsItemBoundingRect,
-                                                              Qt::DescendingOrder);
+    // Wall-first snapping includes hidden anchors, so its guides must include them too.
+    const QList<QGraphicsItem *> items = isDrawingWall(context)
+        ? context.scene->items()
+        : context.scene->items(guideLine.sceneBounds.adjusted(-1.0, -1.0, 1.0, 1.0),
+                               Qt::IntersectsItemBoundingRect,
+                               Qt::DescendingOrder);
     for (QGraphicsItem *item : items) {
         if (item == nullptr) {
             continue;
@@ -1439,8 +1507,10 @@ QGraphicsItem *preferredMapHitItem(const QList<QGraphicsItem *> &hitItems,
                                    const QTransform &viewTransform = QTransform())
 {
     QGraphicsItem *bestItem = nullptr;
+    QGraphicsItem *bestAreaFillItem = nullptr;
     int bestPriority = std::numeric_limits<int>::max();
     qreal bestDistancePixels = std::numeric_limits<qreal>::max();
+    qreal bestAreaFillDistancePixels = std::numeric_limits<qreal>::max();
     bool bestUsesDistanceRanking = false;
     for (QGraphicsItem *item : hitItems) {
         if (!isInteractiveMapSelectionItem(item)) {
@@ -1475,6 +1545,14 @@ QGraphicsItem *preferredMapHitItem(const QList<QGraphicsItem *> &hitItems,
             }
         }
 
+        if (isMapSceneAreaFillItem(item)) {
+            if (distancePixels < bestAreaFillDistancePixels) {
+                bestAreaFillDistancePixels = distancePixels;
+                bestAreaFillItem = item;
+            }
+            continue;
+        }
+
         const int priority = mapSelectionHitPriority(item);
         const bool betterDistanceRankedPath = usesDistanceRanking
             && ((bestUsesDistanceRanking
@@ -1495,7 +1573,7 @@ QGraphicsItem *preferredMapHitItem(const QList<QGraphicsItem *> &hitItems,
             }
         }
     }
-    return bestItem;
+    return bestItem != nullptr ? bestItem : bestAreaFillItem;
 }
 
 }

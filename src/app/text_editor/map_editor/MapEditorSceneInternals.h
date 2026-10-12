@@ -392,7 +392,7 @@ protected:
     {
         if (event != nullptr
             && event->buttons().testFlag(Qt::LeftButton)
-            && QLineF(event->buttonDownScenePos(Qt::LeftButton), event->scenePos()).length() > 0.5) {
+            && QLineF(event->buttonDownScreenPos(Qt::LeftButton), event->screenPos()).length() > 0.5) {
             dragMoved_ = true;
         }
         QGraphicsEllipseItem::mouseMoveEvent(event);
@@ -698,7 +698,7 @@ protected:
     {
         if (event != nullptr
             && event->buttons().testFlag(Qt::LeftButton)
-            && QLineF(event->buttonDownScenePos(Qt::LeftButton), event->scenePos()).length() > 0.5) {
+            && QLineF(event->buttonDownScreenPos(Qt::LeftButton), event->screenPos()).length() > 0.5) {
             dragMoved_ = true;
         }
         QGraphicsEllipseItem::mouseMoveEvent(event);
@@ -836,6 +836,13 @@ private:
             return {};
         }
 
+        if (isMapSceneWallItem(this)) {
+            const auto wallPoint = nearestWallGeometrySnapPoint(scene(), candidate, snapRadius, lineNumber_);
+            if (wallPoint) {
+                return {true, *wallPoint};
+            }
+        }
+
         const qreal maxDistanceSquared = snapRadius * snapRadius;
         qreal bestDistanceSquared = std::numeric_limits<qreal>::max();
         QPointF bestPoint;
@@ -900,7 +907,13 @@ private:
 
         qreal bestDistanceSquared = std::numeric_limits<qreal>::max();
         int bestLineNumber = 0;
-        const QList<QGraphicsItem *> items = scene()->items();
+        bool bestIsWall = false;
+        const QRectF guideProbe(candidate.x() - guideRadius,
+                                candidate.y() - guideRadius,
+                                guideRadius * 2.0,
+                                guideRadius * 2.0);
+        const QList<QGraphicsItem *> items = scene()->items(
+            guideProbe, Qt::IntersectsItemBoundingRect, Qt::DescendingOrder);
         for (QGraphicsItem *item : items) {
             auto *pathItem = dynamic_cast<QGraphicsPathItem *>(item);
             if (pathItem == nullptr) {
@@ -914,8 +927,7 @@ private:
 
             const int subtype = item->data(kMapSceneSelectionSubtypeRole).toInt();
             if (subtype != kMapSceneSelectionSubtypeGeneric
-                && subtype != kMapSceneSelectionSubtypeLineDetail
-                && subtype != kMapSceneSelectionSubtypeAreaFill) {
+                && subtype != kMapSceneSelectionSubtypeLineDetail) {
                 continue;
             }
 
@@ -924,7 +936,7 @@ private:
             stroker.setWidth(guideRadius * 2.0);
             stroker.setCapStyle(Qt::RoundCap);
             stroker.setJoinStyle(Qt::RoundJoin);
-            const QPainterPath guideHitPath = stroker.createStroke(pathItem->path()).united(pathItem->path());
+            const QPainterPath guideHitPath = stroker.createStroke(pathItem->path());
             if (!guideHitPath.contains(localCandidate)) {
                 continue;
             }
@@ -933,10 +945,13 @@ private:
             const qreal deltaX = center.x() - candidate.x();
             const qreal deltaY = center.y() - candidate.y();
             const qreal distanceSquared = (deltaX * deltaX) + (deltaY * deltaY);
-            if (distanceSquared >= bestDistanceSquared) {
+            const bool preferredWall = isMapSceneWallItem(this) && isMapSceneWallItem(item);
+            if ((bestIsWall && !preferredWall)
+                || (bestIsWall == preferredWall && distanceSquared >= bestDistanceSquared)) {
                 continue;
             }
 
+            bestIsWall = preferredWall;
             bestDistanceSquared = distanceSquared;
             bestLineNumber = candidateLineNumber;
         }

@@ -18,6 +18,7 @@
 class QGraphicsScene;
 class QGraphicsSceneMouseEvent;
 class QPainter;
+class QPainterPath;
 class QStyleOptionGraphicsItem;
 class QUndoCommand;
 class QWidget;
@@ -42,6 +43,18 @@ constexpr int kMapSceneFocusedVertexRole = Qt::UserRole + 128;
 // visible background. Background loading follows the initial scene render, so
 // the items must be toggleable without rebuilding the scene.
 constexpr int kMapSceneEmptyDocumentGuideRole = Qt::UserRole + 129;
+constexpr int kMapSceneLineTypeRole = Qt::UserRole + 130;
+
+inline bool isMapSceneWallItem(const QGraphicsItem *item)
+{
+    return item != nullptr
+        && item->data(kMapSceneLineTypeRole).toString() == QStringLiteral("wall");
+}
+
+std::optional<QPointF> nearestWallGeometrySnapPoint(const QGraphicsScene *scene,
+                                                   const QPointF &candidate,
+                                                   qreal radius,
+                                                   int excludedLineNumber = 0);
 
 constexpr qreal kMapEditorCanvasFrameInset = 24.0;
 constexpr qreal kMapEditorCanvasPreviewInset = 20.0;
@@ -87,6 +100,18 @@ enum MapSceneSelectionSubtype
     kMapSceneSelectionSubtypePointOrientationHandle = 6,
     kMapSceneSelectionSubtypeAreaFill = 7
 };
+
+inline bool isMapSceneAreaFillItem(const QGraphicsItem *item)
+{
+    return item != nullptr
+        && item->data(kMapSceneSelectionSubtypeRole).toInt() == kMapSceneSelectionSubtypeAreaFill;
+}
+
+inline bool mapSceneItemParticipatesInPointerSelection(const QGraphicsItem *item)
+{
+    return item != nullptr
+        && (item->acceptedMouseButtons() != Qt::NoButton || isMapSceneAreaFillItem(item));
+}
 
 struct TherionParsedLine;
 
@@ -292,6 +317,9 @@ CoordinateTransform coordinateTransformFromScrapScale(const QStringList &tokens)
 QPointF mapGeometryPointToPreview(const QPointF &point, const QRectF &sourceBounds, const QRectF &targetBounds);
 QPointF mapGeometryPreviewToSource(const QPointF &point, const QRectF &sourceBounds, const QRectF &targetBounds);
 QVector<MapGeometryFeature> collectGeometryFeatures(const QVector<TherionParsedLine> &parsedLines);
+QHash<int, QPainterPath> scrapClipPathsForFeatures(
+    const QVector<MapGeometryFeature> &features, const QRectF &sourceBounds, const QRectF &previewBounds,
+    bool requireConnectedWalls = false, bool approximateMissingContours = false);
 QVector<MapGeometryFeature> collectGeometryFeatures(const Th2GeometryProjection &projection,
                                                     const QVector<TherionSourceLogicalCommand> &commands);
 bool insertLineVertexByDeCasteljau(QVector<MapGeometryFeature::TH2LineVertex> *lineVertices,

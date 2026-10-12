@@ -42,11 +42,27 @@ struct MapEditorXviStationData
     QPointF position;
 };
 
+struct MapEditorXviTraverseStations
+{
+    QString from;
+    QString to;
+};
+
+struct MapEditorXviTraverseColor
+{
+    QColor from;
+    QColor to;
+    bool hasAltitude = false;
+
+    bool operator==(const MapEditorXviTraverseColor &) const = default;
+};
+
 struct MapEditorXviLayerGeometryData
 {
     QVector<QLineF> gridLines;
     QVector<MapEditorXviLineTile> gridTiles;
     QVector<QLineF> traverseShotLines;
+    QVector<MapEditorXviTraverseStations> traverseShotStations;
     QVector<MapEditorXviLineTile> traverseShotTiles;
     QVector<QLineF> splayShotLines;
     QVector<MapEditorXviLineTile> splayShotTiles;
@@ -82,6 +98,12 @@ public:
 
     void setGeometryData(const MapEditorXviLayerGeometryData &geometry);
     const MapEditorXviLayerGeometryData &geometryData() const;
+    void setCenterlineAppearance(const QColor &color, qreal width);
+    void setCenterlineAltitudeColors(const QVector<MapEditorXviTraverseColor> &colors, bool enabled);
+    const QVector<MapEditorXviTraverseColor> &centerlineAltitudeColors() const { return centerlineAltitudeColors_; }
+    QColor centerlineColor() const { return centerlineColor_; }
+    qreal centerlineWidth() const { return centerlineWidth_; }
+    void refreshPaintBounds();
 
     QRectF boundingRect() const override;
     void paint(QPainter *painter,
@@ -89,7 +111,12 @@ public:
                QWidget *widget = nullptr) override;
 
 private:
+    QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
     MapEditorXviLayerGeometryData geometry_;
     QRectF paintBounds_;
+    QColor centerlineColor_ = QColor(18, 44, 88, 130);
+    qreal centerlineWidth_ = 1.8;
+    QVector<MapEditorXviTraverseColor> centerlineAltitudeColors_;
+    bool centerlineAltitudeColorsEnabled_ = false;
 };
 }
