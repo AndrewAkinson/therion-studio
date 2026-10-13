@@ -282,6 +282,13 @@ Active planning only. Completed history belongs in archive files. Stable archite
 - Preserve Mapiah `format=svg` semantics and existing background source transaction paths.
 - Keep general background cache/provider work in `plans/MAP_RUNTIME_OWNERSHIP_PLAN.md`.
 
+### Join Viewer
+
+- Plan: `plans/JOIN_VIEWER_PLAN.md`. Add a `Joins` sidebar page listing cross-survey `equate` links and a Join view
+  that opens both `.th2` drawings side by side, aligned on the join station through XVI centreline station fits, each
+  editable and saved independently, with a faded partner outline.
+- Slice 1 (in progress): core equate-link data in the project index and station-point lookup per survey/projection.
+
 ### Raster Background Placement (issue #30)
 
 - Mapiah raster layers were composed with the scale applied around the image centre, while Mapiah scales from the
