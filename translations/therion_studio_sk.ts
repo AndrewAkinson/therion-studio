@@ -5981,6 +5981,22 @@ subtype blocks</translation>
         <translation>V inšpektore Objekty nechá rozbalený iba scrap vybraného objektu.</translation>
     </message>
     <message>
+        <source>Hide All</source>
+        <translation>Skryť všetko</translation>
+    </message>
+    <message>
+        <source>Show All</source>
+        <translation>Zobraziť všetko</translation>
+    </message>
+    <message>
+        <source>Hide all objects in the map.</source>
+        <translation>Skryje všetky objekty v mape.</translation>
+    </message>
+    <message>
+        <source>Show all objects in the map.</source>
+        <translation>Zobrazí všetky objekty v mape.</translation>
+    </message>
+    <message>
         <location filename="../src/app/text_editor/map_editor/MapEditorTabInspectorBackgroundUi.cpp" line="44"/>
         <source>Layers</source>
         <translation>Vrstvy</translation>

@@ -752,6 +752,54 @@ void MapEditorInspectorObjectController::applyInspectorObjectVisibility()
     context_.updateGeometrySelectionPresentation();
 }
 
+void MapEditorInspectorObjectController::hideAllObjects()
+{
+    if (context_.hiddenObjectLines == nullptr) {
+        return;
+    }
+
+    *context_.lastClickedLineNumber = 0;
+    if (context_.objectsModel != nullptr) {
+        std::function<void(const QModelIndex &)> collectLines = [&](const QModelIndex &parentIndex) {
+            const int count = context_.objectsModel->rowCount(parentIndex);
+            for (int row = 0; row < count; ++row) {
+                const QModelIndex idx = context_.objectsModel->index(row, kInspectorObjectNameColumn, parentIndex);
+                const int line = idx.data(kInspectorSourceLineRole).toInt();
+                if (line > 0) {
+                    context_.hiddenObjectLines->insert(line);
+                }
+                collectLines(idx);
+            }
+        };
+        collectLines(QModelIndex());
+    }
+    if (context_.scene != nullptr) {
+        for (QGraphicsItem *item : context_.scene->items()) {
+            if (item == nullptr) {
+                continue;
+            }
+            bool ok = false;
+            const int line = item->data(kMapSceneLineNumberRole).toInt(&ok);
+            if (ok && line > 0) {
+                context_.hiddenObjectLines->insert(line);
+            }
+        }
+    }
+
+    clearInspectorObjectSelection();
+    rebuildInspectorObjectsTree();
+}
+
+void MapEditorInspectorObjectController::showAllObjects()
+{
+    if (context_.hiddenObjectLines == nullptr) {
+        return;
+    }
+
+    context_.hiddenObjectLines->clear();
+    rebuildInspectorObjectsTree();
+}
+
 QSet<int> MapEditorInspectorObjectController::collapsedScrapLineNumbers() const
 {
     QSet<int> collapsedScrapLines;

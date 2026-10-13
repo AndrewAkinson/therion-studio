@@ -246,16 +246,26 @@ void MapEditorTab::buildUi()
     mapView_->setDragMode(QGraphicsView::NoDrag);
     mapView_->setTransformationAnchor(QGraphicsView::AnchorViewCenter);
     mapView_->setResizeAnchor(QGraphicsView::AnchorViewCenter);
-    mapView_->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    // Partial updates: hover/selection/drag repaint only dirty item regions.
+    // MapEditorSpatialIndexRepaintTest compares the result with a clean full
+    // repaint (hover, selection, drag, draw drafts, high zoom, pan, detached).
+    mapView_->setViewportUpdateMode(QGraphicsView::SmartViewportUpdate);
     mapView_->setCacheMode(QGraphicsView::CacheBackground);
     mapView_->setRenderHint(QPainter::Antialiasing, true);
     mapView_->setRenderHint(QPainter::SmoothPixmapTransform, true);
     mapView_->setBackgroundBrush(mapEditorCanvasViewportBackgroundColor());
     mapView_->setFocusPolicy(Qt::StrongFocus);
-    mapView_->installEventFilter(this);
+    // The tab's application-wide filter already routes every view/viewport event
+    // (also when the pane is detached); object filters would dispatch each
+    // pointer event a second time through the whole input controller.
+    if (qApp == nullptr) {
+        mapView_->installEventFilter(this);
+    }
     if (mapView_->viewport() != nullptr) {
         mapView_->viewport()->setFocusPolicy(Qt::StrongFocus);
-        mapView_->viewport()->installEventFilter(this);
+        if (qApp == nullptr) {
+            mapView_->viewport()->installEventFilter(this);
+        }
         mapView_->viewport()->setMouseTracking(true);
         mapView_->viewport()->setCursor(Qt::CrossCursor);
         mapView_->viewport()->setContextMenuPolicy(Qt::CustomContextMenu);

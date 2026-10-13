@@ -354,6 +354,7 @@ QGraphicsItem *takePendingPrimarySelectionItem(QGraphicsScene *scene)
     }
 
     QGraphicsItem *pendingPrimaryItem = nullptr;
+    ++mapEditorPerformanceCounters().fullSceneItemScans;
     for (QGraphicsItem *item : scene->items()) {
         if (item == nullptr || !item->data(kMapScenePendingPrimarySelectionRole).toBool()) {
             continue;
@@ -630,6 +631,7 @@ MapEditableGeometryVertexItem *findGeometryVertexItem(QGraphicsScene *scene,
         return nullptr;
     }
 
+    ++mapEditorPerformanceCounters().fullSceneItemScans;
     const auto items = scene->items();
     for (QGraphicsItem *item : items) {
         auto *vertexItem = dynamic_cast<MapEditableGeometryVertexItem *>(item);
@@ -1159,6 +1161,7 @@ void MapEditorSelectionController::updateGeometrySelectionPresentation()
 
     QSet<int> selectedLines;
     QHash<int, QSet<int>> selectedLineControlOwnersByLine;
+    QSet<int> selectedStationScraps;
     const QList<QGraphicsItem *> selectedItems = context_.scene->selectedItems();
     for (QGraphicsItem *item : selectedItems) {
         if (item == nullptr) {
@@ -1168,6 +1171,10 @@ void MapEditorSelectionController::updateGeometrySelectionPresentation()
         const int lineNumber = item->data(kMapSceneLineNumberRole).toInt();
         if (lineNumber > 0) {
             selectedLines.insert(lineNumber);
+        }
+        const int stationScrapLine = item->data(kMapSceneStationScrapRole).toInt();
+        if (lineNumber > 0 && stationScrapLine > 0) {
+            selectedStationScraps.insert(stationScrapLine);
         }
 
         const int subtype = item->data(kMapSceneSelectionSubtypeRole).toInt();
@@ -1208,6 +1215,32 @@ void MapEditorSelectionController::updateGeometrySelectionPresentation()
         }
     }
 
+    MapEditorSceneInteractionIndex *index = context_.sceneInteractionIndex;
+    const bool sceneSettled = context_.sceneGeneration == nullptr || context_.sceneGeneration->isSettled();
+    const quint64 generation = context_.sceneGeneration != nullptr ? context_.sceneGeneration->current() : 0;
+
+    // Other stations of the selected stations' scraps get a secondary
+    // highlight so the user can see which stations belong to that scrap.
+    QSet<int> siblingStationLines;
+    if (!selectedStationScraps.isEmpty()) {
+        if (index != nullptr && sceneSettled) {
+            const QHash<int, QVector<int>> &stationsByScrap = index->stationLinesByScrap(context_.scene, generation);
+            for (const int scrapLine : std::as_const(selectedStationScraps)) {
+                for (const int stationLine : stationsByScrap.value(scrapLine)) {
+                    siblingStationLines.insert(stationLine);
+                }
+            }
+        } else {
+            ++mapEditorPerformanceCounters().fullSceneItemScans;
+            for (QGraphicsItem *item : context_.scene->items()) {
+                if (item != nullptr && selectedStationScraps.contains(item->data(kMapSceneStationScrapRole).toInt())) {
+                    siblingStationLines.insert(item->data(kMapSceneLineNumberRole).toInt());
+                }
+            }
+        }
+        siblingStationLines.subtract(selectedLines);
+    }
+
     const auto updateItemPresentation = [&](QGraphicsItem *item) {
         if (item == nullptr) {
             return;
@@ -1231,6 +1264,13 @@ void MapEditorSelectionController::updateGeometrySelectionPresentation()
             && isInteractiveMapSelectionItem(item);
         if (item->data(kMapSceneInteractionSelectionRole).toBool() != visuallySelected) {
             item->setData(kMapSceneInteractionSelectionRole, visuallySelected);
+            item->update();
+        }
+        const bool scrapSiblingStation = lineNumber > 0
+            && siblingStationLines.contains(lineNumber)
+            && item->data(kMapSceneStationScrapRole).toInt() > 0;
+        if (item->data(kMapSceneScrapSiblingStationRole).toBool() != scrapSiblingStation) {
+            item->setData(kMapSceneScrapSiblingStationRole, scrapSiblingStation);
             item->update();
         }
 
@@ -1261,9 +1301,7 @@ void MapEditorSelectionController::updateGeometrySelectionPresentation()
     if (focusedLineNumber > 0) {
         presentedLines.insert(focusedLineNumber);
     }
-    MapEditorSceneInteractionIndex *index = context_.sceneInteractionIndex;
-    const bool sceneSettled = context_.sceneGeneration == nullptr || context_.sceneGeneration->isSettled();
-    const quint64 generation = context_.sceneGeneration != nullptr ? context_.sceneGeneration->current() : 0;
+    presentedLines.unite(siblingStationLines);
     if (index != nullptr && sceneSettled && index->hasSelectionPresentation(context_.scene, generation)) {
         // Delta update: only lines presented last time or now can change state.
         QSet<int> affectedLines = presentedLines;
@@ -1279,6 +1317,7 @@ void MapEditorSelectionController::updateGeometrySelectionPresentation()
             }
         }
     } else {
+        ++mapEditorPerformanceCounters().fullSceneItemScans;
         for (QGraphicsItem *item : context_.scene->items()) {
             updateItemPresentation(item);
         }

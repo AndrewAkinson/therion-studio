@@ -571,6 +571,9 @@ private:
     void scheduleMagnifierOverlayUpdateFromViewportPosition(const QPoint &viewportPosition);
     void refreshVisibleMagnifierOverlay();
     void hideMagnifierOverlay();
+    void scheduleViewportHoverUpdate(const QPoint &viewportPosition);
+    void flushPendingViewportHoverUpdate();
+    void cancelPendingViewportHoverUpdate();
     QString magnifierCoordinateTextForScenePosition(const QPointF &scenePosition) const;
     QRectF mapGeometryFitBounds() const;
     QRectF mapBackgroundFitBounds() const;
@@ -709,6 +712,8 @@ private:
     void setObjectsInspectorAutoCollapseExpandScrapsEnabled(bool enabled);
     std::optional<bool> handleInspectorObjectViewportEvent(QEvent *event);
     void applyInspectorObjectVisibility();
+    void hideAllObjects();
+    void showAllObjects();
     void configureInspectorBackgroundLayerTreeColumns();
     void handleInspectorBackgroundLayerSelectionChanged(const QModelIndex &current);
     void handleInspectorBackgroundLayerClicked(const QModelIndex &index);
@@ -787,6 +792,13 @@ private:
     bool magnifierHasViewportPosition_ = false;
     bool magnifierThrottleActive_ = false;
     bool magnifierEnabled_ = true;
+    QTimer *hoverUpdateTimer_ = nullptr;
+    QPoint pendingHoverViewportPosition_;
+    QElapsedTimer lastHoverUpdateElapsed_;
+    mutable int draftSourceBoundsRevision_ = -1;
+    mutable QRectF draftSourceBoundsPreview_;
+    mutable QRectF draftSourceBounds_;
+    mutable size_t draftSourceBoundsBackgroundKey_ = 0;
     bool mapInspectorCollapsed_ = false;
     int mapInspectorPanelExtent_ = 320;
     QGraphicsScene *mapScene_ = nullptr;
@@ -809,6 +821,8 @@ private:
     int mapInspectorBackgroundTabIndex_ = -1;
     QFrame *mapInspectorLeftEdge_ = nullptr;
     QCheckBox *mapObjectsAutoCollapseExpandScrapsCheck_ = nullptr;
+    QPushButton *mapObjectsHideAllButton_ = nullptr;
+    QPushButton *mapObjectsShowAllButton_ = nullptr;
     QTreeView *mapObjectsTree_ = nullptr;
     QStandardItemModel *mapObjectsModel_ = nullptr;
     QWidget *xviAltitudeLegend_ = nullptr;

@@ -259,6 +259,10 @@ set(THERION_MAP_EDITOR_BACKGROUND_UI_QTEST_SUITES
     MapEditorViewportCullingTest
     MapEditorEndpointSnapTransactionTest
     MapEditorPlainClickSelectionTest
+    MapEditorScrapStationHighlightTest
+    MapEditorInteractionPerformanceTest
+    MapEditorSpatialIndexRepaintTest
+    MapEditorBulkVisibilityTest
     MapEditorAltitudeUnderlayTest
     MapEditorBackgroundRoundTripTest
     MapEditorSceneLifecycleTest
@@ -698,6 +702,8 @@ set(THERION_MAP_EDITOR_SOURCES
     src/app/text_editor/map_editor/MapEditorBackgroundAssetCache.h
     src/app/text_editor/map_editor/MapEditorSceneGeneration.cpp
     src/app/text_editor/map_editor/MapEditorSceneGeneration.h
+    src/app/text_editor/map_editor/MapEditorSceneHandleIndex.cpp
+    src/app/text_editor/map_editor/MapEditorSceneHandleIndex.h
     src/app/text_editor/map_editor/MapEditorSceneInteractionIndex.cpp
     src/app/text_editor/map_editor/MapEditorSceneInteractionIndex.h
     src/app/text_editor/map_editor/MapEditorBackgroundAssetLoader.cpp
@@ -774,6 +780,7 @@ set(THERION_MAP_EDITOR_SOURCES
     src/app/text_editor/map_editor/MapEditorInputPolicy.h
     src/app/text_editor/map_editor/MapEditorMagnifierOverlay.cpp
     src/app/text_editor/map_editor/MapEditorMagnifierOverlay.h
+    src/app/text_editor/map_editor/MapEditorPerformanceCounters.h
     src/app/text_editor/map_editor/MapEditorViewportInputContext.h
     src/app/text_editor/map_editor/MapEditorViewportInputController.cpp
     src/app/text_editor/map_editor/MapEditorViewportInputController.h
@@ -991,6 +998,8 @@ qt_add_executable(MapObjectStyleGallery
     src/app/text_editor/map_editor/MapEditorObjectStyleCatalog.cpp
     src/app/text_editor/map_editor/MapEditorObjectStyleCatalog.h
     src/app/text_editor/map_editor/MapEditorPointSymbolGeometry.h
+    src/app/text_editor/map_editor/MapEditorSceneHandleIndex.cpp
+    src/app/text_editor/map_editor/MapEditorSceneHandleIndex.h
     src/app/text_editor/map_editor/MapEditorSceneItems.cpp
     src/app/text_editor/map_editor/MapEditorSceneInternals.h
     src/app/text_editor/map_editor/MapEditorSceneSupport.h
@@ -1275,6 +1284,8 @@ qt_add_executable(MapGeometryFeatureParsingTest
     src/app/text_editor/map_editor/MapEditorObjectDetailsLogic.cpp
     src/app/text_editor/map_editor/MapEditorObjectDetailsLogic.h
     src/app/text_editor/map_editor/MapEditorPointSymbolGeometry.h
+    src/app/text_editor/map_editor/MapEditorSceneHandleIndex.cpp
+    src/app/text_editor/map_editor/MapEditorSceneHandleIndex.h
     src/app/text_editor/map_editor/MapEditorSceneItems.cpp
     src/app/text_editor/map_editor/MapEditorSceneInternals.h
     src/app/text_editor/map_editor/MapEditorReferencedAreaResolver.cpp
@@ -1303,6 +1314,8 @@ qt_add_executable(MapEditorSourceReferenceResolverTest
     src/app/text_editor/map_editor/MapEditorObjectDetailsLogic.cpp
     src/app/text_editor/map_editor/MapEditorObjectDetailsLogic.h
     src/app/text_editor/map_editor/MapEditorPointSymbolGeometry.h
+    src/app/text_editor/map_editor/MapEditorSceneHandleIndex.cpp
+    src/app/text_editor/map_editor/MapEditorSceneHandleIndex.h
     src/app/text_editor/map_editor/MapEditorSceneItems.cpp
     src/app/text_editor/map_editor/MapEditorSceneInternals.h
     src/app/text_editor/map_editor/MapEditorReferencedAreaResolver.cpp
@@ -1417,6 +1430,8 @@ qt_add_executable(MapEditorInspectorDataTest
     tests/MapEditorInspectorDataTest.cpp
     src/app/text_editor/map_editor/MapEditorInspectorData.cpp
     src/app/text_editor/map_editor/MapEditorInspectorData.h
+    src/app/text_editor/map_editor/MapEditorSceneHandleIndex.cpp
+    src/app/text_editor/map_editor/MapEditorSceneHandleIndex.h
     src/app/text_editor/map_editor/MapEditorSceneItems.cpp
     src/app/text_editor/map_editor/MapEditorSceneSupport.h)
 
@@ -1778,6 +1793,10 @@ qt_add_executable(MapEditorBackgroundUiQTests
     tests/MapEditorViewportCullingTest.cpp
     tests/MapEditorEndpointSnapTransactionTest.cpp
     tests/MapEditorPlainClickSelectionTest.cpp
+    tests/MapEditorScrapStationHighlightTest.cpp
+    tests/MapEditorInteractionPerformanceTest.cpp
+    tests/MapEditorSpatialIndexRepaintTest.cpp
+    tests/MapEditorBulkVisibilityTest.cpp
     tests/MapEditorAltitudeUnderlayTest.cpp
     tests/MapEditorBackgroundUiQTestMain.cpp
     tests/MapEditorBackgroundRoundTripTest.cpp

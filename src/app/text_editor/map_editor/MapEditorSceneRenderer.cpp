@@ -1,5 +1,6 @@
 #include "MapEditorSceneSupport.h"
 #include "MapEditorSceneInternals.h"
+#include "MapEditorPerformanceCounters.h"
 #include "MapEditorSceneThemePolicy.h"
 #include "MapEditorLineDecorationItem.h"
 #include "MapEditorDirectionAidItem.h"
@@ -29,6 +30,8 @@
 #include "../../../core/TherionTokenRules.h"
 
 #include <algorithm>
+#include <QMutex>
+
 #include <cmath>
 #include <limits>
 #include <memory>
@@ -3225,6 +3228,9 @@ void renderMapWorkspaceScene(QGraphicsScene *scene,
                 pointItem->setZValue(3.0);
                 markGeometryItem(pointItem);
                 pointItem->setData(kMapSceneLineNumberRole, feature.lineNumber);
+                if (feature.stationPoint) {
+                    pointItem->setData(kMapSceneStationScrapRole, feature.scrapLineNumber);
+                }
                 if (mapItemsByLine != nullptr && feature.lineNumber > 0) {
                     mapItemsByLine->insert(feature.lineNumber, pointItem);
                 }
@@ -3439,6 +3445,7 @@ void renderMapWorkspaceScene(QGraphicsScene *scene,
 
 QVector<MapGeometryFeature> collectGeometryFeatures(const QVector<TherionParsedLine> &parsedLines)
 {
+    mapEditorPerformanceCounters().wholeDocumentGeometryBuilds.fetch_add(1, std::memory_order_relaxed);
     struct PendingReferencedArea
     {
         MapGeometryFeature feature;
@@ -3725,19 +3732,71 @@ QVector<MapGeometryFeature> collectGeometryFeatures(const QVector<TherionParsedL
     return features;
 }
 
-QVector<MapGeometryFeature> collectGeometryFeatures(const Th2GeometryProjection &projection,
-                                                    const QVector<TherionSourceLogicalCommand> &commands)
+namespace
 {
+struct LogicalCommandsGeometry
+{
+    // Holding the commands keeps the keyed buffer alive, so its address
+    // cannot be reused by a different snapshot while the entry exists.
+    QVector<TherionSourceLogicalCommand> commands;
+    QHash<int, QVector<MapGeometryFeature>> featuresByLine;
+};
+
+std::shared_ptr<const LogicalCommandsGeometry> geometryForLogicalCommands(
+    const QVector<TherionSourceLogicalCommand> &commands)
+{
+    static QMutex mutex;
+    static QVector<std::shared_ptr<const LogicalCommandsGeometry>> recent;
+    constexpr int kMaxEntries = 4;
+    if (!commands.isEmpty()) {
+        const QMutexLocker locker(&mutex);
+        for (int index = 0; index < recent.size(); ++index) {
+            const auto entry = recent.at(index);
+            if (entry->commands.constData() == commands.constData() && entry->commands.size() == commands.size()) {
+                recent.move(index, 0);
+                return entry;
+            }
+        }
+    }
+
     QVector<TherionParsedLine> parsedLines;
     parsedLines.reserve(commands.size());
     for (const TherionSourceLogicalCommand &command : commands) {
         parsedLines.append(command.parsed);
     }
-
-    QHash<int, QVector<MapGeometryFeature>> featuresByLine;
+    auto geometry = std::make_shared<LogicalCommandsGeometry>();
+    geometry->commands = commands;
     for (const MapGeometryFeature &feature : collectGeometryFeatures(parsedLines)) {
-        featuresByLine[feature.lineNumber].append(feature);
+        geometry->featuresByLine[feature.lineNumber].append(feature);
     }
+    if (!commands.isEmpty()) {
+        const QMutexLocker locker(&mutex);
+        recent.prepend(geometry);
+        if (recent.size() > kMaxEntries) {
+            recent.removeLast();
+        }
+    }
+    return geometry;
+}
+}
+
+std::optional<MapGeometryFeature> geometryFeatureForLogicalCommandsLine(
+    const QVector<TherionSourceLogicalCommand> &commands, int lineNumber, MapGeometryFeature::Kind kind)
+{
+    const auto geometry = geometryForLogicalCommands(commands);
+    for (const MapGeometryFeature &feature : geometry->featuresByLine.value(lineNumber)) {
+        if (feature.kind == kind) {
+            return feature;
+        }
+    }
+    return std::nullopt;
+}
+
+QVector<MapGeometryFeature> collectGeometryFeatures(const Th2GeometryProjection &projection,
+                                                    const QVector<TherionSourceLogicalCommand> &commands)
+{
+    const auto geometry = geometryForLogicalCommands(commands);
+    const QHash<int, QVector<MapGeometryFeature>> &featuresByLine = geometry->featuresByLine;
 
     struct ProjectedFeatureRef
     {

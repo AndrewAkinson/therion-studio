@@ -200,6 +200,15 @@ MapEditorViewportInputContext MapEditorTab::viewportInputContext()
         .toggleLineVertexSmoothFromSelection = [this]() {
             return toggleLineVertexSmoothFromSelection();
         },
+        .scheduleHoverUpdate = [this](const QPoint &viewportPosition) {
+            scheduleViewportHoverUpdate(viewportPosition);
+        },
+        .flushPendingHoverUpdate = [this]() {
+            flushPendingViewportHoverUpdate();
+        },
+        .cancelPendingHoverUpdate = [this]() {
+            cancelPendingViewportHoverUpdate();
+        },
     };
 }
 }

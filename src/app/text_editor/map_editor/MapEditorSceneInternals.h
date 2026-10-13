@@ -33,6 +33,8 @@
 #include "MapEditorSceneSupport.h"
 #include "MapEditorPointSymbolGeometry.h"
 #include "MapEditorObjectDetailsLogic.h"
+#include "MapEditorPerformanceCounters.h"
+#include "MapEditorSceneHandleIndex.h"
 
 namespace TherionStudio {
 
@@ -101,6 +103,14 @@ inline QColor mapEditorInteractionHoverColor()
     return QColor(QStringLiteral("#00e5ff"));
 }
 
+// Secondary highlight for stations sharing the selected station's scrap:
+// violet reads apart from the red selection, the cyan hover and the usual
+// black/blue station symbols.
+inline QColor mapEditorScrapSiblingStationColor()
+{
+    return QColor(QStringLiteral("#c400ff"));
+}
+
 inline constexpr int kMapEditorSnapTargetRadiusPixels = 10;
 inline constexpr int kMapEditorSnapGuideRadiusPixels = 16;
 
@@ -152,6 +162,11 @@ public:
         setCursor(Qt::OpenHandCursor);
         setToolTip(QObject::tr("Point handle (line %1)").arg(lineNumber_));
         setPos(sceneCoordsSourceToPreview(sourcePoint, sourceBounds, previewBounds));
+    }
+
+    ~MapEditablePointItem() override
+    {
+        MapEditorSceneHandleIndex::untrack(this, scene());
     }
 
     void setMoveCommittedCallback(std::function<void(int, const QPointF &, const QPointF &)> callback)
@@ -246,7 +261,7 @@ protected:
             symbolBounds = rect();
         }
         // Paint includes scaled marker plus halo; keep update region larger to avoid drag trails.
-        QRectF bounds = symbolBounds.adjusted(-8.0, -8.0, 8.0, 8.0);
+        QRectF bounds = symbolBounds.adjusted(-10.0, -10.0, 10.0, 10.0);
         if (hasLabel_) {
             const QSizeF labelSize = labelText_.size();
             bounds = bounds.united(orientedLabelBounds(labelBoundsForRect(rect().center(),
@@ -262,8 +277,9 @@ protected:
         const bool selected = (option != nullptr && (option->state & QStyle::State_Selected))
             || data(kMapSceneInteractionSelectionRole).toBool();
         const bool hovered = data(kMapSceneInteractionHoverRole).toBool();
+        const bool scrapSibling = !selected && data(kMapSceneScrapSiblingStationRole).toBool();
         const bool emphasize = selected || hovered || dragActive_;
-        const qreal interactionScale = dragActive_ ? 1.5 : (selected ? 1.4 : (hovered ? 1.25 : 1.0));
+        const qreal interactionScale = dragActive_ ? 1.5 : (selected ? 1.4 : (hovered ? 1.25 : (scrapSibling ? 1.2 : 1.0)));
         const qreal lod = mapViewLevelOfDetail(this, painter, widget);
         const qreal zoomOutScale = mapZoomOutMarkerScale(this, painter, widget);
         const qreal scale = interactionScale * zoomOutScale;
@@ -292,6 +308,14 @@ protected:
             painter->setBrush(halo);
             const qreal haloRadius = 2.2 * zoomOutScale;
             painter->drawEllipse(effectiveSymbolRect.adjusted(-haloRadius, -haloRadius, haloRadius, haloRadius));
+        } else if (scrapSibling) {
+            QColor halo = mapEditorScrapSiblingStationColor();
+            halo.setAlpha(70);
+            const qreal ringRadius = 4.0 * zoomOutScale;
+            const QRectF ringRect = effectiveSymbolRect.adjusted(-ringRadius, -ringRadius, ringRadius, ringRadius);
+            painter->setPen(QPen(mapEditorScrapSiblingStationColor(), 2.2 * zoomOutScale));
+            painter->setBrush(halo);
+            painter->drawEllipse(ringRect);
         }
 
         const qreal baseOutlineWidth = pen().widthF() > 0.0 ? pen().widthF() : 1.1;
@@ -344,7 +368,7 @@ protected:
 
         bool renderLabel = false;
         if (hasLabel_) {
-            if (emphasize) {
+            if (emphasize || scrapSibling) {
                 renderLabel = true;
             } else if (stationLabelAutoVisibility_) {
                 if (stationLabelVisibleByZoom_) {
@@ -437,6 +461,8 @@ protected:
             candidate.setY(qBound(fittedBounds_.top(), candidate.y(), fittedBounds_.bottom()));
             return candidate;
         }
+        MapEditorSceneHandleIndex::noteItemChange(this, change, MapEditorSceneHandleKind::Point, lineNumber_,
+                                                  [this]() { return scenePos(); });
 
         return QGraphicsEllipseItem::itemChange(change, value);
     }
@@ -537,7 +563,10 @@ public:
         setPos(sceneCoordsSourceToPreview(sourcePoint, sourceBounds, previewBounds));
     }
 
-    ~MapEditableGeometryVertexItem() override = default;
+    ~MapEditableGeometryVertexItem() override
+    {
+        MapEditorSceneHandleIndex::untrack(this, scene());
+    }
 
     int lineNumber() const
     {
@@ -756,6 +785,8 @@ protected:
             }
             return candidate;
         }
+        MapEditorSceneHandleIndex::noteItemChange(this, change, MapEditorSceneHandleKind::GeometryVertex, lineNumber_,
+                                                  [this]() { return scenePos(); });
         if (change == QGraphicsItem::ItemPositionHasChanged && movePreviewCallback_ != nullptr) {
             const QPointF newSourcePoint = sourcePointForPreviewPos(pos());
             movePreviewCallback_(this, lastPreviewSourcePoint_, newSourcePoint, dragActive_);
@@ -847,7 +878,8 @@ private:
         qreal bestDistanceSquared = std::numeric_limits<qreal>::max();
         QPointF bestPoint;
         bool hasBestPoint = false;
-        const QList<QGraphicsItem *> items = scene()->items();
+        const QVector<QGraphicsItem *> items = MapEditorSceneHandleIndex::itemsInRect(
+            scene(), QRectF(candidate.x() - snapRadius, candidate.y() - snapRadius, snapRadius * 2.0, snapRadius * 2.0));
         for (QGraphicsItem *item : items) {
             if (item == nullptr || item == this) {
                 continue;
@@ -974,7 +1006,7 @@ private:
         }
 
         QVector<QPointF> guidePoints;
-        const QList<QGraphicsItem *> items = scene()->items();
+        const QVector<QGraphicsItem *> items = MapEditorSceneHandleIndex::itemsForLine(scene(), guideLineNumber);
         for (QGraphicsItem *item : items) {
             if (item == nullptr || item == this) {
                 continue;
@@ -1156,7 +1188,20 @@ public:
         setAcceptedMouseButtons(Qt::LeftButton);
         setCursor(Qt::OpenHandCursor);
         setToolTip(QObject::tr("Line point orientation / l-size handle (line %1)").arg(lineNumber_));
+        setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
         handlePreview_ = handlePointForValues(orientationDegrees_, leftSize_);
+    }
+
+    ~MapLinePointSizeHandleItem() override
+    {
+        MapEditorSceneHandleIndex::untrack(this, scene());
+    }
+
+    QVariant itemChange(GraphicsItemChange change, const QVariant &value) override
+    {
+        MapEditorSceneHandleIndex::noteItemChange(this, change, MapEditorSceneHandleKind::LinePointSizeHandle, lineNumber_,
+                                                  [this]() { return handleIndexKey(); });
+        return QGraphicsItem::itemChange(change, value);
     }
 
     void setChangeCommittedCallback(std::function<void(int, int, qreal, qreal)> callback)
@@ -1319,6 +1364,11 @@ protected:
     }
 
 private:
+    QPointF handleIndexKey() const
+    {
+        return mapToScene(boundingRect().center());
+    }
+
     static qreal normalizeDegrees(qreal value)
     {
         qreal normalized = std::fmod(value, 360.0);
@@ -1353,6 +1403,7 @@ private:
         constexpr qreal pi = 3.14159265358979323846;
         orientationDegrees_ = normalizeDegrees(std::atan2(vector.x(), -vector.y()) * 180.0 / pi);
         leftSize_ = qMax<qreal>(0.1, displayLength / previewScale_);
+        MapEditorSceneHandleIndex::moveKey(this, handleIndexKey());
         update();
     }
 
@@ -1387,7 +1438,20 @@ public:
         setAcceptedMouseButtons(Qt::LeftButton);
         setCursor(Qt::OpenHandCursor);
         setToolTip(QObject::tr("Point orientation handle (line %1)").arg(lineNumber_));
+        setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
         handlePreview_ = handlePointForOrientation(orientationDegrees_);
+    }
+
+    ~MapPointOrientationHandleItem() override
+    {
+        MapEditorSceneHandleIndex::untrack(this, scene());
+    }
+
+    QVariant itemChange(GraphicsItemChange change, const QVariant &value) override
+    {
+        MapEditorSceneHandleIndex::noteItemChange(this, change, MapEditorSceneHandleKind::PointOrientationHandle, lineNumber_,
+                                                  [this]() { return handleIndexKey(); });
+        return QGraphicsItem::itemChange(change, value);
     }
 
     void setChangeCommittedCallback(std::function<void(int, qreal)> callback)
@@ -1526,6 +1590,11 @@ protected:
     }
 
 private:
+    QPointF handleIndexKey() const
+    {
+        return mapToScene(boundingRect().center());
+    }
+
     static qreal normalizeDegrees(qreal value)
     {
         qreal normalized = std::fmod(value, 360.0);
@@ -1557,6 +1626,7 @@ private:
         orientationDegrees_ = normalizeDegrees(std::atan2(vector.x(), -vector.y()) * 180.0 / pi);
         prepareGeometryChange();
         handlePreview_ = handlePointForOrientation(orientationDegrees_);
+        MapEditorSceneHandleIndex::moveKey(this, handleIndexKey());
         update();
     }
 

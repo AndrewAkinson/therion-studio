@@ -16,6 +16,8 @@
 #include <optional>
 
 class QGraphicsScene;
+class QGraphicsView;
+class QPoint;
 class QGraphicsSceneMouseEvent;
 class QPainter;
 class QPainterPath;
@@ -44,6 +46,11 @@ constexpr int kMapSceneFocusedVertexRole = Qt::UserRole + 128;
 // the items must be toggleable without rebuilding the scene.
 constexpr int kMapSceneEmptyDocumentGuideRole = Qt::UserRole + 129;
 constexpr int kMapSceneLineTypeRole = Qt::UserRole + 130;
+// Station point items carry their owning scrap's source line (0 = outside any
+// scrap). When a station is selected, the other stations of the same scrap get
+// the sibling role so they render with a distinct secondary highlight.
+constexpr int kMapSceneStationScrapRole = Qt::UserRole + 131;
+constexpr int kMapSceneScrapSiblingStationRole = Qt::UserRole + 132;
 
 inline bool isMapSceneWallItem(const QGraphicsItem *item)
 {
@@ -55,6 +62,14 @@ std::optional<QPointF> nearestWallGeometrySnapPoint(const QGraphicsScene *scene,
                                                    const QPointF &candidate,
                                                    qreal radius,
                                                    int excludedLineNumber = 0);
+
+// Nearest vertex-like editing item (vertices, controls, handles) whose centre
+// is within the direct-hit radius of a viewport position.
+QGraphicsItem *nearestDirectVertexLikeMapItem(const QGraphicsScene *scene,
+                                              const QGraphicsView *view,
+                                              const QPoint &viewportPosition,
+                                              bool requireSelected,
+                                              bool requireVisible);
 
 constexpr qreal kMapEditorCanvasFrameInset = 24.0;
 constexpr qreal kMapEditorCanvasPreviewInset = 20.0;
@@ -322,6 +337,11 @@ QHash<int, QPainterPath> scrapClipPathsForFeatures(
     bool requireConnectedWalls = false, bool approximateMissingContours = false);
 QVector<MapGeometryFeature> collectGeometryFeatures(const Th2GeometryProjection &projection,
                                                     const QVector<TherionSourceLogicalCommand> &commands);
+// Memoized whole-document geometry for one logical-command snapshot. Keyed by the
+// shared command buffer identity (each source revision snapshot owns a distinct
+// buffer), so text edits and undo invalidate it without explicit hooks.
+std::optional<MapGeometryFeature> geometryFeatureForLogicalCommandsLine(
+    const QVector<TherionSourceLogicalCommand> &commands, int lineNumber, MapGeometryFeature::Kind kind);
 bool insertLineVertexByDeCasteljau(QVector<MapGeometryFeature::TH2LineVertex> *lineVertices,
                                    int segmentStartIndex,
                                    qreal t,

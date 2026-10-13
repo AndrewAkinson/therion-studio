@@ -16,6 +16,10 @@ public:
     using ItemsByLine = QHash<int, QVector<QGraphicsItem *>>;
 
     const ItemsByLine &itemsByLine(QGraphicsScene *scene, quint64 generation);
+    // Station point lines grouped by owning scrap line, and the reverse
+    // lookup; built in the same per-generation pass as itemsByLine().
+    const QHash<int, QVector<int>> &stationLinesByScrap(QGraphicsScene *scene, quint64 generation);
+    int stationScrapLine(QGraphicsScene *scene, quint64 generation, int stationLine);
     void invalidate();
 
     // Lines whose items currently carry selection presentation (highlight,
@@ -31,6 +35,8 @@ private:
     quint64 indexedGeneration_ = 0;
     bool valid_ = false;
     ItemsByLine itemsByLine_;
+    QHash<int, QVector<int>> stationLinesByScrap_;
+    QHash<int, int> stationScrapByLine_;
     QGraphicsScene *presentationScene_ = nullptr;
     quint64 presentationGeneration_ = 0;
     bool presentationValid_ = false;

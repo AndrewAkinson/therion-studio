@@ -118,6 +118,16 @@ void MapEditorTab::applyInspectorObjectVisibility()
     MapEditorInspectorObjectController(inspectorObjectContext()).applyInspectorObjectVisibility();
 }
 
+void MapEditorTab::hideAllObjects()
+{
+    MapEditorInspectorObjectController(inspectorObjectContext()).hideAllObjects();
+}
+
+void MapEditorTab::showAllObjects()
+{
+    MapEditorInspectorObjectController(inspectorObjectContext()).showAllObjects();
+}
+
 void MapEditorTab::configureInspectorBackgroundLayerTreeColumns()
 {
     MapEditorInspectorBackgroundController(inspectorBackgroundContext()).configureInspectorBackgroundLayerTreeColumns();

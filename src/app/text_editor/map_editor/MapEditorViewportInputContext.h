@@ -99,5 +99,11 @@ struct MapEditorViewportInputContext
     std::function<bool()> removeLineVertexFromSelection;
     std::function<bool()> deleteSelectedObjectFromSelection;
     std::function<bool()> toggleLineVertexSmoothFromSelection;
+    // Hover hit testing is coalesced to at most one evaluation per frame using
+    // the latest pointer position. Presses flush a pending update first (the
+    // press hit test consults the hover highlight); leave cancels it.
+    std::function<void(const QPoint &)> scheduleHoverUpdate;
+    std::function<void()> flushPendingHoverUpdate;
+    std::function<void()> cancelPendingHoverUpdate;
 };
 }

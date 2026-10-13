@@ -11,6 +11,10 @@ int runMapEditorAppearanceTest(int argc, char **argv);
 int runMapEditorEndpointSnapTransactionTest(int argc, char **argv);
 int runMapEditorViewportCullingTest(int argc, char **argv);
 int runMapEditorPlainClickSelectionTest(int argc, char **argv);
+int runMapEditorScrapStationHighlightTest(int argc, char **argv);
+int runMapEditorInteractionPerformanceTest(int argc, char **argv);
+int runMapEditorSpatialIndexRepaintTest(int argc, char **argv);
+int runMapEditorBulkVisibilityTest(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
@@ -23,6 +27,10 @@ int main(int argc, char **argv)
         {"MapEditorAltitudeUnderlayTest", runMapEditorAltitudeUnderlayTest},
         {"MapEditorEndpointSnapTransactionTest", runMapEditorEndpointSnapTransactionTest},
         {"MapEditorPlainClickSelectionTest", runMapEditorPlainClickSelectionTest},
+        {"MapEditorScrapStationHighlightTest", runMapEditorScrapStationHighlightTest},
+        {"MapEditorInteractionPerformanceTest", runMapEditorInteractionPerformanceTest},
+        {"MapEditorSpatialIndexRepaintTest", runMapEditorSpatialIndexRepaintTest},
+        {"MapEditorBulkVisibilityTest", runMapEditorBulkVisibilityTest},
         {"MapEditorBackgroundRoundTripTest", runMapEditorBackgroundRoundTripTest},
         {"MapEditorSceneLifecycleTest", runMapEditorSceneLifecycleTest},
         {"MapEditorLinePreviewTest", runMapEditorLinePreviewTest}});

@@ -15,7 +15,11 @@ const MapEditorSceneInteractionIndex::ItemsByLine &MapEditorSceneInteractionInde
     }
 
     itemsByLine_.clear();
+    stationLinesByScrap_.clear();
+    stationScrapByLine_.clear();
     if (scene != nullptr) {
+        // Once per scene generation, not per pointer move.
+        ++mapEditorPerformanceCounters().sceneRevisionIndexRebuilds;
         for (QGraphicsItem *item : scene->items()) {
             if (item == nullptr) {
                 continue;
@@ -23,6 +27,11 @@ const MapEditorSceneInteractionIndex::ItemsByLine &MapEditorSceneInteractionInde
             const int lineNumber = item->data(kMapSceneLineNumberRole).toInt();
             if (lineNumber > 0) {
                 itemsByLine_[lineNumber].append(item);
+                const int scrapLine = item->data(kMapSceneStationScrapRole).toInt();
+                if (scrapLine > 0 && !stationScrapByLine_.contains(lineNumber)) {
+                    stationScrapByLine_.insert(lineNumber, scrapLine);
+                    stationLinesByScrap_[scrapLine].append(lineNumber);
+                }
             }
         }
     }
@@ -32,9 +41,24 @@ const MapEditorSceneInteractionIndex::ItemsByLine &MapEditorSceneInteractionInde
     return itemsByLine_;
 }
 
+const QHash<int, QVector<int>> &MapEditorSceneInteractionIndex::stationLinesByScrap(QGraphicsScene *scene,
+                                                                                   quint64 generation)
+{
+    itemsByLine(scene, generation);
+    return stationLinesByScrap_;
+}
+
+int MapEditorSceneInteractionIndex::stationScrapLine(QGraphicsScene *scene, quint64 generation, int stationLine)
+{
+    itemsByLine(scene, generation);
+    return stationScrapByLine_.value(stationLine, 0);
+}
+
 void MapEditorSceneInteractionIndex::invalidate()
 {
     itemsByLine_.clear();
+    stationLinesByScrap_.clear();
+    stationScrapByLine_.clear();
     indexedScene_ = nullptr;
     indexedGeneration_ = 0;
     valid_ = false;

@@ -26,6 +26,8 @@ public:
     void handleInspectorObjectClicked(const QModelIndex &index);
     bool moveInspectorObject(const QModelIndex &sourceIndex, const QModelIndex &targetIndex, bool afterTarget);
     void applyInspectorObjectVisibility();
+    void hideAllObjects();
+    void showAllObjects();
 
 private:
     QString tr(const char *text) const;

@@ -423,7 +423,9 @@ std::optional<QPointF> nearestWallGeometrySnapPoint(const QGraphicsScene *scene,
     if (scene == nullptr || radius <= 0.0) {
         return std::nullopt;
     }
-    const QList<QGraphicsItem *> items = scene->items();
+    // Hidden selection-gated anchors are tracked by the handle index too.
+    const QVector<QGraphicsItem *> items = MapEditorSceneHandleIndex::itemsInRect(
+        scene, QRectF(candidate.x() - radius, candidate.y() - radius, radius * 2.0, radius * 2.0));
     qreal bestDistanceSquared = radius * radius;
     std::optional<QPointF> bestPoint;
     auto consider = [&](const QPointF &point) {

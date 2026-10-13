@@ -10,6 +10,7 @@
 #include "../TextEditorTab.h"
 #include "MapEditorMagnifierOverlay.h"
 #include "MapEditorSceneLifecycleController.h"
+#include "MapEditorViewportInputController.h"
 
 namespace TherionStudio
 {
@@ -170,6 +171,47 @@ void MapEditorTab::scheduleMagnifierOverlayUpdateFromViewportPosition(const QPoi
         magnifierLastUpdateElapsed_.restart();
         updateMagnifierOverlayFromViewportPosition(magnifierPendingViewportPosition_, true);
     });
+}
+
+void MapEditorTab::scheduleViewportHoverUpdate(const QPoint &viewportPosition)
+{
+    pendingHoverViewportPosition_ = viewportPosition;
+    if (hoverUpdateTimer_ == nullptr) {
+        hoverUpdateTimer_ = new QTimer(this);
+        hoverUpdateTimer_->setSingleShot(true);
+        connect(hoverUpdateTimer_, &QTimer::timeout, this, [this]() {
+            MapEditorViewportInputController(viewportInputContext())
+                .refreshHoverAtViewportPosition(pendingHoverViewportPosition_);
+            // Measured from the end of the hit test so slow hit tests still
+            // leave a frame of idle time for queued input to coalesce.
+            lastHoverUpdateElapsed_.restart();
+        });
+    }
+    if (hoverUpdateTimer_->isActive()) {
+        return;
+    }
+    const int elapsedMs = lastHoverUpdateElapsed_.isValid()
+        ? static_cast<int>(qMin<qint64>(lastHoverUpdateElapsed_.elapsed(), kMagnifierUpdateIntervalMs))
+        : kMagnifierUpdateIntervalMs;
+    hoverUpdateTimer_->start(qMax(0, kMagnifierUpdateIntervalMs - elapsedMs));
+}
+
+void MapEditorTab::flushPendingViewportHoverUpdate()
+{
+    if (hoverUpdateTimer_ == nullptr || !hoverUpdateTimer_->isActive()) {
+        return;
+    }
+    hoverUpdateTimer_->stop();
+    MapEditorViewportInputController(viewportInputContext())
+        .refreshHoverAtViewportPosition(pendingHoverViewportPosition_);
+    lastHoverUpdateElapsed_.restart();
+}
+
+void MapEditorTab::cancelPendingViewportHoverUpdate()
+{
+    if (hoverUpdateTimer_ != nullptr) {
+        hoverUpdateTimer_->stop();
+    }
 }
 
 void MapEditorTab::refreshVisibleMagnifierOverlay()

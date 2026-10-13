@@ -3,6 +3,7 @@
 #include "../DocumentFileInspector.h"
 #include "../DocumentInspectorPanel.h"
 #include "../InspectorPanel.h"
+#include "MapEditorInspectorData.h"
 #include "MapEditorRecentSymbolsLayout.h"
 #include "../TextEditorTab.h"
 #include "MapEditorStylePreviewWidget.h"
@@ -60,17 +61,13 @@ void configureSelectionEditableCombo(QComboBox *combo, const QString &objectName
 void disableAutoDefault(std::initializer_list<QPushButton *> buttons)
 {
     for (QPushButton *button : buttons) {
-        if (button != nullptr) {
-            button->setAutoDefault(false);
-        }
+        if (button != nullptr) { button->setAutoDefault(false); }
     }
 }
 
 void setPlainTextEditVisibleLineCount(QPlainTextEdit *edit, int visibleLineCount)
 {
-    if (edit != nullptr) {
-        edit->setFixedHeight(edit->fontMetrics().lineSpacing() * visibleLineCount + 8);
-    }
+    if (edit != nullptr) { edit->setFixedHeight(edit->fontMetrics().lineSpacing() * visibleLineCount + 8); }
 }
 }
 
@@ -440,14 +437,10 @@ void MapEditorTab::buildInspectorPanelUi()
         return block;
     };
 
-    objectDetailsUiState_.scrapScaleSourceX1Spin_ = createScrapScaleSpin(objectDetailsUiState_.scrapScaleEditor_, 0);
-    objectDetailsUiState_.scrapScaleSourceY1Spin_ = createScrapScaleSpin(objectDetailsUiState_.scrapScaleEditor_, 0);
-    objectDetailsUiState_.scrapScaleSourceX2Spin_ = createScrapScaleSpin(objectDetailsUiState_.scrapScaleEditor_, 0);
-    objectDetailsUiState_.scrapScaleSourceY2Spin_ = createScrapScaleSpin(objectDetailsUiState_.scrapScaleEditor_, 0);
-    objectDetailsUiState_.scrapScaleRealX1Spin_ = createScrapScaleSpin(objectDetailsUiState_.scrapScaleEditor_, 4);
-    objectDetailsUiState_.scrapScaleRealY1Spin_ = createScrapScaleSpin(objectDetailsUiState_.scrapScaleEditor_, 4);
-    objectDetailsUiState_.scrapScaleRealX2Spin_ = createScrapScaleSpin(objectDetailsUiState_.scrapScaleEditor_, 4);
-    objectDetailsUiState_.scrapScaleRealY2Spin_ = createScrapScaleSpin(objectDetailsUiState_.scrapScaleEditor_, 4);
+    objectDetailsUiState_.scrapScaleSourceX1Spin_ = createScrapScaleSpin(objectDetailsUiState_.scrapScaleEditor_, 0); objectDetailsUiState_.scrapScaleSourceY1Spin_ = createScrapScaleSpin(objectDetailsUiState_.scrapScaleEditor_, 0);
+    objectDetailsUiState_.scrapScaleSourceX2Spin_ = createScrapScaleSpin(objectDetailsUiState_.scrapScaleEditor_, 0); objectDetailsUiState_.scrapScaleSourceY2Spin_ = createScrapScaleSpin(objectDetailsUiState_.scrapScaleEditor_, 0);
+    objectDetailsUiState_.scrapScaleRealX1Spin_ = createScrapScaleSpin(objectDetailsUiState_.scrapScaleEditor_, 4); objectDetailsUiState_.scrapScaleRealY1Spin_ = createScrapScaleSpin(objectDetailsUiState_.scrapScaleEditor_, 4);
+    objectDetailsUiState_.scrapScaleRealX2Spin_ = createScrapScaleSpin(objectDetailsUiState_.scrapScaleEditor_, 4); objectDetailsUiState_.scrapScaleRealY2Spin_ = createScrapScaleSpin(objectDetailsUiState_.scrapScaleEditor_, 4);
     scrapScaleLayout->addWidget(createScrapScalePointBlock(objectDetailsUiState_.scrapScaleEditor_, tr("Picture point 1 (px)"), objectDetailsUiState_.scrapScaleSourceX1Spin_, objectDetailsUiState_.scrapScaleSourceY1Spin_));
     scrapScaleLayout->addWidget(createScrapScalePointBlock(objectDetailsUiState_.scrapScaleEditor_, tr("Picture point 2 (px)"), objectDetailsUiState_.scrapScaleSourceX2Spin_, objectDetailsUiState_.scrapScaleSourceY2Spin_));
     scrapScaleLayout->addWidget(createScrapScalePointBlock(objectDetailsUiState_.scrapScaleEditor_, tr("Real point 1"), objectDetailsUiState_.scrapScaleRealX1Spin_, objectDetailsUiState_.scrapScaleRealY1Spin_));
@@ -481,8 +474,7 @@ void MapEditorTab::buildInspectorPanelUi()
     objectDetailsUiState_.objectConfigureButtonRow_ = new QWidget(objectDetailsUiState_.advancedSelectionSection_);
     objectDetailsUiState_.objectConfigureButtonRow_->setObjectName(QStringLiteral("mapObjectConfigureButtonRow"));
     auto *objectConfigureButtonRowLayout = new QVBoxLayout(objectDetailsUiState_.objectConfigureButtonRow_);
-    objectConfigureButtonRowLayout->setContentsMargins(0, 8, 0, 0);
-    objectConfigureButtonRowLayout->setSpacing(0);
+    objectConfigureButtonRowLayout->setContentsMargins(0, 8, 0, 0); objectConfigureButtonRowLayout->setSpacing(0);
     objectDetailsUiState_.objectConfigureButton_ = new QPushButton(tr("Edit All Object Settings..."), objectDetailsUiState_.objectConfigureButtonRow_);
     objectDetailsUiState_.objectConfigureButton_->setObjectName(QStringLiteral("mapObjectConfigureButton"));
     connect(objectDetailsUiState_.objectConfigureButton_, &QPushButton::clicked, this, &MapEditorTab::handleConfigureObjectSettingsTriggered);
@@ -500,24 +492,34 @@ void MapEditorTab::buildInspectorPanelUi()
 
     mapObjectsAutoCollapseExpandScrapsCheck_ = new QCheckBox(tr("Auto-collapse/expand Scraps"), objectsTab);
     mapObjectsAutoCollapseExpandScrapsCheck_->setObjectName(QStringLiteral("mapObjectsAutoCollapseExpandScrapsCheck"));
-    mapObjectsAutoCollapseExpandScrapsCheck_->setToolTip(
-        tr("Keep only the selected object's scrap expanded in the Objects inspector."));
+    mapObjectsAutoCollapseExpandScrapsCheck_->setToolTip(tr("Keep only the selected object's scrap expanded in the Objects inspector."));
     mapObjectsAutoCollapseExpandScrapsCheck_->setChecked(objectsInspectorAutoCollapseExpandScrapsEnabled_);
-    connect(mapObjectsAutoCollapseExpandScrapsCheck_,
-            &QCheckBox::toggled,
-            this,
-            &MapEditorTab::setObjectsInspectorAutoCollapseExpandScrapsEnabled);
+    connect(mapObjectsAutoCollapseExpandScrapsCheck_, &QCheckBox::toggled, this, &MapEditorTab::setObjectsInspectorAutoCollapseExpandScrapsEnabled);
     objectsLayout->addWidget(mapObjectsAutoCollapseExpandScrapsCheck_);
+
+    auto *visibilityRow = new QWidget(objectsTab);
+    visibilityRow->setObjectName(QStringLiteral("mapObjectsVisibilityButtonsRow"));
+    auto *visibilityLayout = new QHBoxLayout(visibilityRow);
+    visibilityLayout->setContentsMargins(0, 0, 0, 0); visibilityLayout->setSpacing(6);
+    mapObjectsHideAllButton_ = new QPushButton(inspectorActionIcon(QStringLiteral("eye-off")), tr("Hide All"), visibilityRow);
+    mapObjectsHideAllButton_->setObjectName(QStringLiteral("mapObjectsHideAllButton"));
+    mapObjectsHideAllButton_->setToolTip(tr("Hide all objects in the map."));
+    connect(mapObjectsHideAllButton_, &QPushButton::clicked, this, &MapEditorTab::hideAllObjects);
+    mapObjectsShowAllButton_ = new QPushButton(inspectorActionIcon(QStringLiteral("eye")), tr("Show All"), visibilityRow);
+    mapObjectsShowAllButton_->setObjectName(QStringLiteral("mapObjectsShowAllButton"));
+    mapObjectsShowAllButton_->setToolTip(tr("Show all objects in the map."));
+    connect(mapObjectsShowAllButton_, &QPushButton::clicked, this, &MapEditorTab::showAllObjects);
+    disableAutoDefault({mapObjectsHideAllButton_, mapObjectsShowAllButton_});
+    visibilityLayout->addWidget(mapObjectsHideAllButton_); visibilityLayout->addWidget(mapObjectsShowAllButton_);
+    objectsLayout->addWidget(visibilityRow);
 
     mapObjectsTree_ = new QTreeView(objectsTab);
     mapObjectsTree_->setObjectName(QStringLiteral("mapObjectsTree"));
-    mapObjectsTree_->setRootIsDecorated(true);
-    mapObjectsTree_->setAnimated(true);
+    mapObjectsTree_->setRootIsDecorated(true); mapObjectsTree_->setAnimated(true);
     mapObjectsTree_->setSelectionBehavior(QAbstractItemView::SelectRows);
     mapObjectsTree_->setSelectionMode(QAbstractItemView::SingleSelection);
     mapObjectsTree_->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    mapObjectsTree_->setAlternatingRowColors(true);
-    mapObjectsTree_->setHeaderHidden(true);
+    mapObjectsTree_->setAlternatingRowColors(true); mapObjectsTree_->setHeaderHidden(true);
     mapObjectsTree_->setIconSize(QSize(16, 16));
     mapObjectsModel_ = new QStandardItemModel(mapObjectsTree_);
     mapObjectsTree_->setModel(mapObjectsModel_);
@@ -528,9 +530,7 @@ void MapEditorTab::buildInspectorPanelUi()
     connect(mapObjectsTree_, &QTreeView::clicked, this, &MapEditorTab::handleInspectorObjectClicked);
     objectsLayout->addWidget(mapObjectsTree_, 1);
     if (mapObjectsTree_->selectionModel() != nullptr) {
-        connect(mapObjectsTree_->selectionModel(), &QItemSelectionModel::currentChanged, this, [this](const QModelIndex &current, const QModelIndex &) {
-            handleInspectorObjectSelectionChanged(current);
-        });
+        connect(mapObjectsTree_->selectionModel(), &QItemSelectionModel::currentChanged, this, [this](const QModelIndex &current, const QModelIndex &) { handleInspectorObjectSelectionChanged(current); });
     }
 
     buildInspectorBackgroundTab(inspectorPanel);
