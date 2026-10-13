@@ -310,6 +310,73 @@ private slots:
         QCoreApplication::processEvents();
         QCOMPARE(harness.tab->currentLineNumber(), 10);
     }
+
+    void testScrapCenteringPreservesZoomAndCentersOnPassage()
+    {
+        Harness harness;
+        QVERIFY(open(harness));
+
+        auto *nextBtn = harness.tab->findChild<QPushButton *>(QStringLiteral("mapObjectsNextButton"));
+        auto *prevBtn = harness.tab->findChild<QPushButton *>(QStringLiteral("mapObjectsPreviousButton"));
+        QVERIFY(nextBtn != nullptr);
+        QVERIFY(prevBtn != nullptr);
+
+        // Zoom in via triggerZoomIn
+        for (int i = 0; i < 6; ++i) {
+            harness.tab->triggerZoomIn();
+        }
+        QCoreApplication::processEvents();
+        const qreal initialScale = harness.view->transform().m11();
+        QVERIFY(initialScale > 1.0);
+
+        // Start on scrap a (line 2)
+        harness.tab->goToLine(2);
+        QCoreApplication::processEvents();
+
+        // Scrap a passage (stalactite and 2 walls) scene center is at ~(599.11, 323.68)
+        QPointF centerA = harness.view->mapToScene(harness.view->viewport()->rect().center());
+        QVERIFY(qAbs(centerA.x() - 599.11) < 2.0);
+        QVERIFY(qAbs(centerA.y() - 323.68) < 2.0);
+
+        // Cycle to scrap b (line 15)
+        nextBtn->click();
+        QCoreApplication::processEvents();
+        QCOMPARE(harness.tab->currentLineNumber(), 15);
+
+        // Verify zoom scale is preserved!
+        QCOMPARE(harness.view->transform().m11(), initialScale);
+
+        // Scrap b passage (border) scene center is at ~(545.81, 628.57)
+        QPointF centerB = harness.view->mapToScene(harness.view->viewport()->rect().center());
+        QVERIFY(qAbs(centerB.x() - 545.81) < 2.0);
+        QVERIFY(qAbs(centerB.y() - 628.57) < 2.0);
+
+        // Cycle back to scrap a
+        prevBtn->click();
+        QCoreApplication::processEvents();
+        QCOMPARE(harness.tab->currentLineNumber(), 2);
+        QCOMPARE(harness.view->transform().m11(), initialScale);
+
+        centerA = harness.view->mapToScene(harness.view->viewport()->rect().center());
+        QVERIFY(qAbs(centerA.x() - 599.11) < 2.0);
+        QVERIFY(qAbs(centerA.y() - 323.68) < 2.0);
+
+        // Test clicking scrap row directly in inspector tree
+        auto *objectsTree = harness.tab->findChild<QTreeView *>(QStringLiteral("mapObjectsTree"));
+        QVERIFY(objectsTree != nullptr);
+        auto *model = qobject_cast<const QStandardItemModel *>(objectsTree->model());
+        QVERIFY(model != nullptr);
+
+        const QModelIndex scrapBIndex = model->index(1, kInspectorObjectNameColumn);
+        QCOMPARE(scrapBIndex.data(kInspectorSourceLineRole).toInt(), 15);
+        emit objectsTree->clicked(scrapBIndex);
+        QCoreApplication::processEvents();
+        QCOMPARE(harness.tab->currentLineNumber(), 15);
+        QCOMPARE(harness.view->transform().m11(), initialScale);
+        centerB = harness.view->mapToScene(harness.view->viewport()->rect().center());
+        QVERIFY(qAbs(centerB.x() - 545.81) < 2.0);
+        QVERIFY(qAbs(centerB.y() - 628.57) < 2.0);
+    }
 };
 
 int runMapEditorBulkVisibilityTest(int argc, char **argv)

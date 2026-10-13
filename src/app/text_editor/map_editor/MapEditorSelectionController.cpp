@@ -1362,7 +1362,12 @@ void MapEditorSelectionController::selectMapLine(int lineNumber, bool centerOnSe
                                       lineNumber);
         }
         if (centerOnSelection && !(*context_.autoFitEnabled) && context_.view != nullptr) {
-            context_.view->centerOn(selectedItem);
+            const QRectF itemBounds = selectedItem->sceneBoundingRect();
+            if (!itemBounds.isNull() || (itemBounds.x() != 0.0 || itemBounds.y() != 0.0)) {
+                context_.view->centerOn(itemBounds.center());
+            } else {
+                context_.view->centerOn(selectedItem);
+            }
         }
     }
 
@@ -1391,6 +1396,8 @@ void MapEditorSelectionController::selectMapLines(const QSet<int> &lineNumbers, 
     QList<int> sortedLines = lineNumbers.values();
     std::sort(sortedLines.begin(), sortedLines.end());
     QGraphicsItem *firstSelectedItem = nullptr;
+    QVector<QGraphicsItem *> selectedItems;
+    QVector<QGraphicsItem *> passageItems;
     const QVector<TherionSourceLogicalCommand> logicalCommands = context_.logicalSource.logicalCommandsForCurrentDocument
         ? context_.logicalSource.logicalCommandsForCurrentDocument()
         : QVector<TherionSourceLogicalCommand>();
@@ -1403,7 +1410,13 @@ void MapEditorSelectionController::selectMapLines(const QSet<int> &lineNumbers, 
         if (selectedItemIt == (*context_.itemsByLine).end() || selectedItemIt.value() == nullptr) {
             continue;
         }
-        selectedItemIt.value()->setSelected(true);
+        QGraphicsItem *item = selectedItemIt.value();
+        item->setSelected(true);
+        selectedItems.append(item);
+        const bool isStation = item->data(kMapSceneStationScrapRole).toInt() > 0;
+        if (!isStation) {
+            passageItems.append(item);
+        }
         if (!logicalCommands.isEmpty()) {
             if (geometryProjection.has_value()) {
                 selectAreaBorderLineItems(context_.scene,
@@ -1416,12 +1429,45 @@ void MapEditorSelectionController::selectMapLines(const QSet<int> &lineNumbers, 
             }
         }
         if (firstSelectedItem == nullptr) {
-            firstSelectedItem = selectedItemIt.value();
+            firstSelectedItem = item;
         }
     }
 
-    if (centerOnSelection && firstSelectedItem != nullptr && !(*context_.autoFitEnabled) && context_.view != nullptr) {
-        context_.view->centerOn(firstSelectedItem);
+    if (centerOnSelection && !(*context_.autoFitEnabled) && context_.view != nullptr) {
+        const QVector<QGraphicsItem *> &targetItems = !passageItems.isEmpty() ? passageItems : selectedItems;
+        bool hasValidPoint = false;
+        qreal minX = 0.0, maxX = 0.0, minY = 0.0, maxY = 0.0;
+        for (QGraphicsItem *item : targetItems) {
+            if (item == nullptr) {
+                continue;
+            }
+            const QRectF itemBounds = item->sceneBoundingRect();
+            if (itemBounds.isNull() && itemBounds.x() == 0.0 && itemBounds.y() == 0.0) {
+                continue;
+            }
+            const qreal left = std::min(itemBounds.left(), itemBounds.right());
+            const qreal right = std::max(itemBounds.left(), itemBounds.right());
+            const qreal top = std::min(itemBounds.top(), itemBounds.bottom());
+            const qreal bottom = std::max(itemBounds.top(), itemBounds.bottom());
+            if (!hasValidPoint) {
+                minX = left;
+                maxX = right;
+                minY = top;
+                maxY = bottom;
+                hasValidPoint = true;
+            } else {
+                minX = std::min(minX, left);
+                maxX = std::max(maxX, right);
+                minY = std::min(minY, top);
+                maxY = std::max(maxY, bottom);
+            }
+        }
+        if (hasValidPoint) {
+            const QPointF centerPoint((minX + maxX) * 0.5, (minY + maxY) * 0.5);
+            context_.view->centerOn(centerPoint);
+        } else if (firstSelectedItem != nullptr) {
+            context_.view->centerOn(firstSelectedItem);
+        }
     }
 
     (*context_.updatingSelection) = false;
