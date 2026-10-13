@@ -128,6 +128,16 @@ void MapEditorTab::showAllObjects()
     MapEditorInspectorObjectController(inspectorObjectContext()).showAllObjects();
 }
 
+void MapEditorTab::selectNextObject()
+{
+    MapEditorInspectorObjectController(inspectorObjectContext()).selectNextObject(true);
+}
+
+void MapEditorTab::selectPreviousObject()
+{
+    MapEditorInspectorObjectController(inspectorObjectContext()).selectPreviousObject();
+}
+
 void MapEditorTab::configureInspectorBackgroundLayerTreeColumns()
 {
     MapEditorInspectorBackgroundController(inspectorBackgroundContext()).configureInspectorBackgroundLayerTreeColumns();

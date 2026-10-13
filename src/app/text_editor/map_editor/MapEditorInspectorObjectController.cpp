@@ -800,6 +800,211 @@ void MapEditorInspectorObjectController::showAllObjects()
     rebuildInspectorObjectsTree();
 }
 
+void MapEditorInspectorObjectController::selectPreviousObject()
+{
+    selectNextObject(false);
+}
+
+void MapEditorInspectorObjectController::selectNextObject(bool forward)
+{
+    if (context_.objectsModel == nullptr || context_.objectsModel->rowCount() <= 0) {
+        return;
+    }
+
+    QModelIndex currentIndex;
+    if (context_.objectsTree != nullptr && context_.objectsTree->currentIndex().isValid()) {
+        currentIndex = context_.objectsTree->currentIndex();
+    } else {
+        const int selectedLine = context_.selectedObjectLineNumber != nullptr ? *context_.selectedObjectLineNumber : 0;
+        if (selectedLine > 0) {
+            currentIndex = findInspectorObjectIndexForLine(selectedLine);
+        } else {
+            currentIndex = findInspectorObjectIndexForLine(context_.currentLineNumber());
+        }
+    }
+    if (currentIndex.isValid()) {
+        currentIndex = currentIndex.sibling(currentIndex.row(), kInspectorObjectNameColumn);
+    }
+    if (!currentIndex.isValid()) {
+        currentIndex = context_.objectsModel->index(0, kInspectorObjectNameColumn);
+    }
+    if (!currentIndex.isValid()) {
+        return;
+    }
+
+    auto collectSubtreeLines = [&](const QModelIndex &rootIndex) -> QVector<int> {
+        QVector<int> lines;
+        const int line = rootIndex.data(kInspectorSourceLineRole).toInt();
+        if (line > 0) {
+            lines.append(line);
+        }
+        std::function<void(const QModelIndex &)> recurse = [&](const QModelIndex &parent) {
+            const int count = context_.objectsModel->rowCount(parent);
+            for (int r = 0; r < count; ++r) {
+                QModelIndex child = context_.objectsModel->index(r, kInspectorObjectNameColumn, parent);
+                const int childLine = child.data(kInspectorSourceLineRole).toInt();
+                if (childLine > 0) {
+                    lines.append(childLine);
+                }
+                recurse(child);
+            }
+        };
+        recurse(rootIndex);
+        return lines;
+    };
+
+    auto isItemVisible = [&](const QModelIndex &idx) -> bool {
+        const int line = idx.data(kInspectorSourceLineRole).toInt();
+        if (line <= 0 || context_.hiddenObjectLines == nullptr) {
+            return true;
+        }
+        return !context_.hiddenObjectLines->contains(line);
+    };
+
+    QVector<QModelIndex> candidates;
+    const bool isScrap = !currentIndex.parent().isValid()
+        || isScrapCategory(currentIndex.data(kInspectorObjectCategoryRole).toString());
+
+    if (isScrap) {
+        for (int r = 0; r < context_.objectsModel->rowCount(); ++r) {
+            QModelIndex scrapIdx = context_.objectsModel->index(r, kInspectorObjectNameColumn);
+            if (scrapIdx.isValid() && isScrapCategory(scrapIdx.data(kInspectorObjectCategoryRole).toString())) {
+                candidates.append(scrapIdx);
+            }
+        }
+    } else {
+        const QModelIndex parentScrap = currentIndex.parent();
+        const QString category = currentIndex.data(kInspectorObjectCategoryRole).toString();
+        const QString text = currentIndex.data(Qt::DisplayRole).toString();
+
+        QString targetType;
+        if (category == QStringLiteral("Lines")) {
+            targetType = text.section(QLatin1Char(':'), 0, 0).section(QLatin1Char(' '), 0, 0).trimmed().toLower();
+        } else if (category == QStringLiteral("Stations") || category == QStringLiteral("Points")) {
+            targetType = (category == QStringLiteral("Stations"))
+                ? QStringLiteral("station")
+                : text.section(QLatin1Char(':'), 0, 0).section(QLatin1Char(' '), 0, 0).trimmed().toLower();
+        }
+
+        const int childCount = context_.objectsModel->rowCount(parentScrap);
+        for (int r = 0; r < childCount; ++r) {
+            QModelIndex childIdx = context_.objectsModel->index(r, kInspectorObjectNameColumn, parentScrap);
+            if (!childIdx.isValid()) {
+                continue;
+            }
+            const QString childCat = childIdx.data(kInspectorObjectCategoryRole).toString();
+            if (category == QStringLiteral("Areas")) {
+                if (childCat == QStringLiteral("Areas")) {
+                    candidates.append(childIdx);
+                }
+            } else if (category == QStringLiteral("Lines")) {
+                if (childCat == QStringLiteral("Lines")) {
+                    const QString childText = childIdx.data(Qt::DisplayRole).toString();
+                    const QString childType = childText.section(QLatin1Char(':'), 0, 0).section(QLatin1Char(' '), 0, 0).trimmed().toLower();
+                    if (childType == targetType) {
+                        candidates.append(childIdx);
+                    }
+                }
+            } else if (category == QStringLiteral("Stations") || category == QStringLiteral("Points")) {
+                if (childCat == QStringLiteral("Stations") || childCat == QStringLiteral("Points")) {
+                    const QString childText = childIdx.data(Qt::DisplayRole).toString();
+                    const QString childType = (childCat == QStringLiteral("Stations"))
+                        ? QStringLiteral("station")
+                        : childText.section(QLatin1Char(':'), 0, 0).section(QLatin1Char(' '), 0, 0).trimmed().toLower();
+                    if (childType == targetType) {
+                        candidates.append(childIdx);
+                    }
+                }
+            } else {
+                if (childCat == category) {
+                    candidates.append(childIdx);
+                }
+            }
+        }
+        if (candidates.isEmpty()) {
+            for (int r = 0; r < childCount; ++r) {
+                candidates.append(context_.objectsModel->index(r, kInspectorObjectNameColumn, parentScrap));
+            }
+        }
+    }
+
+    if (candidates.isEmpty()) {
+        return;
+    }
+
+    int currentPos = -1;
+    const int currentLine = currentIndex.data(kInspectorSourceLineRole).toInt();
+    for (int i = 0; i < candidates.size(); ++i) {
+        if (candidates.at(i).data(kInspectorSourceLineRole).toInt() == currentLine) {
+            currentPos = i;
+            break;
+        }
+    }
+    if (currentPos < 0) {
+        currentPos = 0;
+    }
+
+    const int targetPos = forward
+        ? (currentPos + 1) % candidates.size()
+        : (currentPos - 1 + candidates.size()) % candidates.size();
+    const QModelIndex targetIndex = candidates.at(targetPos);
+    const int targetLine = targetIndex.data(kInspectorSourceLineRole).toInt();
+    if (targetLine <= 0) {
+        return;
+    }
+
+    bool allCandidatesVisible = true;
+    for (const QModelIndex &cand : candidates) {
+        if (!isItemVisible(cand)) {
+            allCandidatesVisible = false;
+            break;
+        }
+    }
+
+    const QVector<int> currentLines = collectSubtreeLines(currentIndex);
+    const QVector<int> targetLines = collectSubtreeLines(targetIndex);
+
+    if (!allCandidatesVisible && context_.hiddenObjectLines != nullptr) {
+        for (int l : currentLines) {
+            context_.hiddenObjectLines->insert(l);
+        }
+        for (int l : targetLines) {
+            context_.hiddenObjectLines->remove(l);
+        }
+        if (!isScrap && currentIndex.parent().isValid()) {
+            const int scrapLine = currentIndex.parent().data(kInspectorSourceLineRole).toInt();
+            if (scrapLine > 0) {
+                context_.hiddenObjectLines->remove(scrapLine);
+            }
+        }
+
+        rebuildInspectorObjectsTree();
+        applyInspectorObjectVisibility();
+    }
+
+    if (context_.textEditor != nullptr) {
+        context_.textEditor->goToLine(targetLine);
+        context_.syncMapSelectionFromTextCursor(targetLine, context_.textEditor->currentColumnNumber());
+    }
+
+    syncInspectorObjectSelectionToLine(targetLine, true, true);
+
+    QVector<int> selectedLines;
+    if (isScrap) {
+        selectedLines = targetLines;
+    } else {
+        selectedLines.append(targetLine);
+    }
+    context_.selectMapLines(QSet<int>(selectedLines.begin(), selectedLines.end()), true);
+
+    if (context_.refreshToolbarSummary) {
+        context_.refreshToolbarSummary();
+    }
+    if (context_.refreshObjectDetailsPanel) {
+        context_.refreshObjectDetailsPanel();
+    }
+}
+
 QSet<int> MapEditorInspectorObjectController::collapsedScrapLineNumbers() const
 {
     QSet<int> collapsedScrapLines;

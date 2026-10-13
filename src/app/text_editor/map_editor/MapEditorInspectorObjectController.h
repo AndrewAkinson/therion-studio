@@ -28,6 +28,8 @@ public:
     void applyInspectorObjectVisibility();
     void hideAllObjects();
     void showAllObjects();
+    void selectNextObject(bool forward = true);
+    void selectPreviousObject();
 
 private:
     QString tr(const char *text) const;

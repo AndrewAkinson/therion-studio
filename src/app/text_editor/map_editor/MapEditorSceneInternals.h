@@ -1197,6 +1197,24 @@ public:
         MapEditorSceneHandleIndex::untrack(this, scene());
     }
 
+    void updateViewTransform(const QTransform &viewTransform)
+    {
+        bool invertible = false;
+        const QTransform inverse = viewTransform.inverted(&invertible);
+        if (!invertible) {
+            return;
+        }
+        const qreal scale = qMax(std::hypot(inverse.m11(), inverse.m21()),
+                                 std::hypot(inverse.m12(), inverse.m22()));
+        if (!qFuzzyCompare(scale, screenPaddingScale_)) {
+            prepareGeometryChange();
+            screenPaddingScale_ = scale > 1e-6 ? scale : 1.0;
+            handlePreview_ = handlePointForValues(orientationDegrees_, leftSize_);
+            MapEditorSceneHandleIndex::moveKey(this, handleIndexKey());
+            update();
+        }
+    }
+
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override
     {
         MapEditorSceneHandleIndex::noteItemChange(this, change, MapEditorSceneHandleKind::LinePointSizeHandle, lineNumber_,
@@ -1211,14 +1229,16 @@ public:
 
     QRectF boundingRect() const override
     {
-        return QRectF(anchorPreview_, handlePreview_).normalized().adjusted(-14.0, -14.0, 14.0, 14.0);
+        const qreal padding = 16.0 * (screenPaddingScale_ > 1e-6 ? screenPaddingScale_ : 1.0);
+        return QRectF(anchorPreview_, handlePreview_).normalized().adjusted(-padding, -padding, padding, padding);
     }
 
     QPainterPath shape() const override
     {
+        const qreal scale = screenPaddingScale_ > 1e-6 ? screenPaddingScale_ : 1.0;
         QPainterPath path;
         path.setFillRule(Qt::WindingFill);
-        path.addEllipse(handlePreview_, 11.0, 11.0);
+        path.addEllipse(handlePreview_, 11.0 * scale, 11.0 * scale);
 
         const QPointF vector = handlePreview_ - anchorPreview_;
         const qreal length = std::hypot(vector.x(), vector.y());
@@ -1226,25 +1246,26 @@ public:
             const QPointF direction(vector.x() / length, vector.y() / length);
             const QPointF normal(-direction.y(), direction.x());
             const QPointF arrowTip = handlePreview_;
-            const qreal arrowLength = qMin<qreal>(9.0, length);
+            const qreal arrowLength = qMin<qreal>(12.0 * scale, length * 0.5);
+            const qreal arrowHalfWidth = 6.0 * scale;
             const QPointF arrowBase = arrowTip - (direction * arrowLength);
-            path.addEllipse(arrowBase, 7.0, 7.0);
-            const qreal shaftLength = qMin<qreal>(8.0, qMax<qreal>(0.0, length - arrowLength));
+            path.addEllipse(arrowBase, 7.0 * scale, 7.0 * scale);
+            const qreal shaftLength = qMax<qreal>(0.0, length - arrowLength);
             if (shaftLength > 1e-6) {
                 const QPointF shaftStart = arrowBase - (direction * shaftLength);
                 QPainterPath shaftPath;
-                shaftPath.moveTo(shaftStart + (normal * 3.0));
-                shaftPath.lineTo(arrowBase + (normal * 3.0));
-                shaftPath.lineTo(arrowBase - (normal * 3.0));
-                shaftPath.lineTo(shaftStart - (normal * 3.0));
+                shaftPath.moveTo(shaftStart + (normal * (3.5 * scale)));
+                shaftPath.lineTo(arrowBase + (normal * (3.5 * scale)));
+                shaftPath.lineTo(arrowBase - (normal * (3.5 * scale)));
+                shaftPath.lineTo(shaftStart - (normal * (3.5 * scale)));
                 shaftPath.closeSubpath();
                 path.addPath(shaftPath);
             }
 
             QPainterPath arrowPath;
             arrowPath.moveTo(arrowTip);
-            arrowPath.lineTo(arrowBase + (normal * 6.0));
-            arrowPath.lineTo(arrowBase - (normal * 6.0));
+            arrowPath.lineTo(arrowBase + (normal * arrowHalfWidth));
+            arrowPath.lineTo(arrowBase - (normal * arrowHalfWidth));
             arrowPath.closeSubpath();
             path.addPath(arrowPath);
         }
@@ -1253,14 +1274,18 @@ public:
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override
     {
-        Q_UNUSED(option);
         Q_UNUSED(widget);
         if (painter == nullptr) {
             return;
         }
 
-        QColor color = (hoverActive_ || dragActive_) ? QColor(QStringLiteral("#ffda00")) : QColor(QStringLiteral("#ff0000"));
-        color.setAlpha(dragActive_ ? 230 : (hoverActive_ ? 210 : 175));
+        const qreal lod = option != nullptr
+            ? QStyleOptionGraphicsItem::levelOfDetailFromTransform(painter->worldTransform())
+            : 0.0;
+        const qreal scale = lod > 1e-6 ? (1.0 / lod) : (screenPaddingScale_ > 1e-6 ? screenPaddingScale_ : 1.0);
+
+        QColor color = (hoverActive_ || dragActive_) ? QColor(QStringLiteral("#ffff00")) : QColor(QStringLiteral("#00e676"));
+        color.setAlpha(dragActive_ ? 255 : (hoverActive_ ? 245 : 230));
         painter->setRenderHint(QPainter::Antialiasing, true);
         const QPointF vector = handlePreview_ - anchorPreview_;
         const qreal length = std::hypot(vector.x(), vector.y());
@@ -1268,8 +1293,20 @@ public:
             const QPointF direction(vector.x() / length, vector.y() / length);
             const QPointF normal(-direction.y(), direction.x());
             const QPointF arrowTip = handlePreview_;
-            const qreal arrowLength = qMin<qreal>(7.0, length);
+            qreal arrowLength = 11.0 * scale;
+            qreal arrowHalfWidth = 4.5 * scale;
+            if (arrowLength > length * 0.5) {
+                const qreal ratio = (length * 0.5) / arrowLength;
+                arrowLength *= ratio;
+                arrowHalfWidth *= ratio;
+            }
             const QPointF arrowBase = arrowTip - (direction * arrowLength);
+
+            QPen haloPen(QColor(0, 0, 0, 180), (dragActive_ ? 3.0 : 2.2) + 1.6, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+            haloPen.setCosmetic(true);
+            painter->setPen(haloPen);
+            painter->drawLine(anchorPreview_, arrowBase);
+
             QPen handlePen(color, dragActive_ ? 3.0 : 2.2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
             handlePen.setCosmetic(true);
             painter->setPen(handlePen);
@@ -1277,10 +1314,12 @@ public:
 
             QPainterPath arrow;
             arrow.moveTo(arrowTip);
-            arrow.lineTo(arrowBase + (normal * 3.5));
-            arrow.lineTo(arrowBase - (normal * 3.5));
+            arrow.lineTo(arrowBase + (normal * arrowHalfWidth));
+            arrow.lineTo(arrowBase - (normal * arrowHalfWidth));
             arrow.closeSubpath();
-            painter->setPen(Qt::NoPen);
+            QPen arrowOutline(QColor(0, 0, 0, 180), 1.0, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+            arrowOutline.setCosmetic(true);
+            painter->setPen(arrowOutline);
             painter->setBrush(color);
             painter->drawPath(arrow);
         }
@@ -1385,7 +1424,8 @@ private:
     {
         constexpr qreal pi = 3.14159265358979323846;
         const qreal radians = normalizeDegrees(orientationDegrees) * pi / 180.0;
-        const qreal displayLength = qMax<qreal>(12.0, qMax<qreal>(0.1, leftSize) * previewScale_);
+        const qreal minDisplayLength = 12.0 * (screenPaddingScale_ > 1e-6 ? screenPaddingScale_ : 1.0);
+        const qreal displayLength = qMax<qreal>(minDisplayLength, qMax<qreal>(0.1, leftSize) * previewScale_);
         return anchorPreview_ + QPointF(std::sin(radians) * displayLength,
                                         -std::cos(radians) * displayLength);
     }
@@ -1414,6 +1454,7 @@ private:
     qreal orientationDegrees_ = 0.0;
     qreal leftSize_ = 40.0;
     qreal previewScale_ = 1.0;
+    qreal screenPaddingScale_ = 1.0;
     qreal pressOrientationDegrees_ = 0.0;
     qreal pressLeftSize_ = 40.0;
     bool hoverActive_ = false;
@@ -1427,11 +1468,11 @@ public:
     MapPointOrientationHandleItem(int lineNumber,
                                   const QPointF &anchorPreview,
                                   qreal orientationDegrees,
-                                  qreal displayLength = 28.0)
+                                  qreal screenLength = 28.0)
         : lineNumber_(lineNumber)
         , anchorPreview_(anchorPreview)
         , orientationDegrees_(normalizeDegrees(orientationDegrees))
-        , displayLength_(qMax<qreal>(12.0, displayLength))
+        , screenLength_(qMax<qreal>(12.0, screenLength))
     {
         setFlag(QGraphicsItem::ItemIsSelectable, true);
         setAcceptHoverEvents(true);
@@ -1445,6 +1486,24 @@ public:
     ~MapPointOrientationHandleItem() override
     {
         MapEditorSceneHandleIndex::untrack(this, scene());
+    }
+
+    void updateViewTransform(const QTransform &viewTransform)
+    {
+        bool invertible = false;
+        const QTransform inverse = viewTransform.inverted(&invertible);
+        if (!invertible) {
+            return;
+        }
+        const qreal scale = qMax(std::hypot(inverse.m11(), inverse.m21()),
+                                 std::hypot(inverse.m12(), inverse.m22()));
+        if (!qFuzzyCompare(scale, screenPaddingScale_)) {
+            prepareGeometryChange();
+            screenPaddingScale_ = scale > 1e-6 ? scale : 1.0;
+            handlePreview_ = handlePointForOrientation(orientationDegrees_);
+            MapEditorSceneHandleIndex::moveKey(this, handleIndexKey());
+            update();
+        }
     }
 
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override
@@ -1461,18 +1520,20 @@ public:
 
     QRectF boundingRect() const override
     {
-        return QRectF(anchorPreview_, handlePreview_).normalized().adjusted(-10.0, -10.0, 10.0, 10.0);
+        const qreal padding = 14.0 * (screenPaddingScale_ > 1e-6 ? screenPaddingScale_ : 1.0);
+        return QRectF(anchorPreview_, handlePreview_).normalized().adjusted(-padding, -padding, padding, padding);
     }
 
     QPainterPath shape() const override
     {
+        const qreal scale = screenPaddingScale_ > 1e-6 ? screenPaddingScale_ : 1.0;
         QPainterPath path;
         path.moveTo(anchorPreview_);
         path.lineTo(handlePreview_);
-        path.addEllipse(handlePreview_, 6.0, 6.0);
+        path.addEllipse(handlePreview_, 8.0 * scale, 8.0 * scale);
 
         QPainterPathStroker stroker;
-        stroker.setWidth(12.0);
+        stroker.setWidth(12.0 * scale);
         stroker.setCapStyle(Qt::RoundCap);
         stroker.setJoinStyle(Qt::RoundJoin);
         return stroker.createStroke(path).united(path);
@@ -1480,14 +1541,18 @@ public:
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override
     {
-        Q_UNUSED(option);
         Q_UNUSED(widget);
         if (painter == nullptr) {
             return;
         }
 
-        QColor color = (hoverActive_ || dragActive_) ? QColor(QStringLiteral("#ffda00")) : QColor(QStringLiteral("#ff0000"));
-        color.setAlpha(dragActive_ ? 220 : (hoverActive_ ? 200 : 165));
+        const qreal lod = option != nullptr
+            ? QStyleOptionGraphicsItem::levelOfDetailFromTransform(painter->worldTransform())
+            : 0.0;
+        const qreal scale = lod > 1e-6 ? (1.0 / lod) : (screenPaddingScale_ > 1e-6 ? screenPaddingScale_ : 1.0);
+
+        QColor color = (hoverActive_ || dragActive_) ? QColor(QStringLiteral("#ffff00")) : QColor(QStringLiteral("#00e676"));
+        color.setAlpha(dragActive_ ? 255 : (hoverActive_ ? 245 : 230));
         painter->setRenderHint(QPainter::Antialiasing, true);
 
         const QPointF vector = handlePreview_ - anchorPreview_;
@@ -1499,8 +1564,20 @@ public:
         const QPointF direction(vector.x() / length, vector.y() / length);
         const QPointF normal(-direction.y(), direction.x());
         const QPointF arrowTip = handlePreview_;
-        const qreal arrowLength = qMin<qreal>(7.0, length);
+        qreal arrowLength = 11.0 * scale;
+        qreal arrowHalfWidth = 4.5 * scale;
+        if (arrowLength > length * 0.5) {
+            const qreal ratio = (length * 0.5) / arrowLength;
+            arrowLength *= ratio;
+            arrowHalfWidth *= ratio;
+        }
         const QPointF arrowBase = arrowTip - (direction * arrowLength);
+
+        QPen haloPen(QColor(0, 0, 0, 180), (dragActive_ ? 3.0 : 2.2) + 1.6, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        haloPen.setCosmetic(true);
+        painter->setPen(haloPen);
+        painter->drawLine(anchorPreview_, arrowBase);
+
         QPen handlePen(color, dragActive_ ? 3.0 : 2.2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
         handlePen.setCosmetic(true);
         painter->setPen(handlePen);
@@ -1508,10 +1585,12 @@ public:
 
         QPainterPath arrow;
         arrow.moveTo(arrowTip);
-        arrow.lineTo(arrowBase + (normal * 3.5));
-        arrow.lineTo(arrowBase - (normal * 3.5));
+        arrow.lineTo(arrowBase + (normal * arrowHalfWidth));
+        arrow.lineTo(arrowBase - (normal * arrowHalfWidth));
         arrow.closeSubpath();
-        painter->setPen(Qt::NoPen);
+        QPen arrowOutline(QColor(0, 0, 0, 180), 1.0, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        arrowOutline.setCosmetic(true);
+        painter->setPen(arrowOutline);
         painter->setBrush(color);
         painter->drawPath(arrow);
     }
@@ -1611,8 +1690,9 @@ private:
     {
         constexpr qreal pi = 3.14159265358979323846;
         const qreal radians = normalizeDegrees(orientationDegrees) * pi / 180.0;
-        return anchorPreview_ + QPointF(std::sin(radians) * displayLength_,
-                                        -std::cos(radians) * displayLength_);
+        const qreal displayLength = screenLength_ * (screenPaddingScale_ > 1e-6 ? screenPaddingScale_ : 1.0);
+        return anchorPreview_ + QPointF(std::sin(radians) * displayLength,
+                                        -std::cos(radians) * displayLength);
     }
 
     void updateHandleFromScenePoint(const QPointF &scenePoint)
@@ -1634,7 +1714,8 @@ private:
     QPointF anchorPreview_;
     QPointF handlePreview_;
     qreal orientationDegrees_ = 0.0;
-    qreal displayLength_ = 28.0;
+    qreal screenLength_ = 28.0;
+    qreal screenPaddingScale_ = 1.0;
     qreal pressOrientationDegrees_ = 0.0;
     bool hoverActive_ = false;
     bool dragActive_ = false;

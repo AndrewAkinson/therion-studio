@@ -36,13 +36,16 @@ QString fixtureSource()
         "line wall\n"                            // 6
         "  0 60\n  120 60\n"                     // 7-8
         "endline\n"                              // 9
-        "endscrap\n"                             // 10
-        "scrap b -projection plan\n"             // 11
-        "point 0 -120 station -name b1\n"        // 12
-        "line border\n"                          // 13
-        "  0 -120\n  60 -120\n"                  // 14-15
-        "endline\n"                              // 16
-        "endscrap\n");                           // 17
+        "line wall\n"                            // 10
+        "  0 80\n  120 80\n"                     // 11-12
+        "endline\n"                              // 13
+        "endscrap\n"                             // 14
+        "scrap b -projection plan\n"             // 15
+        "point 0 -120 station -name b1\n"        // 16
+        "line border\n"                          // 17
+        "  0 -120\n  60 -120\n"                  // 18-19
+        "endline\n"                              // 20
+        "endscrap\n");                           // 21
 }
 
 QList<QGraphicsItem *> sceneGeometryItems(QGraphicsScene *scene)
@@ -184,6 +187,128 @@ private slots:
         QCOMPARE(countVisibleItems(items), totalItems);
         QVERIFY(countRowsWithVisibilityTooltip(model, QStringLiteral("Hide object")) > 0);
         QCOMPARE(countRowsWithVisibilityTooltip(model, QStringLiteral("Show object")), 0);
+    }
+
+    void testCycleScrapsWhenAllVisible()
+    {
+        Harness harness;
+        QVERIFY(open(harness));
+
+        auto *nextBtn = harness.tab->findChild<QPushButton *>(QStringLiteral("mapObjectsNextButton"));
+        auto *prevBtn = harness.tab->findChild<QPushButton *>(QStringLiteral("mapObjectsPreviousButton"));
+        QVERIFY(nextBtn != nullptr);
+        QVERIFY(prevBtn != nullptr);
+
+        QGraphicsScene *scene = harness.view->scene();
+        QVERIFY(scene != nullptr);
+        const QList<QGraphicsItem *> items = sceneGeometryItems(scene);
+        const int totalItems = items.size();
+
+        harness.tab->goToLine(2);
+        QCoreApplication::processEvents();
+
+        nextBtn->click();
+        QCoreApplication::processEvents();
+        QCOMPARE(harness.tab->currentLineNumber(), 15);
+        QCOMPARE(countVisibleItems(items), totalItems);
+
+        nextBtn->click();
+        QCoreApplication::processEvents();
+        QCOMPARE(harness.tab->currentLineNumber(), 2);
+        QCOMPARE(countVisibleItems(items), totalItems);
+
+        prevBtn->click();
+        QCoreApplication::processEvents();
+        QCOMPARE(harness.tab->currentLineNumber(), 15);
+        QCOMPARE(countVisibleItems(items), totalItems);
+    }
+
+    void testCycleScrapsWithSoloVisibility()
+    {
+        Harness harness;
+        QVERIFY(open(harness));
+
+        auto *hideAllBtn = harness.tab->findChild<QPushButton *>(QStringLiteral("mapObjectsHideAllButton"));
+        auto *nextBtn = harness.tab->findChild<QPushButton *>(QStringLiteral("mapObjectsNextButton"));
+        auto *prevBtn = harness.tab->findChild<QPushButton *>(QStringLiteral("mapObjectsPreviousButton"));
+        QVERIFY(hideAllBtn != nullptr);
+        QVERIFY(nextBtn != nullptr);
+        QVERIFY(prevBtn != nullptr);
+
+        QGraphicsScene *scene = harness.view->scene();
+        QVERIFY(scene != nullptr);
+
+        hideAllBtn->click();
+        QCoreApplication::processEvents();
+
+        harness.tab->goToLine(2);
+        QCoreApplication::processEvents();
+
+        nextBtn->click();
+        QCoreApplication::processEvents();
+        QCOMPARE(harness.tab->currentLineNumber(), 15);
+
+        for (QGraphicsItem *item : sceneGeometryItems(scene)) {
+            const int line = item->data(kMapSceneLineNumberRole).toInt();
+            if (line >= 15 && line <= 21) {
+                QVERIFY(item->isVisible());
+            } else {
+                QVERIFY(!item->isVisible());
+            }
+        }
+
+        nextBtn->click();
+        QCoreApplication::processEvents();
+        QCOMPARE(harness.tab->currentLineNumber(), 2);
+
+        for (QGraphicsItem *item : sceneGeometryItems(scene)) {
+            const int line = item->data(kMapSceneLineNumberRole).toInt();
+            if (line >= 2 && line <= 14) {
+                QVERIFY(item->isVisible());
+            } else {
+                QVERIFY(!item->isVisible());
+            }
+        }
+
+        prevBtn->click();
+        QCoreApplication::processEvents();
+        QCOMPARE(harness.tab->currentLineNumber(), 15);
+
+        for (QGraphicsItem *item : sceneGeometryItems(scene)) {
+            const int line = item->data(kMapSceneLineNumberRole).toInt();
+            if (line >= 15 && line <= 21) {
+                QVERIFY(item->isVisible());
+            } else {
+                QVERIFY(!item->isVisible());
+            }
+        }
+    }
+
+    void testCycleObjectsWithinScrap()
+    {
+        Harness harness;
+        QVERIFY(open(harness));
+
+        auto *nextBtn = harness.tab->findChild<QPushButton *>(QStringLiteral("mapObjectsNextButton"));
+        auto *prevBtn = harness.tab->findChild<QPushButton *>(QStringLiteral("mapObjectsPreviousButton"));
+        QVERIFY(nextBtn != nullptr);
+        QVERIFY(prevBtn != nullptr);
+
+        harness.tab->goToLine(6);
+        QCoreApplication::processEvents();
+        QCOMPARE(harness.tab->currentLineNumber(), 6);
+
+        nextBtn->click();
+        QCoreApplication::processEvents();
+        QCOMPARE(harness.tab->currentLineNumber(), 10);
+
+        nextBtn->click();
+        QCoreApplication::processEvents();
+        QCOMPARE(harness.tab->currentLineNumber(), 6);
+
+        prevBtn->click();
+        QCoreApplication::processEvents();
+        QCOMPARE(harness.tab->currentLineNumber(), 10);
     }
 };
 

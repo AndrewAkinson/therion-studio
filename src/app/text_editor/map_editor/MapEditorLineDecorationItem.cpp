@@ -556,6 +556,10 @@ void updateMapEditorScreenSpaceMetrics(QGraphicsScene *scene, const QTransform &
             decoration->updateViewTransform(viewTransform);
         } else if (auto *direction = dynamic_cast<MapEditorDirectionAidItem *>(item)) {
             direction->updateViewTransform(viewTransform);
+        } else if (auto *lineHandle = dynamic_cast<MapLinePointSizeHandleItem *>(item)) {
+            lineHandle->updateViewTransform(viewTransform);
+        } else if (auto *pointHandle = dynamic_cast<MapPointOrientationHandleItem *>(item)) {
+            pointHandle->updateViewTransform(viewTransform);
         }
     }
 }
@@ -871,7 +875,7 @@ void MapEditorLineDecorationItem::drawScreenDecoration(
                 const qreal tickLength = sourceLengths
                     ? slopeTickLengthAt(sourceMetrics, sourceDistance, decoration.length) * linePointLengthScale_
                         * directionScale
-                    : decoration.length;
+                    : decoration.length * zoomOutScale;
                 const qreal alternating = index % 2 == 0 ? 1.0 : decoration.alternateLengthScale;
                 const QPointF base = point + normal * (decoration.offset
                     + stableRandomSigned(static_cast<quint32>(seed), markerIndex, 0, 0x91f2U) * decoration.offsetJitter);

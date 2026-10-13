@@ -499,8 +499,8 @@ void MapEditorTab::buildInspectorPanelUi()
 
     auto *visibilityRow = new QWidget(objectsTab);
     visibilityRow->setObjectName(QStringLiteral("mapObjectsVisibilityButtonsRow"));
-    auto *visibilityLayout = new QHBoxLayout(visibilityRow);
-    visibilityLayout->setContentsMargins(0, 0, 0, 0); visibilityLayout->setSpacing(6);
+    auto *visibilityLayout = new QGridLayout(visibilityRow);
+    visibilityLayout->setContentsMargins(0, 0, 0, 0); visibilityLayout->setSpacing(4);
     mapObjectsHideAllButton_ = new QPushButton(inspectorActionIcon(QStringLiteral("eye-off")), tr("Hide All"), visibilityRow);
     mapObjectsHideAllButton_->setObjectName(QStringLiteral("mapObjectsHideAllButton"));
     mapObjectsHideAllButton_->setToolTip(tr("Hide all objects in the map."));
@@ -509,8 +509,21 @@ void MapEditorTab::buildInspectorPanelUi()
     mapObjectsShowAllButton_->setObjectName(QStringLiteral("mapObjectsShowAllButton"));
     mapObjectsShowAllButton_->setToolTip(tr("Show all objects in the map."));
     connect(mapObjectsShowAllButton_, &QPushButton::clicked, this, &MapEditorTab::showAllObjects);
-    disableAutoDefault({mapObjectsHideAllButton_, mapObjectsShowAllButton_});
-    visibilityLayout->addWidget(mapObjectsHideAllButton_); visibilityLayout->addWidget(mapObjectsShowAllButton_);
+    mapObjectsPreviousButton_ = new QPushButton(tr("◀ Previous"), visibilityRow);
+    mapObjectsPreviousButton_->setObjectName(QStringLiteral("mapObjectsPreviousButton"));
+    mapObjectsPreviousButton_->setToolTip(tr("Navigate to previous scrap or object (Alt+Left)."));
+    mapObjectsPreviousButton_->setShortcut(QKeySequence(QStringLiteral("Alt+Left")));
+    connect(mapObjectsPreviousButton_, &QPushButton::clicked, this, &MapEditorTab::selectPreviousObject);
+    mapObjectsNextButton_ = new QPushButton(tr("Next ▶"), visibilityRow);
+    mapObjectsNextButton_->setObjectName(QStringLiteral("mapObjectsNextButton"));
+    mapObjectsNextButton_->setToolTip(tr("Navigate to next scrap or object (Alt+Right)."));
+    mapObjectsNextButton_->setShortcut(QKeySequence(QStringLiteral("Alt+Right")));
+    connect(mapObjectsNextButton_, &QPushButton::clicked, this, &MapEditorTab::selectNextObject);
+    disableAutoDefault({mapObjectsHideAllButton_, mapObjectsShowAllButton_, mapObjectsPreviousButton_, mapObjectsNextButton_});
+    visibilityLayout->addWidget(mapObjectsHideAllButton_, 0, 0);
+    visibilityLayout->addWidget(mapObjectsShowAllButton_, 0, 1);
+    visibilityLayout->addWidget(mapObjectsPreviousButton_, 1, 0);
+    visibilityLayout->addWidget(mapObjectsNextButton_, 1, 1);
     objectsLayout->addWidget(visibilityRow);
 
     mapObjectsTree_ = new QTreeView(objectsTab);
@@ -536,32 +549,18 @@ void MapEditorTab::buildInspectorPanelUi()
     buildInspectorBackgroundTab(inspectorPanel);
     if (mapInspectorTabs_ != nullptr) {
         connect(mapInspectorTabs_, &QTabWidget::currentChanged, this, [this](int index) {
-            if (index == 0) {
-                refreshObjectDetailsPanel();
-            }
+            if (index == 0) { refreshObjectDetailsPanel(); }
             refreshBackgroundPivotMarkerVisibility();
         });
     }
 
     DocumentFileInspectorContext fileContext;
-    fileContext.filePath = [this]() {
-        return textEditor_ != nullptr ? textEditor_->filePath() : QString();
-    };
-    fileContext.encodingName = [this]() {
-        return textEditor_ != nullptr ? textEditor_->fileEncodingName() : QStringLiteral("UTF-8");
-    };
-    fileContext.encodingLabel = [this]() {
-        return textEditor_ != nullptr ? textEditor_->fileEncodingLabel() : QStringLiteral("UTF-8");
-    };
-    fileContext.convertToUtf8 = [this]() {
-        if (textEditor_ != nullptr) {
-            textEditor_->triggerConvertToUtf8();
-        }
-    };
+    fileContext.filePath = [this]() { return textEditor_ != nullptr ? textEditor_->filePath() : QString(); };
+    fileContext.encodingName = [this]() { return textEditor_ != nullptr ? textEditor_->fileEncodingName() : QStringLiteral("UTF-8"); };
+    fileContext.encodingLabel = [this]() { return textEditor_ != nullptr ? textEditor_->fileEncodingLabel() : QStringLiteral("UTF-8"); };
+    fileContext.convertToUtf8 = [this]() { if (textEditor_ != nullptr) textEditor_->triggerConvertToUtf8(); };
     mapFileInspector_ = inspectorPanel->addFileTab(std::move(fileContext));
-
     updateMapInspectorLeftEdgeGeometry();
-
 }
 
 } // namespace TherionStudio

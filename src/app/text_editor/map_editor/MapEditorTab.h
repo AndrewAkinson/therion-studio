@@ -714,6 +714,8 @@ private:
     void applyInspectorObjectVisibility();
     void hideAllObjects();
     void showAllObjects();
+    void selectNextObject();
+    void selectPreviousObject();
     void configureInspectorBackgroundLayerTreeColumns();
     void handleInspectorBackgroundLayerSelectionChanged(const QModelIndex &current);
     void handleInspectorBackgroundLayerClicked(const QModelIndex &index);
@@ -823,6 +825,8 @@ private:
     QCheckBox *mapObjectsAutoCollapseExpandScrapsCheck_ = nullptr;
     QPushButton *mapObjectsHideAllButton_ = nullptr;
     QPushButton *mapObjectsShowAllButton_ = nullptr;
+    QPushButton *mapObjectsPreviousButton_ = nullptr;
+    QPushButton *mapObjectsNextButton_ = nullptr;
     QTreeView *mapObjectsTree_ = nullptr;
     QStandardItemModel *mapObjectsModel_ = nullptr;
     QWidget *xviAltitudeLegend_ = nullptr;

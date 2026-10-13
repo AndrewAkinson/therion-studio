@@ -5997,6 +5997,22 @@ subtype blocks</translation>
         <translation>Zobrazí všetky objekty v mape.</translation>
     </message>
     <message>
+        <source>◀ Previous</source>
+        <translation>◀ Predchádzajúci</translation>
+    </message>
+    <message>
+        <source>Next ▶</source>
+        <translation>Nasledujúci ▶</translation>
+    </message>
+    <message>
+        <source>Navigate to previous scrap or object (Alt+Left).</source>
+        <translation>Prejsť na predchádzajúci scrap alebo objekt (Alt+Vľavo).</translation>
+    </message>
+    <message>
+        <source>Navigate to next scrap or object (Alt+Right).</source>
+        <translation>Prejsť na nasledujúci scrap alebo objekt (Alt+Vpravo).</translation>
+    </message>
+    <message>
         <location filename="../src/app/text_editor/map_editor/MapEditorTabInspectorBackgroundUi.cpp" line="44"/>
         <source>Layers</source>
         <translation>Vrstvy</translation>
