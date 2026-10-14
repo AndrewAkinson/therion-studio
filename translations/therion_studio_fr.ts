@@ -6336,10 +6336,92 @@ Supprimer le sommet malgré tout ?</translation>
         <translation>Filtrer par topographie ou station</translation>
     </message>
     <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="351"/>
+        <source>Automatic scrap join</source>
+        <translation>Jonction automatique de scraps</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="202"/>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="354"/>
+        <source>Scrap join with -count</source>
+        <translation>Jonction de scraps avec -count</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="107"/>
+        <source>Key</source>
+        <translation>Légende</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="108"/>
+        <source>Show or hide what the row colours and markers mean</source>
+        <translation>Afficher ou masquer la signification des couleurs et des marques des lignes</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="201"/>
+        <source>Automatic scrap join, with an equate or nosurvey leg</source>
+        <translation>Jonction automatique de scraps, avec un equate ou un tronçon nosurvey</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="203"/>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="357"/>
+        <source>Point or line join</source>
+        <translation>Jonction de points ou de lignes</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="204"/>
+        <source>No join between these surveys</source>
+        <translation>Aucun join entre ces topographies</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="206"/>
+        <source>Cannot be opened in this view; hover for the reason</source>
+        <translation>Ne peut pas être ouvert dans cette vue ; survolez pour en voir la raison</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="210"/>
+        <source>More than one kind of join between these surveys</source>
+        <translation>Plusieurs types de join entre ces topographies</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="211"/>
+        <source>join with no equate or nosurvey leg</source>
+        <translation>join sans equate ni tronçon nosurvey</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="212"/>
+        <source>nosurvey leg, treated like an equate</source>
+        <translation>tronçon nosurvey, traité comme un equate</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="301"/>
+        <source>No equate or nosurvey leg links these surveys.</source>
+        <translation>Aucun equate ni tronçon nosurvey ne relie ces topographies.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="310"/>
+        <source>nosurvey leg: %1</source>
+        <translation>Tronçon nosurvey : %1</translation>
+    </message>
+    <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="130"/>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="164"/>
         <source>Equate: %1</source>
         <translation>Equate : %1</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="360"/>
+        <source>More than one kind of join links these surveys.</source>
+        <translation>Plusieurs types de join relient ces topographies.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="364"/>
+        <source>join: %1</source>
+        <translation>join : %1</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="374"/>
+        <source>No station is shared by these drawings, so they open without alignment.</source>
+        <translation>Aucune station n’est commune à ces dessins ; ils s’ouvrent donc sans alignement.</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="178"/>
@@ -6362,6 +6444,11 @@ Supprimer le sommet malgré tout ?</translation>
         <translation>%1 : non dessinée dans la vue %2</translation>
     </message>
     <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="453"/>
+        <source>Go to Join in Source</source>
+        <translation>Aller au join dans la source</translation>
+    </message>
+    <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="246"/>
         <source>Open Join</source>
         <translation>Ouvrir la jonction</translation>
@@ -6375,6 +6462,11 @@ Supprimer le sommet malgré tout ?</translation>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="267"/>
         <source>Open Join with Separate Window</source>
         <translation>Ouvrir la jonction avec une fenêtre séparée</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="481"/>
+        <source>Go to nosurvey Leg in Source</source>
+        <translation>Aller au tronçon nosurvey dans la source</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="250"/>

@@ -6501,10 +6501,92 @@ subtype blocks</translation>
         <translation>Filtrovat podle survey nebo stanice</translation>
     </message>
     <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="351"/>
+        <source>Automatic scrap join</source>
+        <translation>Automatické spojení scrapů</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="202"/>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="354"/>
+        <source>Scrap join with -count</source>
+        <translation>Spojení scrapů s -count</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="107"/>
+        <source>Key</source>
+        <translation>Legenda</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="108"/>
+        <source>Show or hide what the row colours and markers mean</source>
+        <translation>Zobrazí nebo skryje význam barev a značek řádků</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="201"/>
+        <source>Automatic scrap join, with an equate or nosurvey leg</source>
+        <translation>Automatické spojení scrapů, s equate nebo úsekem nosurvey</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="203"/>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="357"/>
+        <source>Point or line join</source>
+        <translation>Spojení bodů nebo čar</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="204"/>
+        <source>No join between these surveys</source>
+        <translation>Mezi těmito měřeními není join</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="206"/>
+        <source>Cannot be opened in this view; hover for the reason</source>
+        <translation>V tomto pohledu nelze otevřít; důvod uvidíte po najetí myší</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="210"/>
+        <source>More than one kind of join between these surveys</source>
+        <translation>Mezi těmito měřeními je více druhů join</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="211"/>
+        <source>join with no equate or nosurvey leg</source>
+        <translation>join bez equate nebo úseku nosurvey</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="212"/>
+        <source>nosurvey leg, treated like an equate</source>
+        <translation>úsek nosurvey, chápaný jako equate</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="301"/>
+        <source>No equate or nosurvey leg links these surveys.</source>
+        <translation>Tato měření nespojuje žádný equate ani úsek nosurvey.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="310"/>
+        <source>nosurvey leg: %1</source>
+        <translation>Úsek nosurvey: %1</translation>
+    </message>
+    <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="130"/>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="164"/>
         <source>Equate: %1</source>
         <translation>Equate: %1</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="360"/>
+        <source>More than one kind of join links these surveys.</source>
+        <translation>Tato měření spojuje více druhů join.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="364"/>
+        <source>join: %1</source>
+        <translation>join: %1</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="374"/>
+        <source>No station is shared by these drawings, so they open without alignment.</source>
+        <translation>Žádná stanice není těmto kresbám společná, proto se otevřou bez zarovnání.</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="178"/>
@@ -6527,6 +6609,11 @@ subtype blocks</translation>
         <translation>%1: není nakreslena v pohledu %2</translation>
     </message>
     <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="453"/>
+        <source>Go to Join in Source</source>
+        <translation>Přejít na join ve zdroji</translation>
+    </message>
+    <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="246"/>
         <source>Open Join</source>
         <translation>Otevřít spojení</translation>
@@ -6540,6 +6627,11 @@ subtype blocks</translation>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="267"/>
         <source>Open Join with Separate Window</source>
         <translation>Otevřít spojení se samostatným oknem</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="481"/>
+        <source>Go to nosurvey Leg in Source</source>
+        <translation>Přejít na úsek nosurvey ve zdroji</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="250"/>

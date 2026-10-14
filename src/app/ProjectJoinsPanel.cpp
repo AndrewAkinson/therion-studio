@@ -3,6 +3,7 @@
 #include <QComboBox>
 #include <QContextMenuEvent>
 #include <QFileInfo>
+#include <QGridLayout>
 #include <QHeaderView>
 #include <QLabel>
 #include <QLineEdit>
@@ -10,6 +11,8 @@
 #include <QSet>
 #include <QSortFilterProxyModel>
 #include <QStandardItemModel>
+#include <QStyle>
+#include <QToolButton>
 #include <QTreeView>
 #include <QVBoxLayout>
 
@@ -31,9 +34,21 @@ QString stationReferences(const QVector<ProjectEquateStation> &stations)
     return references.join(QStringLiteral(" = "));
 }
 
-QString groupKey(const ProjectEquateLink &link)
+QString groupKey(const ProjectJoinGroup &group)
 {
-    return QStringLiteral("%1:%2").arg(link.sourceFile, QString::number(link.lineNumber));
+    if (group.joinOnly.has_value()) {
+        return QStringLiteral("join:%1:%2").arg(group.joinOnly->sourceFile, QString::number(group.joinOnly->lineNumber));
+    }
+    return QStringLiteral("%1:%2").arg(group.link.sourceFile, QString::number(group.link.lineNumber));
+}
+
+QString joinItemReferences(const ProjectJoinCommand &join)
+{
+    QStringList references;
+    for (const ProjectJoinItem &item : join.items) {
+        references.append(item.reference);
+    }
+    return references.join(QStringLiteral(" ~ "));
 }
 
 QString fileLocation(const QString &sourceFile, int lineNumber)
@@ -84,6 +99,35 @@ ProjectJoinsPanel::ProjectJoinsPanel(QWidget *parent)
     tree_->header()->hide();
     layout->addWidget(tree_, 1);
 
+    legendBox_ = new QWidget(this);
+    auto *legendLayout = new QVBoxLayout(legendBox_);
+    legendLayout->setContentsMargins(0, 0, 0, 0);
+    legendLayout->setSpacing(2);
+    legendToggle_ = new QToolButton(legendBox_);
+    legendToggle_->setObjectName(QStringLiteral("joinsLegendToggle"));
+    legendToggle_->setText(tr("Key"));
+    legendToggle_->setToolTip(tr("Show or hide what the row colours and markers mean"));
+    legendToggle_->setCheckable(true);
+    legendToggle_->setChecked(true);
+    legendToggle_->setAutoRaise(true);
+    legendToggle_->setArrowType(Qt::DownArrow);
+    legendToggle_->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    legendLayout->addWidget(legendToggle_);
+    legend_ = new QWidget(legendBox_);
+    legend_->setObjectName(QStringLiteral("joinsLegend"));
+    legendGrid_ = new QGridLayout(legend_);
+    legendGrid_->setContentsMargins(6, 0, 0, 0);
+    legendGrid_->setHorizontalSpacing(8);
+    legendGrid_->setVerticalSpacing(2);
+    legendGrid_->setColumnStretch(1, 1);
+    legendLayout->addWidget(legend_);
+    legendBox_->setVisible(false);
+    layout->addWidget(legendBox_);
+    connect(legendToggle_, &QToolButton::toggled, this, [this](bool shown) {
+        legend_->setVisible(shown);
+        legendToggle_->setArrowType(shown ? Qt::DownArrow : Qt::RightArrow);
+    });
+
     connect(projectionCombo_, &QComboBox::currentTextChanged, this, [this]() { rebuildRows(); });
     connect(filterEdit_, &QLineEdit::textChanged, proxyModel_, &QSortFilterProxyModel::setFilterFixedString);
     connect(tree_, &QTreeView::activated, this, &ProjectJoinsPanel::activateRow);
@@ -121,6 +165,60 @@ void ProjectJoinsPanel::setActivationOpensSeparateWindow(bool separateWindow)
     activationOpensSeparateWindow_ = separateWindow;
 }
 
+void ProjectJoinsPanel::setConnectionColors(const ConnectionColors &colors)
+{
+    colors_ = colors;
+    updateLegend();
+    rebuildRows();
+}
+
+void ProjectJoinsPanel::updateLegend()
+{
+    while (QLayoutItem *child = legendGrid_->takeAt(0)) {
+        delete child->widget();
+        delete child;
+    }
+    const auto addEntry = [this](QLabel *sample, const QString &meaning) {
+        const int row = legendGrid_->rowCount();
+        auto *text = new QLabel(meaning, legend_);
+        text->setWordWrap(true);
+        legendGrid_->addWidget(sample, row, 0, Qt::AlignLeft | Qt::AlignTop);
+        legendGrid_->addWidget(text, row, 1);
+    };
+    // A sample styled like the rows it explains.
+    const auto textSample = [this](const QString &text, const QColor &color, bool bold) {
+        auto *sample = new QLabel(text, legend_);
+        sample->setTextFormat(Qt::PlainText);
+        QPalette samplePalette = sample->palette();
+        samplePalette.setColor(QPalette::WindowText, color);
+        sample->setPalette(samplePalette);
+        QFont font = sample->font();
+        font.setBold(bold);
+        sample->setFont(font);
+        return sample;
+    };
+    const QString swatch = QStringLiteral("\u25A0\u25A0\u25A0");
+    const QColor text = palette().color(QPalette::Active, QPalette::Text);
+    addEntry(textSample(swatch, colors_.automaticScrapJoin, true), tr("Automatic scrap join, with an equate or nosurvey leg"));
+    addEntry(textSample(swatch, colors_.countedScrapJoin, false), tr("Scrap join with -count"));
+    addEntry(textSample(swatch, colors_.pointLineJoin, false), tr("Point or line join"));
+    addEntry(textSample(swatch, text, false), tr("No join between these surveys"));
+    addEntry(textSample(swatch, palette().color(QPalette::Disabled, QPalette::Text), false),
+             tr("Cannot be opened in this view; hover for the reason"));
+    auto *warning = new QLabel(legend_);
+    const int iconSize = style()->pixelMetric(QStyle::PM_SmallIconSize, nullptr, this);
+    warning->setPixmap(mixedJoinIcon().pixmap(iconSize, iconSize));
+    addEntry(warning, tr("More than one kind of join between these surveys"));
+    addEntry(textSample(QStringLiteral("A ~ B"), text, false), tr("join with no equate or nosurvey leg"));
+    addEntry(textSample(QStringLiteral("(nosurvey)"), text, false), tr("nosurvey leg, treated like an equate"));
+    legendBox_->setVisible(colors_.automaticScrapJoin.isValid());
+}
+
+QIcon ProjectJoinsPanel::mixedJoinIcon() const
+{
+    return style()->standardIcon(QStyle::SP_MessageBoxWarning, nullptr, this);
+}
+
 void ProjectJoinsPanel::rebuildRows()
 {
     // Keep expansion and selection across background index refreshes.
@@ -137,14 +235,18 @@ void ProjectJoinsPanel::rebuildRows()
     model_->clear();
     for (int groupIndex = 0; groupIndex < groups_.size(); ++groupIndex) {
         const ProjectJoinGroup &group = groups_.at(groupIndex);
-        const QString text = stationReferences(group.link.stations);
+        const QString text = group.link.kind == ProjectStationLinkKind::NoSurvey
+            ? QStringLiteral("%1 (nosurvey)").arg(stationReferences(group.link.stations))
+            : stationReferences(group.link.stations);
         QStandardItem *groupItem = nullptr;
-        if (group.pairs.size() == 1) {
+        if (group.joinOnly.has_value()) {
+            groupItem = joinOnlyItem(group, groupIndex);
+        } else if (group.pairs.size() == 1) {
             groupItem = pairItem(group.pairs.first(), text, groupIndex, 0);
         } else {
             groupItem = new QStandardItem(text);
             groupItem->setData(groupIndex, GroupIndexRole);
-            groupItem->setToolTip(tr("Equate: %1").arg(fileLocation(group.link.sourceFile, group.link.lineNumber)));
+            groupItem->setToolTip(linkDescription(group.link));
             for (int pairIndex = 0; pairIndex < group.pairs.size(); ++pairIndex) {
                 const ProjectJoinPair &pair = group.pairs.at(pairIndex);
                 groupItem->appendRow(pairItem(pair,
@@ -153,7 +255,7 @@ void ProjectJoinsPanel::rebuildRows()
                                               pairIndex));
             }
         }
-        groupItem->setData(groupKey(group.link), RowKeyRole);
+        groupItem->setData(groupKey(group), RowKeyRole);
         model_->appendRow(groupItem);
     }
 
@@ -177,15 +279,100 @@ QStandardItem *ProjectJoinsPanel::pairItem(const ProjectJoinPair &pair,
     item->setData(groupIndex, GroupIndexRole);
     item->setData(pairIndex, PairIndexRole);
     item->setData(QStringLiteral("%1/%2").arg(groupIndex).arg(pairIndex), RowKeyRole);
-    const ProjectEquateLink &link = groups_.at(groupIndex).link;
-    QStringList toolTip = {tr("Equate: %1").arg(fileLocation(link.sourceFile, link.lineNumber)),
+    QStringList toolTip = {linkDescription(groups_.at(groupIndex).link),
                            sideDescription(pair.first),
                            sideDescription(pair.second)};
+    toolTip += connectionDescription(pair.connection, pair.joins);
+    applyConnectionStyle(item, pair.connection, true);
+    if (pair.connection == ProjectJoinConnection::MixedJoins) {
+        item->setIcon(mixedJoinIcon());
+    }
     if (!pair.isAvailable()) {
         item->setForeground(palette().brush(QPalette::Disabled, QPalette::Text));
     }
     item->setToolTip(toolTip.join(QLatin1Char('\n')));
     return item;
+}
+
+QStandardItem *ProjectJoinsPanel::joinOnlyItem(const ProjectJoinGroup &group, int groupIndex) const
+{
+    auto *item = new QStandardItem(joinItemReferences(*group.joinOnly));
+    item->setData(groupIndex, GroupIndexRole);
+    QStringList toolTip = connectionDescription(group.joinOnlyConnection, {*group.joinOnly});
+    toolTip.append(tr("No equate or nosurvey leg links these surveys."));
+    applyConnectionStyle(item, group.joinOnlyConnection, false);
+    item->setToolTip(toolTip.join(QLatin1Char('\n')));
+    return item;
+}
+
+QString ProjectJoinsPanel::linkDescription(const ProjectEquateLink &link) const
+{
+    const QString location = fileLocation(link.sourceFile, link.lineNumber);
+    return link.kind == ProjectStationLinkKind::NoSurvey ? tr("nosurvey leg: %1").arg(location)
+                                                         : tr("Equate: %1").arg(location);
+}
+
+void ProjectJoinsPanel::applyConnectionStyle(QStandardItem *item,
+                                             ProjectJoinConnection connection,
+                                             bool linkedByStation) const
+{
+    QColor color;
+    switch (connection) {
+    case ProjectJoinConnection::AutomaticScrapJoin:
+        color = colors_.automaticScrapJoin;
+        break;
+    case ProjectJoinConnection::CountedScrapJoin:
+        color = colors_.countedScrapJoin;
+        break;
+    case ProjectJoinConnection::PointLineJoin:
+        color = colors_.pointLineJoin;
+        break;
+    case ProjectJoinConnection::None:
+    case ProjectJoinConnection::MixedJoins:
+        return;
+    }
+    if (color.isValid()) {
+        item->setForeground(color);
+    }
+    if (connection == ProjectJoinConnection::AutomaticScrapJoin && linkedByStation) {
+        QFont font = item->font();
+        font.setBold(true);
+        item->setFont(font);
+    }
+}
+
+QStringList ProjectJoinsPanel::connectionDescription(ProjectJoinConnection connection,
+                                                     const QVector<ProjectJoinCommand> &joins) const
+{
+    QStringList lines;
+    switch (connection) {
+    case ProjectJoinConnection::None:
+        return lines;
+    case ProjectJoinConnection::AutomaticScrapJoin:
+        lines.append(tr("Automatic scrap join"));
+        break;
+    case ProjectJoinConnection::CountedScrapJoin:
+        lines.append(tr("Scrap join with -count"));
+        break;
+    case ProjectJoinConnection::PointLineJoin:
+        lines.append(tr("Point or line join"));
+        break;
+    case ProjectJoinConnection::MixedJoins:
+        lines.append(tr("More than one kind of join links these surveys."));
+        break;
+    }
+    for (const ProjectJoinCommand &join : joins) {
+        lines.append(tr("join: %1").arg(fileLocation(join.sourceFile, join.lineNumber)));
+    }
+    return lines;
+}
+
+void ProjectJoinsPanel::openJoinOnlyScraps(const ProjectJoinGroup &group)
+{
+    for (const ProjectStructureEntry &scrap : group.joinOnlyScraps) {
+        emit sourceLocationRequested(scrap.sourceFile, scrap.lineNumber);
+    }
+    emit statusMessageRequested(tr("No station is shared by these drawings, so they open without alignment."));
 }
 
 QString ProjectJoinsPanel::sideDescription(const ProjectJoinSide &side) const
@@ -235,6 +422,11 @@ void ProjectJoinsPanel::activateRow(const QModelIndex &proxyIndex)
 {
     const ProjectJoinPair *pair = pairForIndex(proxyIndex);
     if (pair == nullptr) {
+        const ProjectJoinGroup *group = groupForIndex(proxyIndex);
+        if (group != nullptr && group->joinOnly.has_value()) {
+            openJoinOnlyScraps(*group);
+            return;
+        }
         tree_->setExpanded(proxyIndex, !tree_->isExpanded(proxyIndex));
         return;
     }
@@ -256,6 +448,23 @@ void ProjectJoinsPanel::showContextMenu(const QPoint &position)
     }
 
     // Copies: a background index refresh may rebuild groups_ while the menu is open.
+    const ProjectJoinGroup groupCopy = *group;
+    if (groupCopy.joinOnly.has_value()) {
+        QMenu menu(this);
+        QAction *goToJoin = menu.addAction(tr("Go to Join in Source"));
+        connect(goToJoin, &QAction::triggered, this, [this, groupCopy]() {
+            emit sourceLocationRequested(groupCopy.joinOnly->sourceFile, groupCopy.joinOnly->lineNumber);
+        });
+        menu.addSeparator();
+        for (const ProjectStructureEntry &scrap : groupCopy.joinOnlyScraps) {
+            QAction *openScrap = menu.addAction(tr("Open %1").arg(QFileInfo(scrap.sourceFile).fileName()));
+            connect(openScrap, &QAction::triggered, this, [this, scrap]() {
+                emit sourceLocationRequested(scrap.sourceFile, scrap.lineNumber);
+            });
+        }
+        menu.exec(tree_->viewport()->mapToGlobal(menuPosition));
+        return;
+    }
     const ProjectEquateLink link = group->link;
     const std::optional<ProjectJoinPair> pair = pairForIndex(proxyIndex) != nullptr
         ? std::optional<ProjectJoinPair>(*pairForIndex(proxyIndex))
@@ -270,7 +479,8 @@ void ProjectJoinsPanel::showContextMenu(const QPoint &position)
         connect(openJoin, &QAction::triggered, this, [this, pair, separate]() { emit joinRequested(*pair, separate); });
         connect(openOther, &QAction::triggered, this, [this, pair, separate]() { emit joinRequested(*pair, !separate); });
     }
-    QAction *goToEquate = menu.addAction(tr("Go to Equate in Source"));
+    QAction *goToEquate = menu.addAction(link.kind == ProjectStationLinkKind::NoSurvey ? tr("Go to nosurvey Leg in Source")
+                                                                                      : tr("Go to Equate in Source"));
     connect(goToEquate, &QAction::triggered, this, [this, link]() {
         emit sourceLocationRequested(link.sourceFile, link.lineNumber);
     });

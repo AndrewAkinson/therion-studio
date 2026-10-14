@@ -108,6 +108,9 @@ ProjectEquateLinkScanResult scanProjectEquateLinks(const ProjectEquateLinkScanIn
                 scrapEntry = scrapEntryAtLine(input, sourceFile, command.startLineNumber);
                 scrapProjection = normalizedScrapProjection(
                     commandOptionUnbracketedValueTokens(command.parsed.tokens, QStringLiteral("projection")));
+                if (!scrapEntry.objectId.isEmpty()) {
+                    result.scrapProjectionByObjectId.insert(scrapEntry.objectId, scrapProjection);
+                }
                 continue;
             }
             if (commandName == QStringLiteral("endscrap")) {

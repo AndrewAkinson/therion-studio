@@ -294,7 +294,10 @@ Active planning only. Completed history belongs in archive files. Stable archite
   Czech, French, and Slovak manuals now cover `Joins` (3.14, 8.1.12).
 - Phase 2 slice B (awaiting review): Lucide `link` icon on linked drawings' tabs and separate map windows
   (SPECIFICATION 3.8.6).
-- Phase 2 stage C1 (awaiting review): index records `join` commands and cross-survey `nosurvey` legs; no UI change.
+- Phase 2 stage C1 (done): index records `join` commands and cross-survey `nosurvey` legs.
+- Phase 2 stage C2 (awaiting review): Joins rows coloured by `join` kind with a foldable themed key below the list (all row styles and markers), `nosurvey` rows, and
+  join-only rows that open both scraps unaligned (SPECIFICATION 3.8.6, 8.1.5). Entrance joins stay uncoloured on this
+  branch until `NamespaceOffBug` is merged.
 - Found during C1 (pre-existing, not from the join work): references such as `EntranceSP2@Entrance` to objects in a
   `-namespace off` survey resolve in Therion but not in the project index, so Validation reports false
   `unknown join reference` warnings and C2 would leave those joins uncoloured. Proposed as its own fix branch.

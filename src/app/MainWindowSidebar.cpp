@@ -389,6 +389,7 @@ void MainWindow::buildStructureSidebar()
     if (sessionStore_ != nullptr) {
         projectJoinsPanel_->setActivationOpensSeparateWindow(sessionStore_->joinOpensSeparateWindow());
     }
+    applyJoinConnectionColors();
     structureViewStack_->addWidget(projectJoinsPanel_);
     connect(projectJoinsPanel_, &TherionStudio::ProjectJoinsPanel::joinRequested, this, &MainWindow::openProjectJoin);
     connect(projectJoinsPanel_,

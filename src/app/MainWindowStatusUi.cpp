@@ -1,4 +1,6 @@
 #include "MainWindow.h"
+#include "ui/ApplicationStyleTokens.h"
+#include "ProjectJoinsPanel.h"
 #include "LucideIconFactory.h"
 #include "text_editor/map_editor/MapEditorJoinOutline.h"
 #include "text_editor/map_editor/MapEditorJoinPairs.h"
@@ -200,6 +202,21 @@ void MainWindow::populateMapJoinMenu(QMenu *menu)
     }
 }
 
+void MainWindow::applyJoinConnectionColors()
+{
+    if (projectJoinsPanel_ == nullptr) {
+        return;
+    }
+    using TherionStudio::UiStyleTokens::JoinConnectionColorRole;
+    const bool darkBackground = palette().color(QPalette::Base).lightness() < 128;
+    const auto color = [darkBackground](JoinConnectionColorRole role) {
+        return TherionStudio::UiStyleTokens::joinConnectionColor(role, darkBackground);
+    };
+    projectJoinsPanel_->setConnectionColors({color(JoinConnectionColorRole::AutomaticScrapJoin),
+                                             color(JoinConnectionColorRole::CountedScrapJoin),
+                                             color(JoinConnectionColorRole::PointLineJoin)});
+}
+
 void MainWindow::refreshMapJoinLinkIcons()
 {
     // Linked drawings show the link icon on their tab and on their separate map window.
@@ -348,6 +365,7 @@ void MainWindow::changeEvent(QEvent *event)
         rebuildMapObjectsTree();
         refreshMapBackgroundPanel();
         refreshMapJoinLinkIcons();
+        applyJoinConnectionColors();
         break;
     default:
         break;

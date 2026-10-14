@@ -296,6 +296,7 @@ private:
     void refreshMapJoinStatusButton(TherionStudio::MapEditorTab *mapTab);
     void populateMapJoinMenu(QMenu *menu);
     void refreshMapJoinLinkIcons();
+    void applyJoinConnectionColors();
     void updateDocumentMenuActionState();
     void setCompilerStatusIdle();
     void setCompilerStatusRunning(const QString &configPath);

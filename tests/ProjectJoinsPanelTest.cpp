@@ -2,10 +2,12 @@
 
 #include <QApplication>
 #include <QComboBox>
+#include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
 #include <QTimer>
 #include <QSignalSpy>
+#include <QToolButton>
 #include <QTreeView>
 #include <QtTest/QtTest>
 
@@ -111,6 +113,76 @@ private slots:
 
         QVERIFY2(menuActions.contains(tr("Go to Equate in Source")), qPrintable(menuActions.join(QLatin1Char('|'))));
         QVERIFY2(!menuActions.contains(tr("Open Join")), qPrintable(menuActions.join(QLatin1Char('|'))));
+    }
+
+    void coloursRowsByJoinKindAndOpensJoinOnlyScraps()
+    {
+        ProjectIndexSnapshot snapshot = joinSnapshot();
+        const auto scrapItem = [](const QString &scrap, const QString &namespacePath, ProjectStructureEntryKind kind) {
+            ProjectJoinItem item;
+            item.reference = scrap + QLatin1Char('@') + namespacePath;
+            item.kind = kind;
+            item.scrapObjectId = scrap;
+            item.namespacePath = namespacePath;
+            item.resolved = true;
+            return item;
+        };
+        snapshot.scrapProjectionByObjectId = {{QStringLiteral("su"), QStringLiteral("plan")},
+                                              {QStringLiteral("sl"), QStringLiteral("plan")},
+                                              {QStringLiteral("sf"), QStringLiteral("plan")}};
+        ProjectStructureEntry far;
+        far.kind = ProjectStructureEntryKind::Scrap;
+        far.objectId = QStringLiteral("sf");
+        far.sourceFile = QStringLiteral("far.th2");
+        far.lineNumber = 2;
+        ProjectStructureEntry upper = far;
+        upper.objectId = QStringLiteral("su");
+        upper.sourceFile = QStringLiteral("upper.th2");
+        snapshot.entries = {upper, far};
+        snapshot.joinCommands = {
+            ProjectJoinCommand{QStringLiteral("maps.th"), 20, ProjectJoinMode::Scraps, 0,
+                               {scrapItem(QStringLiteral("su"), QStringLiteral("upper"), ProjectStructureEntryKind::Scrap),
+                                scrapItem(QStringLiteral("sl"), QStringLiteral("lower"), ProjectStructureEntryKind::Scrap)}},
+            ProjectJoinCommand{QStringLiteral("maps.th"), 21, ProjectJoinMode::PointsAndLines, 0,
+                               {scrapItem(QStringLiteral("su"), QStringLiteral("upper"), ProjectStructureEntryKind::Line),
+                                scrapItem(QStringLiteral("sf"), QStringLiteral("far"), ProjectStructureEntryKind::Line)}}};
+
+        ProjectJoinsPanel panel;
+        auto *legend = panel.findChild<QWidget *>(QStringLiteral("joinsLegend"));
+        panel.setProjectIndex(snapshot);
+        QVERIFY(!legend->isVisibleTo(&panel));
+        const ProjectJoinsPanel::ConnectionColors colors{QColor(Qt::darkGreen), QColor(Qt::darkCyan), QColor(Qt::darkYellow)};
+        panel.setConnectionColors(colors);
+        QVERIFY(legend->isVisibleTo(&panel));
+        // Eight entries, each a sample and its meaning; the Key button folds them away.
+        QCOMPARE(legend->findChildren<QLabel *>().size(), 16);
+        auto *legendToggle = panel.findChild<QToolButton *>(QStringLiteral("joinsLegendToggle"));
+        legendToggle->click();
+        QVERIFY(!legend->isVisibleTo(&panel));
+        legendToggle->click();
+        QVERIFY(legend->isVisibleTo(&panel));
+
+        auto *tree = panel.findChild<QTreeView *>();
+        QAbstractItemModel *model = tree->model();
+        // 1@upper = 2@lower: the two surveys are joined by an automatic scrap join.
+        const QModelIndex joined = model->index(0, 0);
+        QCOMPARE(joined.data(Qt::ForegroundRole).value<QBrush>().color(), colors.automaticScrapJoin);
+        QVERIFY(joined.data(Qt::FontRole).value<QFont>().bold());
+        QVERIFY(joined.data(Qt::ToolTipRole).toString().contains(QStringLiteral("maps.th:20")));
+
+        // upper ~ far has only a wall join and no equate: listed as its own row.
+        const QModelIndex joinOnly = model->index(model->rowCount() - 1, 0);
+        QCOMPARE(joinOnly.data().toString(), QStringLiteral("su@upper ~ sf@far"));
+        QCOMPARE(joinOnly.data(Qt::ForegroundRole).value<QBrush>().color(), colors.pointLineJoin);
+        // Bold is reserved for an automatic scrap join backed by an equate or nosurvey leg.
+        QVERIFY(!joinOnly.data(Qt::FontRole).value<QFont>().bold());
+
+        QSignalSpy openSpy(&panel, &ProjectJoinsPanel::sourceLocationRequested);
+        QSignalSpy statusSpy(&panel, &ProjectJoinsPanel::statusMessageRequested);
+        emit tree->activated(joinOnly);
+        QCOMPARE(openSpy.count(), 2);
+        QCOMPARE(openSpy.at(1).at(0).toString(), QStringLiteral("far.th2"));
+        QCOMPARE(statusSpy.count(), 1);
     }
 
     void keepsProjectionAndFiltersRows()

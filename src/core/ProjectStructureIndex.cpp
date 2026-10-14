@@ -1586,6 +1586,7 @@ ProjectIndexSnapshot scanProjectIndexFromFilePaths(const QString &projectRootPat
         scanEquateLinks(snapshot.entries, sourceFiles, stationReferenceIndex, &cache, inMemoryFileContentsByPath, shouldCancel);
     snapshot.equateLinks = std::move(equateLinkScan.equateLinks);
     snapshot.stationDrawingPointsByStationKey = std::move(equateLinkScan.stationDrawingPointsByStationKey);
+    snapshot.scrapProjectionByObjectId = std::move(equateLinkScan.scrapProjectionByObjectId);
     if (projectIndexScanShouldCancel(shouldCancel)) {
         return cancelSnapshot();
     }

@@ -69,6 +69,80 @@ private slots:
         QCOMPARE(groups.at(1).pairs.size(), 1);
         QCOMPARE(groups.at(1).pairs.at(0).second.status, ProjectJoinSideStatus::Unresolved);
     }
+
+    void classifiesPairsByJoinAndListsJoinOnlyConnections()
+    {
+        const ProjectEquateStation a = station(QStringLiteral("1@a"), QStringLiteral("a"));
+        const ProjectEquateStation b = station(QStringLiteral("2@b"), QStringLiteral("b"));
+        ProjectIndexSnapshot snapshot;
+        snapshot.equateLinks.append(ProjectEquateLink{QStringLiteral("root.th"), 3, {a, b}});
+        snapshot.stationDrawingPointsByStationKey[a.stationKey] = {drawing(a, QStringLiteral("a.th2"), QStringLiteral("plan"))};
+        snapshot.stationDrawingPointsByStationKey[b.stationKey] = {drawing(b, QStringLiteral("b.th2"), QStringLiteral("plan"))};
+        snapshot.scrapProjectionByObjectId = {{QStringLiteral("sa"), QStringLiteral("plan")},
+                                              {QStringLiteral("sb"), QStringLiteral("plan")},
+                                              {QStringLiteral("sd"), QStringLiteral("plan")},
+                                              {QStringLiteral("sbe"), QStringLiteral("extended")},
+                                              {QStringLiteral("sde"), QStringLiteral("extended")}};
+        ProjectStructureEntry scrapD;
+        scrapD.kind = ProjectStructureEntryKind::Scrap;
+        scrapD.objectId = QStringLiteral("sd");
+        scrapD.name = QStringLiteral("SD");
+        scrapD.sourceFile = QStringLiteral("d.th2");
+        scrapD.lineNumber = 4;
+        snapshot.entries.append(scrapD);
+
+        const auto item = [](const QString &scrap, const QString &namespacePath, ProjectStructureEntryKind kind) {
+            ProjectJoinItem joinItem;
+            joinItem.reference = scrap;
+            joinItem.kind = kind;
+            joinItem.scrapObjectId = scrap;
+            joinItem.namespacePath = namespacePath;
+            joinItem.resolved = true;
+            return joinItem;
+        };
+        ProjectJoinCommand automatic{QStringLiteral("maps.th"), 10, ProjectJoinMode::Scraps, 0,
+                                     {item(QStringLiteral("sa"), QStringLiteral("a"), ProjectStructureEntryKind::Scrap),
+                                      item(QStringLiteral("sb"), QStringLiteral("b"), ProjectStructureEntryKind::Scrap)}};
+        ProjectJoinCommand wallsToD{QStringLiteral("maps.th"), 11, ProjectJoinMode::PointsAndLines, 0,
+                                    {item(QStringLiteral("sa"), QStringLiteral("a"), ProjectStructureEntryKind::Line),
+                                     item(QStringLiteral("sd"), QStringLiteral("d"), ProjectStructureEntryKind::Line)}};
+        ProjectJoinCommand extendedOnly{QStringLiteral("maps.th"), 12, ProjectJoinMode::Scraps, 2,
+                                        {item(QStringLiteral("sbe"), QStringLiteral("b"), ProjectStructureEntryKind::Scrap),
+                                         item(QStringLiteral("sde"), QStringLiteral("d"), ProjectStructureEntryKind::Scrap)}};
+        snapshot.joinCommands = {automatic, wallsToD, extendedOnly};
+
+        QVector<ProjectJoinGroup> plan = projectJoinGroups(snapshot, QStringLiteral("plan"));
+        QCOMPARE(plan.size(), 2);
+        QCOMPARE(plan.at(0).pairs.first().connection, ProjectJoinConnection::AutomaticScrapJoin);
+        QCOMPARE(plan.at(0).pairs.first().joins.first().lineNumber, 10);
+        // a and d have no equate or nosurvey, so their wall join is listed on its own.
+        QVERIFY(plan.at(1).joinOnly.has_value());
+        QCOMPARE(plan.at(1).joinOnly->lineNumber, 11);
+        QCOMPARE(plan.at(1).joinOnlyConnection, ProjectJoinConnection::PointLineJoin);
+        QCOMPARE(plan.at(1).joinOnlyScraps.size(), 2);
+        QCOMPARE(plan.at(1).joinOnlyScraps.at(1).sourceFile, QStringLiteral("d.th2"));
+
+        // In the extended view only the counted join exists, and b-d has no link.
+        const QVector<ProjectJoinGroup> extended = projectJoinGroups(snapshot, QStringLiteral("extended"));
+        QCOMPARE(extended.at(0).pairs.first().connection, ProjectJoinConnection::None);
+        QCOMPARE(extended.at(1).joinOnlyConnection, ProjectJoinConnection::CountedScrapJoin);
+
+        // Two join kinds between the same surveys are an input error.
+        ProjectJoinCommand alsoWalls = wallsToD;
+        alsoWalls.items[1] = item(QStringLiteral("sb"), QStringLiteral("b"), ProjectStructureEntryKind::Line);
+        snapshot.joinCommands.append(alsoWalls);
+        plan = projectJoinGroups(snapshot, QStringLiteral("plan"));
+        QCOMPARE(plan.at(0).pairs.first().connection, ProjectJoinConnection::MixedJoins);
+
+        // A join between surveys linked by an equate does not appear again as join-only.
+        snapshot.equateLinks.append(
+            ProjectEquateLink{QStringLiteral("root.th"), 5, {a, station(QStringLiteral("9@d"), QStringLiteral("d"))}});
+        plan = projectJoinGroups(snapshot, QStringLiteral("plan"));
+        QCOMPARE(std::count_if(plan.cbegin(), plan.cend(), [](const ProjectJoinGroup &group) {
+                     return group.joinOnly.has_value();
+                 }),
+                 0);
+    }
 };
 
 int runProjectJoinListTest(int argc, char **argv)

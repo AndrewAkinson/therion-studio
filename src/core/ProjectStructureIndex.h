@@ -169,6 +169,8 @@ struct ProjectIndexSnapshot
     QVector<ProjectEquateLink> equateLinks;
     QHash<QString, QVector<ProjectStationDrawingPoint>> stationDrawingPointsByStationKey;
     QVector<ProjectJoinCommand> joinCommands;
+    // Normalized `-projection` of every scrap, by scrap object ID.
+    QHash<QString, QString> scrapProjectionByObjectId;
     QVector<ProjectIndexDiagnostic> diagnostics;
     ProjectStructureIndexScanStats scanStats;
     bool canceled = false;
