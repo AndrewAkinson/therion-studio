@@ -9,8 +9,9 @@ Join view that opens the two `.th2` drawings containing the equated stations sid
 through the centreline, each fully editable and saved independently, with a faded read-only outline of the partner
 drawing in each pane.
 
-Status: plan agreed with the user; no implementation yet. Specification, architecture, user manual, worklog and
-translations shall be updated in the same changes that implement each slice.
+Status: phase 1 implemented (slices 1–6 below). Phase 2 (options) agreed in outline on 2026-10-14; open questions are
+listed in that section. Specification, architecture, user manual, worklog and translations are updated in the same
+changes that implement each slice. Not archived until phase 2 is done.
 
 ## Current State
 
@@ -90,21 +91,32 @@ Notes:
   blocking.
 - Structure remains navigation-only: unresolved equates stay reported in Validation, not in Joins.
 
-## Join View
+## Join View (as built)
 
-- One document tab (title `Join: <stationA> = <stationB>`) containing a horizontal `QSplitter` with two map editor
-  panes.
-- Each pane is the existing `MapEditorTab`: own undo stack, dirty marker, save, inspector. Saving one pane saves only
-  that file.
-- If a file is already open in a tab or detached window, the Join view reuses that editor instance (moved into the
-  pane and returned on close) rather than loading a second buffer. Opening a file already shown in a Join view focuses
-  the Join view.
-- On open each pane selects and centres its join-station point at a shared zoom level.
-- Linked view: a non-widget `MapJoinViewLink` applies `partnerToThis` to keep the join aligned during pan/zoom; a
-  toggle unlinks.
-- Faded outline: each pane shows the partner drawing as a read-only, low-opacity, non-interactive layer positioned by
-  `partnerToThis`, rendered from the partner's shared source projection snapshot (no reparse), updated when the partner
-  document changes, with a visibility toggle.
+- Hosting: no join tab. The two drawings open as normal document tabs, and the user can show either map in the
+  existing separate map window (`MapEditorTab::toggleMapPaneWindow`). Both editors therefore stay visible to save,
+  close, and session handling, which a tab holding two editors would not be without a `MainWindow` refactor (46 code
+  paths enumerate attached tabs or detached windows separately).
+- `MapEditorTab` exposes a narrow view-linking API: view centre and scale in drawing units, `mapViewChanged`,
+  `centrelineFitForSourceLine`, `stationPointSourcePosition`, outline path and source-to-scene transform, and adding a
+  display-only overlay item.
+- `MapEditorJoinViewLink` keeps both views on the same real point at the same real-world scale; views agree to within
+  about 3 screen pixels because each view scrolls in whole pixels. A linked view widens its own scroll area so a join
+  at a drawing edge can be centred.
+- `MapEditorJoinOutline` shows the partner as a faded, display-only outline (lines and station points) placed through
+  the join transform. It rebuilds after any partner source change (debounced 150 ms, because some map edits skip the
+  scene refresh) and re-adds its item after host scene refreshes.
+- `MapEditorJoinPairs` opens, lists, and closes a join (fit, outlines both ways, one link) and zooms both views to about
+  30 m across the first view. A `Joined: <drawing>` status-bar indicator offers `Link Views`, `Show Outline`, and
+  `Remove Join` per joined drawing.
+
+## Changes From The Original Plan
+
+- Join tab with a splitter replaced by normal tabs plus the existing separate map window (data-safety reason above).
+- Faded outline implemented before wiring the link, at the user's suggestion; it made a two-editor host unnecessary.
+- Alignment uses XVI station fits; scrap `-scale` is only a fallback (scale often unset; Therion fits from stations).
+- Side fixes kept out of this branch: `fix/french-3d-inspector-strings`, `chore/refresh-translation-locations`, and
+  `XVIrootStation` (`xth_me_image_insert` root station `0` was ignored, misplacing the XVI background).
 
 ## Implementation Slices
 
@@ -114,20 +126,57 @@ Notes:
 2. Core alignment: `Th2CentrelineAlignment` (pure functions): XVI grid scale, station matching, similarity fit,
    join transform. Extend `TherionXviParser` to read `XVIgrids` units if needed. QTest cases with fixtures taken from
    LongwoodValleySink.
-3. Joins sidebar page (model + page builder in a new `MainWindowJoinsSidebar.cpp`), opening the two drawings centred
-   on the station without linking.
-4. Join view tab with splitter, editor reuse, linked pan/zoom.
-5. Faded partner outline.
+3. Joins sidebar page (`ProjectJoinsPanel` over the pure `ProjectJoinList`), opening the two drawings centred on the
+   station. Done.
+4. View-linking API and `MapEditorJoinViewLink`. Done.
+5. Faded partner outline (`MapEditorJoinOutline`). Done.
+6. `Open Join` links the views (`MapEditorJoinPairs`) with the `Joined` indicator. Done.
+
+Slices 1 and 2 are also done.
 
 Each slice: update `SPECIFICATION.md`, `ARCHITECTURE.md` (UI surface ownership: Joins page), `docs/USER_MANUAL.md`,
 `WORKLOG.md`, translation catalogs; run `scripts/check_structure_constraints.py`; stop for user review against
 LongwoodValleySink.
 
+## Phase 2: Options (requested 2026-10-14)
+
+### A. Open one view in a separate window
+
+- Default: activating a join (double-click / Enter) opens both drawings as tabs, as now.
+- Joins row context menu gains `Open Join with Separate Window`: as `Open Join`, then shows the second drawing's map in
+  the existing separate map window.
+- A Settings option reverses the two: double-click opens with a separate window, and the context menu offers
+  `Open Join in Tabs`. Stored through `ISessionStore` like the other Settings options.
+
+### B. Show that drawings are linked
+
+- While a join's views are linked, both document tabs show a link icon (Lucide `link`, added to the bundled icon set
+  under the existing Lucide licence notice). The separate map window shows the same icon in its title area. The icon
+  goes when the link is turned off or the join removed.
+
+### C. Therion `join` awareness
+
+- Therion `join` connects scraps (`join CenturySP1@Century TickleWestSP4@TickleWest`) or line ends and marked line
+  points (`join Wall1@TickleWest:Left Wall2@TickleWest:0`). The project index already parses join references for
+  validation; it shall also keep the join commands with their resolved scraps/lines.
+- An equate row shall be shown green when its two stations are drawn in scraps that a `join` connects (directly, or
+  through joined lines in those scraps) in the selected projection.
+- An option on the Joins page shall list `join` commands as well, marking which are backed by an equate between the
+  joined drawings.
+- Equates without a join, and joins without an equate, are legitimate and shall not be shown as problems.
+
+### Open questions for phase 2
+
+1. Which drawing goes in the separate window: always the second (right-hand) side of the row, or a choice?
+2. Green means "a `join` connects the two scraps that draw the equated stations". Should a join that connects other
+   scraps of the same two surveys also count?
+3. "Stations can also be joined by no survey": does this mean equates with no survey shot between the stations, joins
+   where no survey data connects the drawings, or something else?
+4. Should the join list be a mode of the Joins page (`Equates | Joins | Both`) or a separate checkbox filter?
+
 ## Risks
 
-- Same file in two buffers: avoided by editor reuse; covered by a focused test.
-- Rendering the partner outline may need the scene renderer to build items into a separate group; to be confirmed in
-  slice 5 before committing to the approach.
+- Same file in two buffers: avoided by keeping normal tabs (no editor reuse needed).
 - Drawings whose station points are not snapped to the XVI stations give a less exact fit; the fit residual is shown in
   the pane tooltip.
 

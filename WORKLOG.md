@@ -284,20 +284,10 @@ Active planning only. Completed history belongs in archive files. Stable archite
 
 ### Join Viewer
 
-- Plan: `plans/JOIN_VIEWER_PLAN.md`. Add a `Joins` sidebar page listing cross-survey `equate` links and a Join view
-  that opens both `.th2` drawings side by side, aligned on the join station through XVI centreline station fits, each
-  editable and saved independently, with a faded partner outline.
-- Slice 1 (done): `ProjectIndexSnapshot` carries cross-survey `equateLinks` and
-  `stationDrawingPointsByStationKey`.
-- Slice 2 (done): `Th2CentrelineAlignment` fits scrap station points to XVI centreline stations
-  (`XVIgrids` now parsed), falls back to scrap `-scale`, and links two drawings at the join station.
-- Slice 3 (done): `Joins` sidebar page (`ProjectJoinsPanel` over `ProjectJoinList`) opening both drawings
-  centred on the join station.
-- Slice 4 (done): view linking API and `MapEditorJoinViewLink`, not yet used by the UI.
-- Slice 5 (done): `Open Join` shows each drawing's partner as a faded `MapEditorJoinOutline`.
-- Slice 6 (awaiting review): `Open Join` links the two views through `MapEditorJoinPairs` and zooms onto the join; a
-  `Joined` status indicator toggles the link and outline or removes the join. Hosting stays with normal tabs plus the
-  existing separated map window, which keeps save/close/session handling covering both drawings.
+- Plan: `plans/JOIN_VIEWER_PLAN.md`. Phase 1 (Joins sidebar, centreline alignment, faded partner outline, linked views,
+  `Joined` indicator) is implemented on `JoinViewer`.
+- Next: phase 2 options (open one view in a separate window with a Settings default, link icon on linked tabs, Therion
+  `join` awareness with green equate rows). Open questions are listed in the plan.
 
 ### Raster Background Placement (issue #30)
 
