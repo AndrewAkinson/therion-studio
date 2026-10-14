@@ -64,8 +64,7 @@ Notes:
 
 - Exact for plan and fixed-angle elevation projections. Extended elevations are drawn independently per survey; the
   join station coincides but passage direction may differ.
-- Possible later upgrade: use Therion-computed coordinates from a `.lox` (already loadable by
-  `ThreeDViewerLoxLoader`) for true cross-survey placement. Not in the first slice because it needs a fresh compile.
+- Later upgrade: phase 2 stage C4 places drawings from Therion-computed station positions (SQL database export).
 - No external library: the fit is a closed-form 2D similarity. Core stays QtCore-only, so it uses a small
   `Th2SimilarityTransform` value type; the app layer converts it to `QTransform` for `QGraphicsView`.
 
@@ -144,7 +143,8 @@ LongwoodValleySink.
 
 - Default: activating a join (double-click / Enter) opens both drawings as tabs, as now.
 - Joins row context menu gains `Open Join with Separate Window`: as `Open Join`, then shows the second drawing's map in
-  the existing separate map window.
+  the existing separate map window. Always the second (right-hand) drawing of the row; choosing a side is not worth
+  the extra complexity.
 - A Settings option reverses the two: double-click opens with a separate window, and the context menu offers
   `Open Join in Tabs`. Stored through `ISessionStore` like the other Settings options.
 
@@ -154,25 +154,94 @@ LongwoodValleySink.
   under the existing Lucide licence notice). The separate map window shows the same icon in its title area. The icon
   goes when the link is turned off or the join removed.
 
-### C. Therion `join` awareness
+### C. Therion `join` and `nosurvey` awareness
 
-- Therion `join` connects scraps (`join CenturySP1@Century TickleWestSP4@TickleWest`) or line ends and marked line
-  points (`join Wall1@TickleWest:Left Wall2@TickleWest:0`). The project index already parses join references for
-  validation; it shall also keep the join commands with their resolved scraps/lines.
-- An equate row shall be shown green when its two stations are drawn in scraps that a `join` connects (directly, or
-  through joined lines in those scraps) in the selected projection.
-- An option on the Joins page shall list `join` commands as well, marking which are backed by an equate between the
-  joined drawings.
-- Equates without a join, and joins without an equate, are legitimate and shall not be shown as problems.
+Background (Therion book, `join`):
+
+- `join` works in two modes. **Scrap join**: two scrap IDs; Therion joins the closest scrap ends (passage walls only).
+  `-count N` asks Therion to join the scraps in N places/passages. **Point/line join**: IDs of points or lines,
+  optionally with a line point mark (`id:mark`, `:0`, `:end`, or an index); several items in one command join them all
+  (`join a b c`). A passage usually needs two line joins; in extreme cases single points are joined, which can leave
+  points on one side and a line on the other.
+- `data nosurvey <from> <to>`: the network is computed from the other data and the listed stations are then connected
+  by a line, so the two stations have no measured relation of their own.
+
+One list, coloured (no separate modes): the Joins page lists every connection between drawings of different surveys:
+
+- equate rows (as now);
+- `nosurvey` rows: a `data nosurvey` leg whose two stations are in different survey namespaces;
+- join-only rows: a `join` between drawings of different surveys with no equate or `nosurvey` leg between them.
+
+Colours (three greens, light and dark theme tokens, with a legend tooltip):
+
+1. **Bold green**: automatic scrap join (no `-count`) and an equate or `nosurvey` leg anywhere between the two
+   surveys (decided 2026-10-14; to be reviewed once it is in use).
+2. Green (second shade): scrap join with `-count N`.
+3. Green (third shade): point/line join.
+4. Plain: equate or `nosurvey` leg with no `join`. Legitimate; never shown as a problem.
+
+A `nosurvey` leg counts exactly as an equate: it records a definite link, so it qualifies for bold green.
+
+Join rules between one pair of drawings (decided 2026-10-14): the three join kinds are mutually exclusive. A scrap
+join (automatic or `-count N`) is a single `join` command. Point/line joins need at least two `join` commands (a
+passage needs both walls joined). Breaking these rules is an input error:
+
+- more than one join kind between the same pair of drawings;
+- more than one scrap-join command between the same pair;
+- only one point/line join between a pair.
+
+These are reported as Validation warnings naming the `join` lines (problem reporting stays in the Validation panel),
+and the affected Joins row carries a warning marker that points to them.
+
+Join-only rows use the colour of their join type and say "no equate" in the tooltip. Connections with neither a `join`
+nor an equate are legitimate and simply not listed.
+
+Staged implementation:
+
+- **C1 Index.** Record `join` commands (mode, `-count`, each item resolved to its scrap or line and the line's scrap,
+  marks) by extending the existing join-reference validation scan rather than scanning again, and record
+  cross-survey `nosurvey` legs from the centreline scan. Drawing points gain their scrap's identity so equates and
+  joins can be matched. Core tests only; no UI change.
+- **C2 Classification and colours.** `ProjectJoinList` classifies each row (equate / `nosurvey` / join-only, and join
+  type) for the selected projection; `ProjectJoinsPanel` shows the colours, legend, and join file/line in tooltips.
+  Core and panel tests.
+- **C3 Join rule checks.** Add the three join-rule warnings to project validation (same index data as C2), with
+  focused false-positive tests, and the warning marker on Joins rows.
+- **C4 Computed centreline placement.** Therion computes the station network; the app asks Therion for it rather than
+  using the `.lox` (which also carries walls and surfaces). A background Therion run, on its own
+  `TherionRunnerService` instance so the Compiler panel is not blocked, uses a temporary config that sources the
+  project root and only exports the database (`export database -fmt sql`): surveys, stations with computed X/Y/Z,
+  shots, and flags. The app already imports this format for its SQL report tab, so loading and station lookup reuse
+  that code. The export is regenerated when missing or older than the sources. While it runs, equate rows open at
+  once with the existing XVI anchor; when it is ready, every row (equate, `nosurvey`, join-only) is placed by fitting
+  each drawing's station points to the computed positions projected into its projection (plan, or elevation at its
+  angle), so both drawings share one frame and no anchor is needed.
+- **C5 Fallback without computed positions** (Therion not configured or the run fails). For a point/line join, anchor
+  on the joined points (the closest pair when several are joined); for a scrap join, on the closest pair of wall-line
+  ends between the two scraps. The scale still comes from each drawing's own fit, so only the position is
+  approximate. A `nosurvey` row opens both drawings unlinked and says why.
+- **Extended elevations** have no common frame: each survey's extended layout is independent. Equate rows keep the
+  equate anchor; rows with no equate open both drawings unlinked and say why, until a way to line them up is found.
 
 ### Open questions for phase 2
 
-1. Which drawing goes in the separate window: always the second (right-hand) side of the row, or a choice?
-2. Green means "a `join` connects the two scraps that draw the equated stations". Should a join that connects other
-   scraps of the same two surveys also count?
-3. "Stations can also be joined by no survey": does this mean equates with no survey shot between the stations, joins
-   where no survey data connects the drawings, or something else?
-4. Should the join list be a mode of the Joins page (`Equates | Joins | Both`) or a separate checkbox filter?
+Answered (2026-10-14):
+
+- An equate or `nosurvey` leg anywhere between the two surveys is enough for bold green (to be reviewed in use).
+- Join kinds are exclusive per pair of drawings; point/line joins need at least two commands, scrap joins exactly one;
+  violations are Validation warnings.
+- Computed station positions are produced by the app through Therion when needed, and used for all rows once
+  available.
+- A `nosurvey` leg counts as an equate.
+- Join-rule errors: Validation warnings plus a warning marker on the Joins row (confirmed).
+- Extended elevations without an equate are left unlinked for now.
+- Computed positions come from Therion's SQL database export, not the `.lox`.
+- The background Therion run starts automatically when a join needs computed positions and they are missing or older
+  than the sources; the status bar shows that it is running.
+
+Still open:
+
+1. Check during C4 whether `export database` can leave out the shot tables; only the station table is read either way.
 
 ## Risks
 
