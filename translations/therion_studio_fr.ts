@@ -7990,4 +7990,118 @@ Supprimer le sommet malgré tout ?</translation>
         <translation>Aperçu de la correction automatique</translation>
     </message>
 </context>
+<context>
+    <name>ThreeDViewerInspector</name>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="71"/>
+        <source>Camera</source>
+        <translation>Caméra</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="92"/>
+        <source>Compass</source>
+        <translation>Boussole</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="114"/>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="147"/>
+        <source>%1°</source>
+        <translation>%1°</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="125"/>
+        <source>Tilt</source>
+        <translation>Inclinaison</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="158"/>
+        <source>Distance</source>
+        <translation>Distance</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="180"/>
+        <source>%1 m</source>
+        <translation>%1 m</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="192"/>
+        <source>Focal Length</source>
+        <translation>Focale</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="216"/>
+        <source>%1 mm</source>
+        <translation>%1 mm</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="225"/>
+        <source>Focal length is disabled in orthographic projection.</source>
+        <translation>La focale est désactivée en projection orthographique.</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="243"/>
+        <source>Layers</source>
+        <translation>Calques</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="296"/>
+        <source>Scene Settings</source>
+        <translation>Paramètres de la scène</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="317"/>
+        <source>Model Coloring</source>
+        <translation>Coloration du modèle</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="323"/>
+        <source>Altitude</source>
+        <translation>Altitude</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="323"/>
+        <source>None</source>
+        <translation>Aucune</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="339"/>
+        <source>Background</source>
+        <translation>Arrière-plan</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="345"/>
+        <source>Black</source>
+        <translation>Noir</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="345"/>
+        <source>White</source>
+        <translation>Blanc</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="356"/>
+        <source>Show Bounding Box</source>
+        <translation>Afficher la boîte englobante</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="366"/>
+        <source>Show Head-Up Display</source>
+        <translation>Afficher l’affichage tête haute</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="376"/>
+        <source>Show Title &amp; Stats</source>
+        <translation>Afficher le titre et les statistiques</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="391"/>
+        <source>Rotation Speed</source>
+        <translation>Vitesse de rotation</translation>
+    </message>
+    <message>
+        <location filename="../resources/qml/three_d_viewer/ThreeDViewerInspector.qml" line="413"/>
+        <source>%1°/s</source>
+        <translation>%1°/s</translation>
+    </message>
+</context>
 </TS>
