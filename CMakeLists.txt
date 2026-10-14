@@ -936,6 +936,7 @@ set(THERION_STUDIO_RESOURCE_FILES
     resources/icons/lucide/hand.svg
     resources/icons/lucide/house.svg
     resources/icons/lucide/image.svg
+    resources/icons/lucide/link.svg
     resources/icons/lucide/spell-check.svg
     resources/icons/lucide/map-pin.svg
     resources/icons/lucide/locate-fixed.svg

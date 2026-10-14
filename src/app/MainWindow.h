@@ -295,6 +295,7 @@ private:
     void updateStatusHintLabel(const QString &text);
     void refreshMapJoinStatusButton(TherionStudio::MapEditorTab *mapTab);
     void populateMapJoinMenu(QMenu *menu);
+    void refreshMapJoinLinkIcons();
     void updateDocumentMenuActionState();
     void setCompilerStatusIdle();
     void setCompilerStatusRunning(const QString &configPath);

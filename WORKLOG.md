@@ -292,6 +292,8 @@ Active planning only. Completed history belongs in archive files. Stable archite
   scoped to those views so the `Joins` view does not contradict it (3.5, 3.8.6, 8.1.5); the join viewer is listed as
   Post-MVP (9.2); keyboard routes added for the `Joins` context menu and `View -> Joined Drawings` (3.13.1, 3.9);
   Czech, French, and Slovak manuals now cover `Joins` (3.14, 8.1.12).
+- Phase 2 slice B (awaiting review): Lucide `link` icon on linked drawings' tabs and separate map windows
+  (SPECIFICATION 3.8.6).
 - Release note: the join viewer is feature work while 2026.7.2 is scoped to performance; propose it for the release
   after 2026.7.2 unless the maintainers decide otherwise.
 - Next: phase 2 options (open one view in a separate window with a Settings default, link icon on linked tabs, Therion

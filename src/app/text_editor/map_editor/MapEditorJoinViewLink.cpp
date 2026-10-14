@@ -26,7 +26,10 @@ MapEditorJoinViewLink::MapEditorJoinViewLink(MapEditorTab *first,
 
 void MapEditorJoinViewLink::setEnabled(bool enabled)
 {
-    enabled_ = enabled;
+    if (enabled_ != enabled) {
+        enabled_ = enabled;
+        emit enabledChanged(enabled_);
+    }
     if (enabled_) {
         alignSecondToFirst();
     }

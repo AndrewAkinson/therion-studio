@@ -29,6 +29,9 @@ public:
     // Shows `firstCentre` in the first editor at `pixelsPerFirstUnit`, then aligns the second editor.
     void showFirstAt(const QPointF &firstCentre, qreal pixelsPerFirstUnit);
 
+signals:
+    void enabledChanged(bool enabled);
+
 private:
     void alignSecondToFirst();
     void alignFirstToSecond();

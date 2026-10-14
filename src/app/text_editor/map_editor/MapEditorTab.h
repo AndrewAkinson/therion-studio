@@ -13,6 +13,7 @@
 #include <QElapsedTimer>
 #include <QSet>
 #include <QVector>
+#include <QIcon>
 #include <QPainterPath>
 #include <QPointer>
 #include <QTransform>
@@ -296,6 +297,8 @@ public slots:
     qreal mapViewPixelsPerSourceUnit() const;
     int mapViewportPixelWidth() const;
     void setMapViewCentreAndScale(const QPointF &sourceCentre, qreal pixelsPerSourceUnit);
+    // Icon for the separate map window, now and whenever it is opened later (e.g. the join link icon).
+    void setMapPaneWindowIcon(const QIcon &icon);
     // Centreline placement of the scrap containing `lineNumber`, from the current text and cached XVI backgrounds.
     Th2CentrelineFit centrelineFitForSourceLine(int lineNumber);
     std::optional<QPointF> stationPointSourcePosition(int lineNumber) const;
@@ -357,6 +360,7 @@ private:
         bool detached_ = false;
         bool inlineWorkspaceModeSelectorVisible_ = true;
         bool reattaching_ = false;
+        QIcon windowIcon_;
     };
 
     struct SelectionSyncState

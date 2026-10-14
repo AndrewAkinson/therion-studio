@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "ProjectJoinsPanel.h"
 #include "text_editor/map_editor/MapEditorJoinPairs.h"
+#include "text_editor/map_editor/MapEditorJoinViewLink.h"
 
 #include "MainWindowDocumentHelpers.h"
 #include "MainWindowStructureRoles.h"
@@ -1210,6 +1211,13 @@ void MainWindow::openProjectJoin(const TherionStudio::ProjectJoinPair &pair, boo
     if (!TherionStudio::openMapEditorJoinPair(firstTab, firstLine, secondTab, secondLine, separateWindow)) {
         statusBar()->showMessage(tr("Cannot align the joined drawings: a scrap has no XVI centreline stations or -scale."),
                                  5000);
+    }
+    // Keep the Joined indicator and link icons current as the link is toggled, removed, or its drawing closed.
+    for (const TherionStudio::MapEditorJoinPair &pair : TherionStudio::mapEditorJoinPairsFor(firstTab)) {
+        if (pair.partner == secondTab && pair.link != nullptr) {
+            connect(pair.link, &TherionStudio::MapEditorJoinViewLink::enabledChanged, this, &MainWindow::refreshDocumentStatusWidgets);
+            connect(pair.link, &QObject::destroyed, this, &MainWindow::refreshDocumentStatusWidgets, Qt::QueuedConnection);
+        }
     }
     refreshDocumentStatusWidgets();
 }

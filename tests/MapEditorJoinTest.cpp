@@ -14,7 +14,9 @@
 #include <QGraphicsView>
 #include <QPointer>
 #include <QHBoxLayout>
+#include <QPixmap>
 #include <QPlainTextEdit>
+#include <QSignalSpy>
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QTemporaryDir>
@@ -155,7 +157,7 @@ private slots:
 
         MapEditorJoinOutlineItem *item = outline->item();
         QVERIFY(item != nullptr);
-        QVERIFY(item->scene() == first_->findChild<QGraphicsView *>()->scene());
+        QVERIFY(item->scene() == first_->findChild<QGraphicsView *>(QStringLiteral("mapCanvasView"))->scene());
         QVERIFY(!item->outlinePath().isEmpty());
         QCOMPARE(item->acceptedMouseButtons(), Qt::NoButton);
 
@@ -168,7 +170,7 @@ private slots:
         QVERIFY(first_->loadFile(QDir(dir_.path()).filePath(QStringLiteral("a.th2"))));
         QTRY_VERIFY(originalItem.isNull());
         QTRY_VERIFY(outline->item() != nullptr
-                    && outline->item()->scene() == first_->findChild<QGraphicsView *>()->scene());
+                    && outline->item()->scene() == first_->findChild<QGraphicsView *>(QStringLiteral("mapCanvasView"))->scene());
 
         outline->setOutlineVisible(false);
         QVERIFY(!outline->item()->isVisible());
@@ -228,6 +230,7 @@ private slots:
         QVERIFY(openMapEditorJoinPair(first_, kFirstJoinLine, second_, kSecondJoinLine));
         // Opening the same join again replaces it.
         QVERIFY(openMapEditorJoinPair(first_, kFirstJoinLine, second_, kSecondJoinLine));
+        QVERIFY(mapEditorHasEnabledJoinLink(first_) && mapEditorHasEnabledJoinLink(second_));
         const QVector<MapEditorJoinPair> firstPairs = mapEditorJoinPairsFor(first_);
         const QVector<MapEditorJoinPair> secondPairs = mapEditorJoinPairsFor(second_);
         QCOMPARE(firstPairs.size(), 1);
@@ -247,14 +250,32 @@ private slots:
         second_->setMapViewCentreAndScale(kSecondJoin + QPointF(19.685, 0), second_->mapViewPixelsPerSourceUnit());
         QTRY_VERIFY(showSamePoint(first_, second_, secondToFirst_));
 
+        // Turning the link off is signalled and clears the linked state that drives the link icon.
+        QSignalSpy enabledSpy(firstPairs.first().link.data(), &MapEditorJoinViewLink::enabledChanged);
+        firstPairs.first().link->setEnabled(false);
+        QCOMPARE(enabledSpy.count(), 1);
+        QVERIFY(!mapEditorHasEnabledJoinLink(first_) && !mapEditorHasEnabledJoinLink(second_));
+        firstPairs.first().link->setEnabled(true);
+
+        // An icon set before the separate map window opens is applied when it opens, and updates while open.
+        QPixmap linkPixmap(16, 16);
+        linkPixmap.fill(Qt::darkGreen);
+        second_->setMapPaneWindowIcon(QIcon(linkPixmap));
+
         // Opening with a separate window shows the second drawing's map there and keeps the views linked.
         QVERIFY(!second_->isMapPaneDetached());
         QVERIFY(openMapEditorJoinPair(first_, kFirstJoinLine, second_, kSecondJoinLine, true));
         QVERIFY(second_->isMapPaneDetached());
+        QWidget *mapWindow = second_->findChild<QGraphicsView *>(QStringLiteral("mapCanvasView"))->window();
+        QVERIFY(mapWindow != host_.get());
+        QVERIFY(!mapWindow->windowIcon().isNull());
+        second_->setMapPaneWindowIcon(QIcon());
+        QVERIFY(mapWindow->windowIcon().cacheKey() != QIcon(linkPixmap).cacheKey());
         QTRY_VERIFY(showSamePoint(first_, second_, secondToFirst_));
         QCOMPARE(mapEditorJoinPairsFor(first_).size(), 1);
 
         closeMapEditorJoinPair(second_, first_);
+        QVERIFY(!mapEditorHasEnabledJoinLink(first_));
         QVERIFY(mapEditorJoinPairsFor(first_).isEmpty());
         QVERIFY(mapEditorJoinPairsFor(second_).isEmpty());
         QVERIFY(first_->findChildren<MapEditorJoinViewLink *>().isEmpty());

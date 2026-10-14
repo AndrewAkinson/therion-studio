@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "LucideIconFactory.h"
 #include "text_editor/map_editor/MapEditorJoinOutline.h"
 #include "text_editor/map_editor/MapEditorJoinPairs.h"
 #include "text_editor/map_editor/MapEditorJoinViewLink.h"
@@ -199,8 +200,27 @@ void MainWindow::populateMapJoinMenu(QMenu *menu)
     }
 }
 
+void MainWindow::refreshMapJoinLinkIcons()
+{
+    // Linked drawings show the link icon on their tab and on their separate map window.
+    const QIcon linkIcon = TherionStudio::themedLucideIcon(QStringLiteral("link"), palette(), 16, devicePixelRatioF());
+    QList<TherionStudio::MapEditorTab *> mapTabs = detachedMapEditorTabs();
+    for (int index = 0; index < editorTabs_->count(); ++index) {
+        auto *mapTab = qobject_cast<TherionStudio::MapEditorTab *>(editorTabs_->widget(index));
+        if (mapTab == nullptr) {
+            continue;
+        }
+        mapTabs.append(mapTab);
+        editorTabs_->setTabIcon(index, TherionStudio::mapEditorHasEnabledJoinLink(mapTab) ? linkIcon : QIcon());
+    }
+    for (TherionStudio::MapEditorTab *mapTab : std::as_const(mapTabs)) {
+        mapTab->setMapPaneWindowIcon(TherionStudio::mapEditorHasEnabledJoinLink(mapTab) ? linkIcon : QIcon());
+    }
+}
+
 void MainWindow::refreshMapJoinStatusButton(TherionStudio::MapEditorTab *mapTab)
 {
+    refreshMapJoinLinkIcons();
     if (statusMapJoinButton_ == nullptr) {
         return;
     }
@@ -327,6 +347,7 @@ void MainWindow::changeEvent(QEvent *event)
         rebuildStructureSidebar();
         rebuildMapObjectsTree();
         refreshMapBackgroundPanel();
+        refreshMapJoinLinkIcons();
         break;
     default:
         break;
