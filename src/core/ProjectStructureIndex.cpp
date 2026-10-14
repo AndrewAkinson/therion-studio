@@ -15,6 +15,7 @@
 #include <QDirIterator>
 #include <QFileInfo>
 #include <QHash>
+#include <QScopeGuard>
 #include <QSet>
 
 #include <algorithm>
@@ -116,7 +117,8 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
 QVector<ProjectIndexDiagnostic> scanJoinReferences(const QVector<ProjectStructureEntry> &entries,
                                                    ParsedFileCache *cache,
                                                    const QHash<QString, QString> &inMemoryFileContentsByPath,
-                                                   const std::function<bool()> &shouldCancel);
+                                                   const std::function<bool()> &shouldCancel,
+                                                   QVector<ProjectJoinCommand> *joinCommands);
 QVector<ProjectIndexDiagnostic> scanStationReferences(const QVector<ProjectStructureEntry> &entries,
                                                       const StationReferenceIndex &stationIndex,
                                                       ParsedFileCache *cache,
@@ -306,10 +308,20 @@ struct ReferenceKeyIndex
     QHash<QString, QVector<QString>> keysByNameAndNamespace;
 };
 
+struct NoSurveyLegReference
+{
+    QString sourceFile;
+    int lineNumber = 0;
+    QString fromReference;
+    QString toReference;
+    QString ownerNamespacePath;
+};
+
 struct StationReferenceIndex
 {
     QHash<QString, QVector<QString>> keysByExactReference;
     ReferenceKeyIndex keysByNameAndNamespace;
+    QVector<NoSurveyLegReference> noSurveyLegs;
 };
 
 enum class ReferenceResolutionState
@@ -1541,7 +1553,8 @@ ProjectIndexSnapshot scanProjectIndexFromFilePaths(const QString &projectRootPat
     snapshot.diagnostics += scanJoinReferences(snapshot.entries,
                                                &cache,
                                                inMemoryFileContentsByPath,
-                                               shouldCancel);
+                                               shouldCancel,
+                                               &snapshot.joinCommands);
     if (projectIndexScanShouldCancel(shouldCancel)) {
         return cancelSnapshot();
     }
@@ -1802,7 +1815,8 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
 QVector<ProjectIndexDiagnostic> scanJoinReferences(const QVector<ProjectStructureEntry> &entries,
                                                    ParsedFileCache *cache,
                                                    const QHash<QString, QString> &inMemoryFileContentsByPath,
-                                                   const std::function<bool()> &shouldCancel)
+                                                   const std::function<bool()> &shouldCancel,
+                                                   QVector<ProjectJoinCommand> *joinCommands)
 {
     QVector<ProjectIndexDiagnostic> diagnostics;
     const ReferenceKeyIndex joinObjectKeysByName = mergedReferenceKeysByReferenceName(
@@ -1813,6 +1827,19 @@ QVector<ProjectIndexDiagnostic> scanJoinReferences(const QVector<ProjectStructur
          ProjectStructureEntryKind::Station});
     const QHash<QString, ProjectStructureEntry> entriesByKey = entriesByStructureKey(entries);
     const NamespaceEntriesByFile namespaceEntries = namespaceEntriesByFile(entries);
+    QHash<QString, ProjectStructureEntry> entriesByObjectId;
+    for (const ProjectStructureEntry &entry : entries) {
+        entriesByObjectId.insert(entry.objectId, entry);
+    }
+    const auto containingScrapObjectId = [&entriesByObjectId](const ProjectStructureEntry &entry) {
+        for (ProjectStructureEntry current = entry; !current.objectId.isEmpty();
+             current = entriesByObjectId.value(current.parentObjectId)) {
+            if (current.kind == ProjectStructureEntryKind::Scrap) {
+                return current.objectId;
+            }
+        }
+        return QString();
+    };
 
     QSet<QString> sourceFiles;
     for (const ProjectStructureEntry &entry : entries) {
@@ -1837,6 +1864,28 @@ QVector<ProjectIndexDiagnostic> scanJoinReferences(const QVector<ProjectStructur
 
             const ProjectStructureEntry ownerEntry =
                 nearestNamespaceEntryForLine(namespaceEntries, sourceFile, command.startLineNumber);
+            ProjectJoinCommand joinCommand;
+            joinCommand.sourceFile = sourceFile;
+            joinCommand.lineNumber = command.startLineNumber;
+            joinCommand.count = commandOptionValue(command.parsed, QStringLiteral("count")).toInt();
+            const auto recordJoinCommand = qScopeGuard([&joinCommand, joinCommands]() {
+                if (joinCommands == nullptr) {
+                    return;
+                }
+                // Therion treats a join of scrap IDs as a scrap join; anything else joins points and lines.
+                bool allScraps = false;
+                for (const ProjectJoinItem &item : std::as_const(joinCommand.items)) {
+                    if (!item.resolved) {
+                        continue;
+                    }
+                    allScraps = item.kind == ProjectStructureEntryKind::Scrap;
+                    if (!allScraps) {
+                        break;
+                    }
+                }
+                joinCommand.mode = allScraps ? ProjectJoinMode::Scraps : ProjectJoinMode::PointsAndLines;
+                joinCommands->append(joinCommand);
+            });
             for (int tokenIndex = 1; tokenIndex < command.parsed.tokens.size(); ++tokenIndex) {
                 const QString referenceName = command.parsed.tokens.value(tokenIndex).trimmed();
                 if (referenceName.isEmpty() || referenceName.startsWith(QLatin1Char('-'))) {
@@ -1850,11 +1899,24 @@ QVector<ProjectIndexDiagnostic> scanJoinReferences(const QVector<ProjectStructur
 
                 const ReferenceResolution resolution =
                     resolveReferenceKey(joinObjectKeysByName, referenceParts.lookupName, ownerEntry.namespacePath);
+                const ProjectStructureEntry resolvedEntry = resolution.state == ReferenceResolutionState::Unique
+                    ? entriesByKey.value(resolution.key)
+                    : ProjectStructureEntry();
+                ProjectJoinItem joinItem;
+                joinItem.reference = referenceName;
+                joinItem.linePointMark = referenceParts.linePointMark;
+                if (resolution.state == ReferenceResolutionState::Unique) {
+                    joinItem.kind = resolvedEntry.kind;
+                    joinItem.objectId = resolvedEntry.objectId;
+                    joinItem.scrapObjectId = containingScrapObjectId(resolvedEntry);
+                    joinItem.namespacePath = resolvedEntry.namespacePath;
+                    joinItem.resolved = true;
+                }
+                joinCommand.items.append(joinItem);
                 const TherionSourcePhysicalRange referenceRange =
                     parsedLineTokenPhysicalRange(command.parsed, tokenIndex);
                 if (resolution.state == ReferenceResolutionState::Unique) {
                     if (referenceParts.requiresLinePointMark) {
-                        const ProjectStructureEntry resolvedEntry = entriesByKey.value(resolution.key);
                         if (resolvedEntry.kind == ProjectStructureEntryKind::Line
                             && !resolvedEntry.linePointMarks.contains(referenceParts.linePointMark.toLower())) {
                             appendProjectIndexDiagnostic(&diagnostics,
@@ -1934,6 +1996,12 @@ ProjectEquateLinkScanResult scanEquateLinks(const QVector<ProjectStructureEntry>
         return station;
     };
     input.shouldCancel = shouldCancel;
+    for (const NoSurveyLegReference &leg : stationIndex.noSurveyLegs) {
+        input.noSurveyLegs.append(ProjectEquateLink{leg.sourceFile,
+                                                    leg.lineNumber,
+                                                    {input.resolveStation(leg.fromReference, leg.ownerNamespacePath),
+                                                     input.resolveStation(leg.toReference, leg.ownerNamespacePath)}});
+    }
     return scanProjectEquateLinks(input);
 }
 
@@ -1960,6 +2028,7 @@ StationReferenceIndex stationReferencesFromProject(const QVector<ProjectStructur
             logicalDocumentForFile(sourceFile, cache, inMemoryFileContentsByPath);
         int fromColumn = -1;
         int toColumn = -1;
+        bool noSurveyData = false;
         QString dataNamespacePath;
         for (const TherionSourceLogicalCommand &command : logicalDocument.commands()) {
             if (projectIndexScanShouldCancel(shouldCancel)) {
@@ -1968,6 +2037,7 @@ StationReferenceIndex stationReferencesFromProject(const QVector<ProjectStructur
             if (!commandIsInCenterline(command)) {
                 fromColumn = -1;
                 toColumn = -1;
+                noSurveyData = false;
                 dataNamespacePath.clear();
                 continue;
             }
@@ -1975,6 +2045,7 @@ StationReferenceIndex stationReferencesFromProject(const QVector<ProjectStructur
             if (command.metadata.commandName == QStringLiteral("data")) {
                 fromColumn = -1;
                 toColumn = -1;
+                noSurveyData = command.parsed.tokens.value(1).compare(QStringLiteral("nosurvey"), Qt::CaseInsensitive) == 0;
                 for (int tokenIndex = 2; tokenIndex < command.parsed.tokens.size(); ++tokenIndex) {
                     const QString columnName = command.parsed.tokens.at(tokenIndex).toLower();
                     if (columnName == QStringLiteral("from")) {
@@ -2011,6 +2082,15 @@ StationReferenceIndex stationReferencesFromProject(const QVector<ProjectStructur
             if (command.metadata.commandName == QStringLiteral("station")
                 || command.metadata.commandName == QStringLiteral("equate")) {
                 continue;
+            }
+
+            if (noSurveyData && fromColumn >= 0 && toColumn >= 0
+                && fromColumn < command.parsed.tokens.size() && toColumn < command.parsed.tokens.size()) {
+                index.noSurveyLegs.append(NoSurveyLegReference{sourceFile,
+                                                               command.startLineNumber,
+                                                               command.parsed.tokens.at(fromColumn),
+                                                               command.parsed.tokens.at(toColumn),
+                                                               dataNamespacePath});
             }
 
             const QVector<int> stationColumns = {fromColumn, toColumn};

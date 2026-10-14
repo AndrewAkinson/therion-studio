@@ -23,6 +23,8 @@ struct ProjectEquateLinkScanInput
     std::function<QString(const QString &sourceFile, int lineNumber)> ownerNamespacePath;
     std::function<ProjectEquateStation(const QString &reference, const QString &ownerNamespacePath)> resolveStation;
     std::function<bool()> shouldCancel;
+    // `data nosurvey` legs with both stations already resolved; kept when they link different namespaces.
+    QVector<ProjectEquateLink> noSurveyLegs;
 };
 
 struct ProjectEquateLinkScanResult

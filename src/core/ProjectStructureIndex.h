@@ -90,12 +90,51 @@ struct ProjectEquateStation
     bool resolved = false;
 };
 
-// One `equate` command whose stations resolve to more than one survey namespace.
+enum class ProjectStationLinkKind
+{
+    Equate,
+    // A `data nosurvey` leg: the network is computed from other data and the two stations are then connected.
+    NoSurvey,
+};
+
+// One `equate` command, or one `data nosurvey` leg, whose stations resolve to more than one survey namespace.
 struct ProjectEquateLink
 {
     QString sourceFile;
     int lineNumber = 0;
     QVector<ProjectEquateStation> stations;
+    ProjectStationLinkKind kind = ProjectStationLinkKind::Equate;
+};
+
+enum class ProjectJoinMode
+{
+    // Two scrap IDs: Therion joins the closest scrap ends (`-count N` asks for N places).
+    Scraps,
+    // Point or line IDs, optionally with a line point mark (`id:mark`, `:0`, `:end`).
+    PointsAndLines,
+};
+
+struct ProjectJoinItem
+{
+    QString reference;
+    QString linePointMark;
+    ProjectStructureEntryKind kind = ProjectStructureEntryKind::Unknown;
+    QString objectId;
+    // The scrap itself, or the scrap that contains the joined line or point.
+    QString scrapObjectId;
+    QString namespacePath;
+    bool resolved = false;
+};
+
+// One `join` command with its items resolved to scraps, lines, or points.
+struct ProjectJoinCommand
+{
+    QString sourceFile;
+    int lineNumber = 0;
+    ProjectJoinMode mode = ProjectJoinMode::PointsAndLines;
+    // `-count N` for scrap joins; 0 when absent (Therion's automatic join).
+    int count = 0;
+    QVector<ProjectJoinItem> items;
 };
 
 // A `point ... station -name` in a `.th2` scrap that draws an equated station.
@@ -107,6 +146,7 @@ struct ProjectStationDrawingPoint
     QString scrapName;
     QString surveyName;
     QString projection;
+    QString scrapObjectId;
 };
 
 struct ProjectStructureIndexScanStats
@@ -128,6 +168,7 @@ struct ProjectIndexSnapshot
     QHash<QString, QSet<QString>> stationReferenceCandidateKeysByLookupKey;
     QVector<ProjectEquateLink> equateLinks;
     QHash<QString, QVector<ProjectStationDrawingPoint>> stationDrawingPointsByStationKey;
+    QVector<ProjectJoinCommand> joinCommands;
     QVector<ProjectIndexDiagnostic> diagnostics;
     ProjectStructureIndexScanStats scanStats;
     bool canceled = false;

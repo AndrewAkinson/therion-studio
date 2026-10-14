@@ -180,8 +180,12 @@ Validation should be conservative and catalog-backed.
 - source file and line navigation
 - map/scrap composition references
 - non-hierarchical relationships such as preview, revise, join, and equate when represented as graph data
-- cross-survey `equate` links and the `.th2` station points (scrap, survey, normalized projection) that draw equated
-  stations, scanned by `ProjectEquateLinkScanner` through the index's own namespace and station-reference resolution
+- cross-survey `equate` links and `data nosurvey` legs (one link list with a kind) and the `.th2` station points (scrap,
+  survey, normalized projection) that draw linked stations, scanned by `ProjectEquateLinkScanner` through the index's
+  own namespace and station-reference resolution; `nosurvey` legs are captured by the centreline station scan, which
+  already owns `data` column parsing
+- `join` commands (scrap or point/line mode, `-count`, each item resolved to its scrap), recorded by the same scan that
+  validates join references rather than a second pass
 
 The project navigation sidebar displays file navigation and project structure projections. Its default `Survey` tree follows survey namespace and definition ownership; map composition references are graph relationships and must not reparent map or scrap definition nodes in that projection. A separate `Map` projection may display map composition using those graph relationships. Structure should not list general validation diagnostics. Validation-owned diagnostics should be surfaced in the Validation panel and may reference project-index objects when that improves navigation.
 

@@ -79,6 +79,98 @@ private slots:
         QCOMPARE(unknownStationReferences.count(QStringLiteral("1@cave")), 1);
     }
 
+    void indexesJoinCommandsAndNoSurveyLegs()
+    {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+        QDir projectDir(tempDir.path());
+        const QString centreline = QStringLiteral("  centreline\n"
+                                                  "    data normal from to length compass clino\n"
+                                                  "    1 2 1 0 0\n"
+                                                  "  endcentreline\n");
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("root.th")),
+                              QStringLiteral("survey top\n"
+                                             "survey a\n"
+                                             "  input a.th2\n")
+                                  + centreline
+                                  + QStringLiteral("endsurvey a\n"
+                                                   "survey b\n"
+                                                   "  input b.th2\n")
+                                  + centreline
+                                  + QStringLiteral("endsurvey b\n"
+                                                   "centreline\n"
+                                                   "  data nosurvey from to\n"
+                                                   "  2@a 1@b\n"
+                                                   "  2@a 1@a\n"
+                                                   "endcentreline\n"
+                                                   "join sa@a sb@b -count 2\n"
+                                                   "join w1@a:end w2@b:0\n"
+                                                   "join sa@a sa2@a\n"
+                                                   "endsurvey top\n")));
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("a.th2")),
+                              QStringLiteral("scrap sa -projection plan\n"
+                                             "point 0 0 station -name 2\n"
+                                             "line wall -id w1\n"
+                                             "  0 0\n"
+                                             "  10 0\n"
+                                             "endline\n"
+                                             "endscrap\n"
+                                             "scrap sa2 -projection plan\n"
+                                             "point 0 0 station -name 1\n"
+                                             "endscrap\n")));
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("b.th2")),
+                              QStringLiteral("scrap sb -projection plan\n"
+                                             "point 0 0 station -name 1\n"
+                                             "line wall -id w2\n"
+                                             "  0 0\n"
+                                             "  5 5\n"
+                                             "endline\n"
+                                             "endscrap\n")));
+
+        QString errorMessage;
+        const ProjectIndexSnapshot snapshot = ProjectStructureIndex::scanProjectIndex(projectDir.path(), &errorMessage);
+        QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage));
+
+        // The cross-survey nosurvey leg is a link like an equate; the same-survey leg is not.
+        QCOMPARE(snapshot.equateLinks.size(), 1);
+        const ProjectEquateLink &leg = snapshot.equateLinks.first();
+        QCOMPARE(leg.kind, ProjectStationLinkKind::NoSurvey);
+        QCOMPARE(leg.stations.at(0).reference, QStringLiteral("2@a"));
+        QCOMPARE(leg.stations.at(1).reference, QStringLiteral("1@b"));
+        QVERIFY(leg.stations.at(0).resolved && leg.stations.at(1).resolved);
+        const QVector<ProjectStationDrawingPoint> stationA =
+            snapshot.stationDrawingPointsByStationKey.value(leg.stations.at(0).stationKey);
+        const QVector<ProjectStationDrawingPoint> stationB =
+            snapshot.stationDrawingPointsByStationKey.value(leg.stations.at(1).stationKey);
+        QCOMPARE(stationA.size(), 1);
+        QCOMPARE(stationB.size(), 1);
+        QVERIFY(!stationA.first().scrapObjectId.isEmpty());
+        QVERIFY(stationA.first().scrapObjectId != stationB.first().scrapObjectId);
+
+        QCOMPARE(snapshot.joinCommands.size(), 3);
+        const ProjectJoinCommand &scrapJoin = snapshot.joinCommands.at(0);
+        QCOMPARE(scrapJoin.mode, ProjectJoinMode::Scraps);
+        QCOMPARE(scrapJoin.count, 2);
+        QCOMPARE(scrapJoin.items.size(), 2);
+        QCOMPARE(scrapJoin.items.at(0).kind, ProjectStructureEntryKind::Scrap);
+        // Join items name the same scraps that draw the linked stations, so equates and joins can be matched.
+        QCOMPARE(scrapJoin.items.at(0).scrapObjectId, stationA.first().scrapObjectId);
+        QCOMPARE(scrapJoin.items.at(1).scrapObjectId, stationB.first().scrapObjectId);
+
+        const ProjectJoinCommand &lineJoin = snapshot.joinCommands.at(1);
+        QCOMPARE(lineJoin.mode, ProjectJoinMode::PointsAndLines);
+        QCOMPARE(lineJoin.count, 0);
+        QCOMPARE(lineJoin.items.at(0).kind, ProjectStructureEntryKind::Line);
+        QCOMPARE(lineJoin.items.at(0).linePointMark, QStringLiteral("end"));
+        QCOMPARE(lineJoin.items.at(1).linePointMark, QStringLiteral("0"));
+        QCOMPARE(lineJoin.items.at(0).scrapObjectId, stationA.first().scrapObjectId);
+        QCOMPARE(lineJoin.items.at(1).scrapObjectId, stationB.first().scrapObjectId);
+
+        const ProjectJoinCommand &sameSurveyJoin = snapshot.joinCommands.at(2);
+        QCOMPARE(sameSurveyJoin.mode, ProjectJoinMode::Scraps);
+        QCOMPARE(sameSurveyJoin.items.at(0).namespacePath, sameSurveyJoin.items.at(1).namespacePath);
+    }
+
     void normalizesScrapProjectionNames()
     {
         QCOMPARE(normalizedScrapProjection({}), QStringLiteral("plan"));

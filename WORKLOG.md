@@ -294,6 +294,12 @@ Active planning only. Completed history belongs in archive files. Stable archite
   Czech, French, and Slovak manuals now cover `Joins` (3.14, 8.1.12).
 - Phase 2 slice B (awaiting review): Lucide `link` icon on linked drawings' tabs and separate map windows
   (SPECIFICATION 3.8.6).
+- Phase 2 stage C1 (awaiting review): index records `join` commands and cross-survey `nosurvey` legs; no UI change.
+- Found during C1 (pre-existing, not from the join work): references such as `EntranceSP2@Entrance` to objects in a
+  `-namespace off` survey resolve in Therion but not in the project index, so Validation reports false
+  `unknown join reference` warnings and C2 would leave those joins uncoloured. Proposed as its own fix branch.
+- Out of scope, possible upstream suggestion: unresolved map-block references are only reported when named with the
+  `.m`/`.s` suffix convention; user-configurable naming conventions (Settings) would let other conventions be checked.
 - Release note: the join viewer is feature work while 2026.7.2 is scoped to performance; propose it for the release
   after 2026.7.2 unless the maintainers decide otherwise.
 - Next: phase 2 options (open one view in a separate window with a Settings default, link icon on linked tabs, Therion

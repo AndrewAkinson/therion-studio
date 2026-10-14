@@ -139,7 +139,15 @@ ProjectEquateLinkScanResult scanProjectEquateLinks(const ProjectEquateLinkScanIn
                                                             command.startLineNumber,
                                                             scrapEntry.name,
                                                             surveyNameForEntry(input, scrapEntry),
-                                                            scrapProjection});
+                                                            scrapProjection,
+                                                            scrapEntry.objectId});
+        }
+    }
+
+    for (ProjectEquateLink leg : input.noSurveyLegs) {
+        if (linksDifferentNamespaces(leg.stations)) {
+            leg.kind = ProjectStationLinkKind::NoSurvey;
+            result.equateLinks.append(leg);
         }
     }
 
