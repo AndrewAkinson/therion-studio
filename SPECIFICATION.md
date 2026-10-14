@@ -584,7 +584,7 @@ The rules below define the expected day-to-day interaction model. If a later req
 - Structure siblings under the same parent shall be displayed in category order survey, map, scrap, followed by diagnostics, and entries within the same category shall be sorted alphabetically by displayed name with source order used only as a stable tie-breaker.
 - Structure parsing shall treat Therion spelling aliases `centreline` / `centerline` and `endcentreline` / `endcenterline` equivalently.
 - Structure graph object-kind labels and summaries shall preserve canonical Therion source terms such as `survey`, `centerline`, `map`, `scrap`, `station`, `point`, `line`, and `area` instead of translating them.
-- The project navigation sidebar shall provide a compact `Files` / `Survey` / `Map` segmented view selector. The `Files` view shall host project file navigation and file/folder actions. The `Survey` and `Map` views shall host Structure projections.
+- The project navigation sidebar shall provide a compact `Files` / `Survey` / `Map` / `Joins` segmented view selector. The `Files` view shall host project file navigation and file/folder actions. The `Survey` and `Map` views shall host Structure projections. The `Joins` view shall host the survey-join list.
 - The left activity rail `Structure` entry shall open the shared project navigation sidebar. The project navigation sidebar shall provide the `Files` tab internally rather than requiring a separate `Files` rail entry.
 - The Structure sidebar shall provide separate `Survey` and `Map` views. The default `Survey` hierarchy shall be the survey namespace and definition hierarchy. Map and scrap items shall remain under the survey namespace where they are defined; resolved map composition references shall not reparent those definition nodes in the `Survey` view.
 - The `Map` Structure view shall present map composition by showing top-level maps, child maps, and referenced scraps according to resolved map composition references.
@@ -593,6 +593,13 @@ The rules below define the expected day-to-day interaction model. If a later req
 - Unresolved and ambiguous map/scrap references detected inside a map block shall be shown as warning child rows under the owning map node and shall navigate to the source reference line when activated.
 - A map block that mixes map references and scrap references shall be shown with a navigable warning child row because Therion map content expects one content kind per map block.
 - `preview above` / `preview below` map relations shall not be treated as ownership hierarchy in the Structure sidebar.
+- The `Joins` view shall list every `equate` command whose stations resolve to more than one survey namespace, one row per equate labelled with its station references as written. Equates whose stations all resolve to one namespace, and commented-out equates, shall not be listed.
+- An equate that links more than two surveys shall expand to one child row per pair of stations in different survey namespaces.
+- The `Joins` view shall provide a projection selector listing the scrap projections (`plan`, `extended`, `elevation <angle>`, and others) that draw at least one equated station, defaulting to `plan` when present. Projections shall be compared after removing `[]` brackets and a degree unit, so `[elevation 90 deg]` and `[elevation 90]` are the same view. Scraps with `-projection none` shall not be offered.
+- For the selected projection, a join row shall be available only when both stations resolve and each is drawn as a `point ... station -name` in a scrap of that projection inside a `.th2` file read by the project. Unavailable rows shall be shown dimmed with a tooltip naming the reason (station not found, not drawn in any drawing read by Therion, or not drawn in the selected view).
+- The `Joins` view shall provide a text filter over row labels, and shall keep its expansion state, selection, and projection choice across background project-index refreshes.
+- Activating an available join row shall open both `.th2` drawings in the map editor, each navigated to its join-station point. Activating an unavailable row shall show its reason in the status bar instead.
+- The `Joins` row context menu shall provide `Open Join`, `Go to Equate in Source`, and an action to open each drawn side at its station point.
 - The Structure sidebar shall remain a lightweight navigation/indexing aid; it shall not be presented as a full substitute for Therion compiler validation or export selection semantics.
 - Selecting a row in the structure sidebar shall only select that row. Activating a source row, such as by double-clicking it or pressing Enter, shall change the active document context and navigate to the source location.
 - The structure sidebar shall remain synchronized with the open project and the currently selected content when possible.
@@ -1222,6 +1229,7 @@ The criteria below are intended for implementation verification and QA.
 - Sidebar selection changes the active document context.
 - The sidebar remains synchronized with the open project when the underlying structure changes.
 - The activity rail exposes `Structure`, `Compiler`, and quick `Compile`; the `Files` view lives inside the shared project navigation sidebar, and no dedicated `Files` or `Map` rail pane is required.
+- The `Joins` view lists cross-survey equates only, offers the projections found in the project's drawings, dims joins that cannot be opened in the selected projection with a reason tooltip, and opens both drawings at the join station when an available row is activated.
 - The sidebar can be collapsed and re-expanded through explicit UI controls.
 
 #### 8.1.6 Therion Runner / Console

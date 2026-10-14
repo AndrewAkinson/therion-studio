@@ -90,9 +90,10 @@ Therion namespace and reference semantics are compatibility-critical. In particu
 
 ## UI Surface Ownership
 
-The main project sidebar surfaces have distinct responsibilities. `Files`, `Survey`, and `Map` may be presented as tabs in one project navigation sidebar opened from the `Structure` rail entry, but their ownership stays separate:
+The main project sidebar surfaces have distinct responsibilities. `Files`, `Survey`, `Map`, and `Joins` may be presented as tabs in one project navigation sidebar opened from the `Structure` rail entry, but their ownership stays separate:
 
 - `Files`: filesystem/project file operations and file navigation.
+- `Joins`: navigation between drawings of different surveys linked by `equate`. `ProjectJoinsPanel` presents rows built by the pure `ProjectJoinList` projection over the shared project index; it emits open/navigate requests and does not read files or own document state. Unresolved equate stations remain Validation diagnostics.
 - `Structure`: orientation and navigation for project objects and relationships. It may show structural relationship warnings that affect orientation, such as unresolved map/scrap composition references, but shall not become the general validation UI.
 - `Validation`: all validation and problem identification, including command/catalog diagnostics, context/document-type diagnostics, parse/round-trip-sensitive findings, safe fixes, and project-wide problem scans.
 - `Compiler`: Therion execution, target config selection, run output, and compiler-facing workflow state.

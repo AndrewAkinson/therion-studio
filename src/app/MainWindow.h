@@ -61,6 +61,8 @@ class ThreeDViewerTab;
 class TherionSqlReportTab;
 class TherionRunnerService;
 class ProjectScanCacheService;
+class ProjectJoinsPanel;
+struct ProjectJoinPair;
 }
 
 class MainWindow final : public QMainWindow
@@ -225,6 +227,8 @@ private:
     bool reloadDocumentWidgetFromDisk(QWidget *documentWidget, QString *errorMessage = nullptr);
     QByteArray documentFileFingerprint(const QString &filePath) const;
     void openStructureSourceIndex(const QModelIndex &current, QTreeView *sourceTree);
+    void openProjectSourceLocation(const QString &sourceFile, int lineNumber);
+    void openProjectJoin(const TherionStudio::ProjectJoinPair &pair);
     void handleStructureItemActivated(const QModelIndex &index, QTreeView *sourceTree);
     bool confirmCloseTab(int index);
     bool closeOpenDocumentForFilePath(const QString &filePath);
@@ -568,4 +572,5 @@ private:
     TherionStudio::ProjectOutputsScanner *projectOutputsScanner_ = nullptr;
     TherionStudio::ProjectValidationController *projectValidationController_ = nullptr;
     TherionStudio::ProjectStructureScanner *structureSidebarScanner_ = nullptr;
+    TherionStudio::ProjectJoinsPanel *projectJoinsPanel_ = nullptr;
 };

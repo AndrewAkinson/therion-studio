@@ -190,7 +190,7 @@ Project search scans Therion text sources (`.th`, `.th2`, and Therion config fil
 
 ### 5.2 Project Navigation Pane
 
-The `Structure` activity opens the project navigation pane with a compact `Files` / `Survey` / `Map` selector.
+The `Structure` activity opens the project navigation pane with a compact `Files` / `Survey` / `Map` / `Joins` selector.
 
 `Files` shows the project folder tree and supports file navigation and file/folder context-menu actions. `Survey` shows the survey namespace and definition hierarchy for `survey`, `map`, and `scrap` objects and recognizes both Therion centerline spellings: `centreline` and `centerline`. `Map` shows map composition: top-level maps, child maps, and referenced scraps.
 
@@ -201,6 +201,8 @@ Select a row to inspect it in the tree. Double-click a source row, or select it 
 Within each parent, rows are grouped as surveys, maps, then scraps, and each group is sorted alphabetically by the displayed name. Warning rows appear after the project objects they relate to.
 
 The index uses the selected `Target Config` when it points inside the opened project. Without an explicit target config, Therion Studio uses the first root config found in this priority order: `thconfig`, `thconfig.thconfig`, `main.thconfig`, `index.thconfig`, then `<project_name>.thconfig` where `<project_name>` is the opened project folder name. If none of those exists and exactly one named root config exists (`*.thconfig` or `thconfig.*`), that file is used. If several config files are possible, choose the intended `Target Config` in the `Compiler` pane. Renaming, deleting, creating, or externally changing project source/config files refreshes the shared project index; if the selected `Target Config` no longer exists, it is cleared so discovery can run again.
+
+`Joins` lists the `equate` commands that join different surveys, such as `equate 12@upper_series 1@lower_series`. Equates inside a single survey are not listed. Choose the drawing view at the top (`plan`, `extended`, `elevation 315`, and so on) and type in the filter box to find a survey or station. An equate that joins more than two surveys expands to one row per pair. Double-click a row, or select it and press `Enter`, to open both `.th2` drawings with each centred on its join station. A dimmed row cannot be opened in the chosen view; hover over it to see why, for example when a station is not drawn in that view or its drawing is not `input` by the survey. Right-click a row to go to the `equate` line in its source file or to open either drawing on its own.
 
 In the `Survey` view, maps and scraps remain under the survey namespace where they are defined, even when another map references them as part of map composition. In the `Map` view, maps and scraps are shown under the maps that reference them. Unresolved or ambiguous map composition references appear as warning rows that navigate to the source line. The Therion compiler remains the authoritative validator for export behavior.
 

@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "ProjectJoinsPanel.h"
 
 #include "MainWindowDocumentHelpers.h"
 #include "MainWindowStructureRoles.h"
@@ -707,6 +708,9 @@ void MainWindow::storeCurrentStructureExpansionState()
 void MainWindow::applyStructureSidebarIndex(const TherionStudio::ProjectIndexSnapshot &projectIndex)
 {
     lastStructureSidebarProjectIndex_ = projectIndex;
+    if (projectJoinsPanel_ != nullptr) {
+        projectJoinsPanel_->setProjectIndex(projectIndex);
+    }
 
     const QString currentExpansionProjectRootPath = normalizedStructurePathKey(projectRootPath_);
     if (structureExpansionProjectRootPath_ != currentExpansionProjectRootPath) {
@@ -1157,8 +1161,11 @@ void MainWindow::openStructureSourceIndex(const QModelIndex &current, QTreeView 
         return;
     }
 
-    const QString sourceFile = current.data(SourceFileRole).toString();
-    const int lineNumber = current.data(LineNumberRole).toInt();
+    openProjectSourceLocation(current.data(SourceFileRole).toString(), current.data(LineNumberRole).toInt());
+}
+
+void MainWindow::openProjectSourceLocation(const QString &sourceFile, int lineNumber)
+{
     if (sourceFile.isEmpty()) {
         return;
     }
@@ -1174,6 +1181,16 @@ void MainWindow::openStructureSourceIndex(const QModelIndex &current, QTreeView 
     if (tabWidget != nullptr && lineNumber > 0) {
         documentGoToLineForWidget(tabWidget, lineNumber);
     }
+}
+
+void MainWindow::openProjectJoin(const TherionStudio::ProjectJoinPair &pair)
+{
+    if (!pair.isAvailable()) {
+        return;
+    }
+    // Each drawing opens centred on its join-station point.
+    openProjectSourceLocation(pair.first.drawing->sourceFile, pair.first.drawing->lineNumber);
+    openProjectSourceLocation(pair.second.drawing->sourceFile, pair.second.drawing->lineNumber);
 }
 
 void MainWindow::handleStructureItemActivated(const QModelIndex &index, QTreeView *sourceTree)

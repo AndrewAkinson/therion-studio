@@ -139,6 +139,8 @@ set(THERION_CORE_SOURCES
     src/core/TherionSourceValidator.h
     src/core/ProjectEquateLinkScanner.cpp
     src/core/ProjectEquateLinkScanner.h
+    src/core/ProjectJoinList.cpp
+    src/core/ProjectJoinList.h
     src/core/ProjectStructureIndex.cpp
     src/core/ProjectStructureIndex.h
     src/core/TherionStationNameRules.cpp
@@ -184,6 +186,7 @@ set(THERION_CORE_QTEST_SUITES
     PocketTopoImportTest
     Th2GeometryProjectionTest
     Th2CentrelineAlignmentTest
+    ProjectJoinListTest
     TherionFileTypesTest
     TherionBackgroundMetadataTest
     TherionDocumentParserTest
@@ -391,6 +394,8 @@ set(THERION_APP_SOURCES
     src/app/ProjectScanCacheService.h
     src/app/ProjectFileDiscovery.cpp
     src/app/ProjectFileDiscovery.h
+    src/app/ProjectJoinsPanel.cpp
+    src/app/ProjectJoinsPanel.h
     src/app/ProjectFileWatchInventory.cpp
     src/app/ProjectFileWatchInventory.h
     src/app/ProjectFileWatchInventoryService.cpp
@@ -1227,6 +1232,7 @@ therion_add_core_qtest_runner(TherionCoreQTests
     tests/core/TherionSourceValidatorFixTest.cpp
     tests/core/TherionSourceValidatorProjectionTest.cpp
     tests/core/ProjectStructureIndexQTest.cpp
+    tests/core/ProjectJoinListTest.cpp
     tests/core/TherionSourceTextTest.cpp
     tests/core/TherionTokenRulesTest.cpp)
 
@@ -1731,6 +1737,10 @@ function(therion_add_map_editor_ui_test target_name test_source resource_name)
             ${THERION_STUDIO_RESOURCE_FILES})
 endfunction()
 
+qt_add_executable(ProjectJoinsPanelTest
+    tests/ProjectJoinsPanelTest.cpp)
+target_link_libraries(ProjectJoinsPanelTest PRIVATE therion_app Qt6::Test)
+
 therion_add_map_editor_ui_test(MapEditorDetachedPaneTest
     tests/MapEditorDetachedPaneTest.cpp
     "MapEditorDetachedPaneResources")
@@ -1862,6 +1872,7 @@ set(THERION_UNIT_TEST_TARGETS
     MainWindowValidationFixApplyServiceTest)
 
 set(THERION_UI_TEST_TARGETS
+    ProjectJoinsPanelTest
     TherionSqlReportTabTest
     TextEditorCaretInteractionTest
     TextEditorCompletionHighlightTest
