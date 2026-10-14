@@ -31,6 +31,6 @@ struct ProjectEquateLinkScanResult
     QHash<QString, QVector<ProjectStationDrawingPoint>> stationDrawingPointsByStationKey;
 };
 
-[[nodiscard]] QString normalizedScrapProjection(QString projection);
+[[nodiscard]] QString normalizedScrapProjection(const QStringList &projectionValueTokens);
 [[nodiscard]] ProjectEquateLinkScanResult scanProjectEquateLinks(const ProjectEquateLinkScanInput &input);
 }

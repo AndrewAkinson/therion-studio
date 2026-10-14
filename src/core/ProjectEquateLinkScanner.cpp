@@ -15,28 +15,6 @@ bool scanShouldCancel(const ProjectEquateLinkScanInput &input)
     return input.shouldCancel && input.shouldCancel();
 }
 
-QString optionValueText(const TherionSourceLogicalCommand &command, const QString &optionName)
-{
-    for (const TherionSourceLogicalOptionEntryRange &optionEntry : command.optionEntryRanges) {
-        if (normalizedCommandOptionName(optionEntry.key) == optionName) {
-            return optionEntry.rawValueTokens.join(QLatin1Char(' '));
-        }
-    }
-    return QString();
-}
-
-QString stationPointName(const TherionSourceLogicalCommand &command)
-{
-    if (command.positionalArgumentRanges.size() < 3) {
-        return QString();
-    }
-    const QString pointType = command.positionalArgumentRanges.at(2).text.trimmed().section(QLatin1Char(':'), 0, 0);
-    if (pointType.compare(QStringLiteral("station"), Qt::CaseInsensitive) != 0) {
-        return QString();
-    }
-    return optionValueText(command, QStringLiteral("name")).trimmed();
-}
-
 QString surveyNameForEntry(const ProjectEquateLinkScanInput &input, const ProjectStructureEntry &entry)
 {
     QString objectId = entry.parentObjectId;
@@ -96,11 +74,9 @@ void scanEquateCommand(const ProjectEquateLinkScanInput &input,
 }
 }
 
-QString normalizedScrapProjection(QString projection)
+QString normalizedScrapProjection(const QStringList &projectionValueTokens)
 {
-    projection.remove(QLatin1Char('['));
-    projection.remove(QLatin1Char(']'));
-    QStringList parts = projection.simplified().toLower().split(QLatin1Char(' '), Qt::SkipEmptyParts);
+    QStringList parts = projectionValueTokens.join(QLatin1Char(' ')).toLower().split(QLatin1Char(' '), Qt::SkipEmptyParts);
     // Degrees are Therion's default angle unit, so `[elevation 90 deg]` names the same view as `[elevation 90]`.
     static const QStringList degreeUnits = {QStringLiteral("deg"), QStringLiteral("degree"), QStringLiteral("degrees")};
     if (parts.size() == 3 && degreeUnits.contains(parts.last())) {
@@ -130,7 +106,8 @@ ProjectEquateLinkScanResult scanProjectEquateLinks(const ProjectEquateLinkScanIn
             }
             if (commandName == QStringLiteral("scrap")) {
                 scrapEntry = scrapEntryAtLine(input, sourceFile, command.startLineNumber);
-                scrapProjection = normalizedScrapProjection(optionValueText(command, QStringLiteral("projection")));
+                scrapProjection = normalizedScrapProjection(
+                    commandOptionUnbracketedValueTokens(command.parsed.tokens, QStringLiteral("projection")));
                 continue;
             }
             if (commandName == QStringLiteral("endscrap")) {
@@ -142,10 +119,12 @@ ProjectEquateLinkScanResult scanProjectEquateLinks(const ProjectEquateLinkScanIn
                 || scrapProjection == QStringLiteral("none")) {
                 continue;
             }
-            const QString stationName = stationPointName(command);
-            if (stationName.isEmpty()) {
+            const std::optional<TherionSourceLogicalArgumentRange> stationNameRange =
+                therionStationPointNameRange(command);
+            if (!stationNameRange.has_value()) {
                 continue;
             }
+            const QString stationName = stationNameRange->text.trimmed();
             const std::optional<TherionStationNameTransform> transform =
                 therionActiveScrapStationNameTransform(command, stationNameTransforms);
             const QString reference = transform.has_value()

@@ -81,12 +81,12 @@ private slots:
 
     void normalizesScrapProjectionNames()
     {
-        QCOMPARE(normalizedScrapProjection(QString()), QStringLiteral("plan"));
-        QCOMPARE(normalizedScrapProjection(QStringLiteral("Plan")), QStringLiteral("plan"));
-        QCOMPARE(normalizedScrapProjection(QStringLiteral("[elevation  315]")), QStringLiteral("elevation 315"));
-        QCOMPARE(normalizedScrapProjection(QStringLiteral("[elevation 90 deg]")), QStringLiteral("elevation 90"));
-        QCOMPARE(normalizedScrapProjection(QStringLiteral("[elevation 100 grad]")), QStringLiteral("elevation 100 grad"));
-        QCOMPARE(normalizedScrapProjection(QStringLiteral("elevation")), QStringLiteral("elevation"));
+        QCOMPARE(normalizedScrapProjection({}), QStringLiteral("plan"));
+        QCOMPARE(normalizedScrapProjection(QStringLiteral("Plan").split(QLatin1Char(' '))), QStringLiteral("plan"));
+        QCOMPARE(normalizedScrapProjection(QStringLiteral("elevation  315").split(QLatin1Char(' '))), QStringLiteral("elevation 315"));
+        QCOMPARE(normalizedScrapProjection(QStringLiteral("elevation 90 deg").split(QLatin1Char(' '))), QStringLiteral("elevation 90"));
+        QCOMPARE(normalizedScrapProjection(QStringLiteral("elevation 100 grad").split(QLatin1Char(' '))), QStringLiteral("elevation 100 grad"));
+        QCOMPARE(normalizedScrapProjection(QStringLiteral("elevation").split(QLatin1Char(' '))), QStringLiteral("elevation"));
     }
 
     void indexesCrossSurveyEquateLinksAndStationDrawings()
