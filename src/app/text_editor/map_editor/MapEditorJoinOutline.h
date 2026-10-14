@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QPainterPath>
 #include <QPointer>
+#include <QTimer>
 
 namespace TherionStudio
 {
@@ -29,8 +30,8 @@ private:
 };
 
 // Shows `partner`'s drawing in `host`, placed by `partnerToHost` (partner drawing units to host drawing
-// units). Owned by `host`; rebuilds when the partner drawing refreshes and re-adds its item after host
-// scene refreshes.
+// units). Owned by `host`; rebuilds after any partner source change (debounced) and re-adds its item after
+// host scene refreshes.
 class MapEditorJoinOutline final : public QObject
 {
     Q_OBJECT
@@ -58,6 +59,7 @@ private:
     QPointer<MapEditorTab> partner_;
     QPointer<MapEditorJoinOutlineItem> item_;
     QTransform partnerToHost_;
+    QTimer partnerChangeDebounce_;
     bool visible_ = true;
 };
 }

@@ -1752,6 +1752,7 @@ therion_add_map_editor_ui_test(MapEditorJoinTest
     tests/MapEditorJoinTest.cpp
     "MapEditorJoinResources")
 target_link_libraries(MapEditorJoinTest PRIVATE Qt6::Test)
+target_compile_definitions(MapEditorJoinTest PRIVATE THERION_STUDIO_TESTING)
 
 therion_add_map_editor_ui_test(MapEditorDetachedPaneTest
     tests/MapEditorDetachedPaneTest.cpp

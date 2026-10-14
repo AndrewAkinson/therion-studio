@@ -178,6 +178,14 @@ public:
     void triggerAddArea();
     void triggerSmartArea();
 #ifdef THERION_STUDIO_TESTING
+    void testRecordLineAreaVertexMove(int lineNumber,
+                                      const QString &kind,
+                                      int vertexIndex,
+                                      const QPointF &oldPoint,
+                                      const QPointF &newPoint)
+    {
+        recordLineAreaVertexMove(lineNumber, kind, vertexIndex, oldPoint, newPoint);
+    }
     bool testBeginLineExtensionFromSelection(int lineNumber, int sourceVertexIndex, bool prepend)
     {
         return beginLineExtensionFromSelection(lineNumber, sourceVertexIndex, prepend);

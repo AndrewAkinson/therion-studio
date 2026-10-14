@@ -2,6 +2,7 @@
 #include "../src/app/text_editor/map_editor/MapEditorJoinPairs.h"
 #include "../src/app/text_editor/map_editor/MapEditorJoinViewLink.h"
 #include "../src/app/text_editor/map_editor/MapEditorTab.h"
+#include "../src/app/text_editor/TextEditorTab.h"
 #include "../src/core/CommandCatalogStore.h"
 #include "../src/core/QtFileSystem.h"
 #include "FakeSessionStore.h"
@@ -13,6 +14,9 @@
 #include <QGraphicsView>
 #include <QPointer>
 #include <QHBoxLayout>
+#include <QPlainTextEdit>
+#include <QTextBlock>
+#include <QTextCursor>
 #include <QTemporaryDir>
 #include <QtTest/QtTest>
 
@@ -37,6 +41,10 @@ QString drawing(const QString &xviName, qreal unitsPerMetre)
                           "point 0 0 station -name 1\n"
                           "point %2 0 station -name 2\n"
                           "point %2 %3 station -name 3\n"
+                          "line wall\n"
+                          "  0 0\n"
+                          "  %2 %3\n"
+                          "endline\n"
                           "endscrap\n")
         .arg(xviName, QString::number(10 * unitsPerMetre), QString::number(5 * unitsPerMetre));
 }
@@ -124,10 +132,11 @@ private slots:
         // One metre is 78.74 first units and 19.685 second units, so it spans the same pixels in both.
         QVERIFY(qAbs(second_->mapViewPixelsPerSourceUnit() / first_->mapViewPixelsPerSourceUnit() - 4.0) < 0.05);
 
-        // Panning the second editor one metre east moves the first one metre east.
+        // Panning the second editor one metre east moves the first to the same place. Each view rounds to whole
+        // pixels, so check the panned view against its target and the other view against the panned view.
         second_->setMapViewCentreAndScale(kSecondJoin + QPointF(19.685, 0), second_->mapViewPixelsPerSourceUnit());
+        QVERIFY(centredOn(second_, kSecondJoin + QPointF(19.685, 0)));
         QVERIFY(showSamePoint(first_, second_, secondToFirst_));
-        QVERIFY(centredOn(first_, kFirstJoin + QPointF(78.74, 0), 3.0));
 
         // Unlinked views move independently.
         link.setEnabled(false);
@@ -171,6 +180,45 @@ private slots:
         QTRY_VERIFY(guard.isNull());
     }
 
+    void followsEditsToThePartnerDrawing()
+    {
+        MapEditorJoinOutline *outline = MapEditorJoinOutline::attach(first_, second_, secondToFirst_);
+        QVERIFY(outline != nullptr && outline->item() != nullptr);
+        const int elementsBefore = outline->item()->outlinePath().elementCount();
+
+        // Type a new wall into the partner, well outside its current bounds, as a user would in the source pane.
+        auto *sourceEditor = second_->findChild<TextEditorTab *>()->findChild<QPlainTextEdit *>();
+        QVERIFY(sourceEditor != nullptr);
+        QTextCursor cursor(sourceEditor->document()->findBlockByLineNumber(5)); // before endscrap
+        cursor.insertText(QStringLiteral("line wall\n  -400 -400\n  -300 -450\nendline\n"));
+        QTRY_VERIFY(outline->item() != nullptr && outline->item()->outlinePath().elementCount() > elementsBefore);
+
+        // The partner's scene scaling changed with its bounds; the join stations must still coincide.
+        const QPointF partnerStationScene = second_->mapSourceToSceneTransform().map(kSecondJoin);
+        QVERIFY(near(outline->item()->mapToScene(partnerStationScene),
+                     first_->mapSourceToSceneTransform().map(kFirstJoin),
+                     1e-6));
+    }
+
+    void followsMapVertexMovesInThePartnerDrawing()
+    {
+        MapEditorJoinOutline *outline = MapEditorJoinOutline::attach(first_, second_, secondToFirst_);
+        QVERIFY(outline != nullptr && outline->item() != nullptr);
+        const QRectF boundsBefore = outline->item()->outlinePath().boundingRect();
+
+        // Drag the wall's end vertex on the partner's map, as a user would. For a plain wall the editor skips
+        // its own scene refresh, so the outline must follow the source change itself.
+        const QPointF wallEnd(10 * 19.685, 5 * 19.685);
+        second_->testRecordLineAreaVertexMove(kSecondWallLine, QStringLiteral("line"), 1, wallEnd, wallEnd + QPointF(300, 200));
+        QVERIFY(second_->text().contains(QStringLiteral("  496.85 298.425")));
+        QTRY_VERIFY(outline->item() != nullptr && outline->item()->outlinePath().boundingRect() != boundsBefore);
+
+        const QPointF partnerStationScene = second_->mapSourceToSceneTransform().map(kSecondJoin);
+        QVERIFY(near(outline->item()->mapToScene(partnerStationScene),
+                     first_->mapSourceToSceneTransform().map(kFirstJoin),
+                     1e-6));
+    }
+
     void opensLinksAndClosesAJoinPair()
     {
         // A line that is not a station point cannot be placed; nothing is created.
@@ -208,6 +256,7 @@ private slots:
 private:
     static constexpr int kFirstJoinLine = 5;
     static constexpr int kSecondJoinLine = 3;
+    static constexpr int kSecondWallLine = 6;
     const QPointF kFirstJoin = QPointF(10 * 78.74, 5 * 78.74);
     const QPointF kSecondJoin = QPointF(0, 0);
 

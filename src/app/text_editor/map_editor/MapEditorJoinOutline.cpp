@@ -9,6 +9,7 @@ namespace TherionStudio
 namespace
 {
 constexpr qreal kJoinOutlineZValue = 2.0; // above backgrounds, below the drawing's own lines (2.5)
+constexpr int kPartnerChangeDebounceMs = 150;
 const QColor kJoinOutlineColor(128, 128, 128, 150);
 
 QTransform qTransformFromSimilarity(const Th2SimilarityTransform &similarity)
@@ -82,6 +83,12 @@ MapEditorJoinOutline::MapEditorJoinOutline(MapEditorTab *host,
     , partner_(partner)
     , partnerToHost_(qTransformFromSimilarity(partnerToHost))
 {
+    // Some map edits (e.g. moving a vertex of a plain line) change the source without a scene refresh, so follow
+    // the partner's text; the outline is built from its current source snapshot, not its scene.
+    partnerChangeDebounce_.setSingleShot(true);
+    partnerChangeDebounce_.setInterval(kPartnerChangeDebounceMs);
+    connect(&partnerChangeDebounce_, &QTimer::timeout, this, &MapEditorJoinOutline::rebuildPath);
+    connect(partner, &MapEditorTab::documentTextChanged, &partnerChangeDebounce_, qOverload<>(&QTimer::start));
     connect(partner, &MapEditorTab::sceneProjectionRefreshCompleted, this, &MapEditorJoinOutline::rebuildPath);
     connect(host, &MapEditorTab::sceneProjectionRefreshCompleted, this, &MapEditorJoinOutline::placeItem);
     // The outline belongs to the pair: closing the partner removes it.
