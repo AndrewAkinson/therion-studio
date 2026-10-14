@@ -247,6 +247,13 @@ private slots:
         second_->setMapViewCentreAndScale(kSecondJoin + QPointF(19.685, 0), second_->mapViewPixelsPerSourceUnit());
         QTRY_VERIFY(showSamePoint(first_, second_, secondToFirst_));
 
+        // Opening with a separate window shows the second drawing's map there and keeps the views linked.
+        QVERIFY(!second_->isMapPaneDetached());
+        QVERIFY(openMapEditorJoinPair(first_, kFirstJoinLine, second_, kSecondJoinLine, true));
+        QVERIFY(second_->isMapPaneDetached());
+        QTRY_VERIFY(showSamePoint(first_, second_, secondToFirst_));
+        QCOMPARE(mapEditorJoinPairsFor(first_).size(), 1);
+
         closeMapEditorJoinPair(second_, first_);
         QVERIFY(mapEditorJoinPairsFor(first_).isEmpty());
         QVERIFY(mapEditorJoinPairsFor(second_).isEmpty());

@@ -26,7 +26,11 @@ MapEditorJoinViewLink *joinLinkBetween(MapEditorTab *first, MapEditorTab *second
 }
 }
 
-bool openMapEditorJoinPair(MapEditorTab *first, int firstJoinLine, MapEditorTab *second, int secondJoinLine)
+bool openMapEditorJoinPair(MapEditorTab *first,
+                           int firstJoinLine,
+                           MapEditorTab *second,
+                           int secondJoinLine,
+                           bool separateSecondMap)
 {
     if (first == nullptr || second == nullptr || first == second) {
         return false;
@@ -40,6 +44,10 @@ bool openMapEditorJoinPair(MapEditorTab *first, int firstJoinLine, MapEditorTab 
     }
 
     closeMapEditorJoinPair(first, second);
+    // Separate before aligning; the link follows any viewport resize while the window is laid out.
+    if (separateSecondMap && !second->isMapPaneDetached()) {
+        second->toggleMapPaneWindow();
+    }
     const Th2SimilarityTransform secondToFirst = joinPartnerToThisTransform(firstFit, *firstJoin, secondFit, *secondJoin);
     MapEditorJoinOutline::attach(first, second, secondToFirst);
     MapEditorJoinOutline::attach(second, first, secondToFirst.inverted());

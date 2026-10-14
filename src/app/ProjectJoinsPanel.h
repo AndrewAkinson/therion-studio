@@ -22,9 +22,15 @@ public:
     explicit ProjectJoinsPanel(QWidget *parent = nullptr);
 
     void setProjectIndex(const ProjectIndexSnapshot &snapshot);
+    // Whether double-click / Enter opens the second drawing's map in a separate window; the context menu offers the
+    // other choice.
+    void setActivationOpensSeparateWindow(bool separateWindow);
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 signals:
-    void joinRequested(const TherionStudio::ProjectJoinPair &pair);
+    void joinRequested(const TherionStudio::ProjectJoinPair &pair, bool separateWindow);
     void sourceLocationRequested(const QString &sourceFile, int lineNumber);
     void statusMessageRequested(const QString &message);
 
@@ -45,5 +51,7 @@ private:
     QTreeView *tree_ = nullptr;
     QStandardItemModel *model_ = nullptr;
     QSortFilterProxyModel *proxyModel_ = nullptr;
+    bool activationOpensSeparateWindow_ = false;
+    bool contextMenuFromKeyboard_ = false;
 };
 }

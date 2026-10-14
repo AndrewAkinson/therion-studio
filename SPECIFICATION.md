@@ -243,7 +243,7 @@ The application shall provide a project navigation sidebar that combines project
 Required capabilities:
 
 - display project files and folders in a `Files` tab
-- display only surveys, maps, and scraps in the Structure sidebar hierarchy
+- display only surveys, maps, and scraps in the `Survey` and `Map` Structure hierarchies, and connections between surveys in a separate `Joins` view
 - allow navigation through the project hierarchy
 - show selection state and the active document context
 - provide a readable overview of the current project structure
@@ -577,7 +577,7 @@ The rules below define the expected day-to-day interaction model. If a later req
 
 #### 3.8.6 Structure Sidebar Behavior
 
-- The structure sidebar shall present a navigable project hierarchy limited to surveys, maps, and scraps.
+- The `Survey` and `Map` views shall present a navigable project hierarchy limited to surveys, maps, and scraps. The `Joins` view lists connections between surveys and is not part of that hierarchy.
 - The structure sidebar shall show a short explanatory description above the hierarchy tree.
 - The structure sidebar shall not prepend synthetic top rows for project-root path or summary text inside the hierarchy tree.
 - Structure rows shall include category icons for survey, map, and scrap items using the bundled compass, map, and puzzle Lucide icons respectively.
@@ -601,8 +601,9 @@ The rules below define the expected day-to-day interaction model. If a later req
 - Activating an available join row shall open both `.th2` drawings in the map editor, each navigated to its join-station point. Activating an unavailable row shall show its reason in the status bar instead.
 - When both drawings of an opened join can be placed on the centreline, each map editor shall show the other drawing as a faded, read-only outline of its lines and station points, aligned so the two join stations coincide. Placement shall fit each scrap's station points to the centreline stations of its referenced `.xvi` (metres from the `.xvi` grid), falling back to one station with the `.xvi` grid scale and then to the scrap `-scale`; it shall not depend on where the `.xvi` background is placed. The outline shall not be selectable or editable, shall update when the other drawing changes, shall survive map refreshes, and shall be removed when the other drawing is closed. When a drawing cannot be placed, both drawings shall still open and the status bar shall say why.
 - An opened join shall also link the two map views: both shall centre on the join station with about 30 m of cave across the first view, and panning or zooming either view shall move the other so the same real point stays centred at the same real-world scale. Views may follow each other to within a few screen pixels because each view scrolls in whole pixels.
-- While the current map document is part of a join, the status bar shall show a `Joined` indicator naming the other drawing (or the number of joined drawings). Its menu shall offer, for each joined drawing, `Link Views` and `Show Outline` toggles and `Remove Join`, which removes the link and both outlines. Closing either drawing shall end its joins.
-- The `Joins` row context menu shall provide `Open Join`, `Go to Equate in Source`, and an action to open each drawn side at its station point.
+- While the current map document is part of a join, the status bar shall show a `Joined` indicator naming the other drawing (or the number of joined drawings). Its menu shall offer, for each joined drawing, `Link Views` and `Show Outline` toggles and `Remove Join`, which removes the link and both outlines. The same menu shall be available from `View -> Joined Drawings` so it is reachable from the keyboard, showing a disabled `No joined drawings` entry when the current document has no joins. Closing either drawing shall end its joins.
+- The `Joins` row context menu shall provide `Open Join`, `Go to Equate in Source`, and an action to open each drawn side at its station point. When opened from the keyboard (Menu key or Shift+F10), the context menu shall act on the current row and open at that row, not at the mouse pointer.
+- Opening a join may show the second drawing's map in the map editor's separate map window, with the first drawing current in the main window and the two views still linked. By default, activating a row (double-click or `Enter`) opens both drawings as tabs and the context menu offers `Open Join with Separate Window`; a Settings option, `Opening a join shows the second drawing in a separate window`, swaps them so activation uses the separate window and the context menu offers `Open Join in Tabs`. The option is stored with the other application settings.
 - The Structure sidebar shall remain a lightweight navigation/indexing aid; it shall not be presented as a full substitute for Therion compiler validation or export selection semantics.
 - Selecting a row in the structure sidebar shall only select that row. Activating a source row, such as by double-clicking it or pressing Enter, shall change the active document context and navigate to the source location.
 - The structure sidebar shall remain synchronized with the open project and the currently selected content when possible.
@@ -700,6 +701,7 @@ Platform modifier mapping:
 | Expand/Collapse Map Inspector | View | none | Expand or collapse the TH2 Visual map editor's inspector column without modifying document source |
 | Expand/Collapse Map Inspector and Help | View | none | When a TH2 Visual map pane is detached, expose both controls because the detached visual map and raw source help are visible at the same time |
 | Show/Hide Map Magnifier | View | none | Enable or disable the visual map magnifier overlay as UI/session state only |
+| Joined Drawings | View | none | For the current map document, list the drawings joined to it with `Link Views` / `Show Outline` toggles and `Remove Join`, the same menu as the status-bar `Joined` indicator |
 | Enter/Exit Full Screen | View | platform full-screen shortcut | Toggle the main window full-screen state |
 | New Project | File | none | Expose `Project from Template...` and `Empty Project...` creation choices; disabled while a project is already open |
 | Open Project… | File | Command+O | Open a Therion project; disabled while a project is already open |
@@ -1227,7 +1229,7 @@ The criteria below are intended for implementation verification and QA.
 
 #### 8.1.5 Structure Sidebar
 
-- The structure sidebar shows only surveys, maps, and scraps.
+- The `Survey` and `Map` structure views show only surveys, maps, and scraps.
 - The structure tree does not include synthetic project-root or summary rows.
 - Sidebar selection changes the active document context.
 - The sidebar remains synchronized with the open project when the underlying structure changes.
@@ -1420,6 +1422,7 @@ The following items may be delivered after the MVP, provided they do not regress
 - stronger session restoration of viewport, selection, and window layout state
 - additional quality-of-life shortcuts or menu actions that do not conflict with the documented command set
 - broader translation coverage for extended documentation/help content beyond the core UI string catalogs
+- cross-survey join navigation: the `Joins` view, centreline-aligned faded partner outlines, and linked map views for drawings of different surveys
 - deeper pen/stylus ergonomics, including hover, pressure, and tilt handling where available
 - Sidecar-specific refinements for macOS secondary-display workflows
 

@@ -18,9 +18,14 @@ struct MapEditorJoinPair
 };
 
 // Aligns two open drawings at their join-station points (source line numbers) through each scrap's centreline
-// fit, shows each as an outline in the other, links the two views, and zooms both onto the join. Replaces any
-// existing join between the same two editors. Returns false, changing nothing, when either drawing cannot be placed.
-bool openMapEditorJoinPair(MapEditorTab *first, int firstJoinLine, MapEditorTab *second, int secondJoinLine);
+// fit, shows each as an outline in the other, links the two views, and zooms both onto the join. With
+// `separateSecondMap`, the second drawing's map is shown in its separate map window. Replaces any existing join
+// between the same two editors. Returns false, changing nothing, when either drawing cannot be placed.
+bool openMapEditorJoinPair(MapEditorTab *first,
+                           int firstJoinLine,
+                           MapEditorTab *second,
+                           int secondJoinLine,
+                           bool separateSecondMap = false);
 
 [[nodiscard]] QVector<MapEditorJoinPair> mapEditorJoinPairsFor(MapEditorTab *tab);
 

@@ -92,6 +92,13 @@ MainWindowSettingsDialog::MainWindowSettingsDialog(const Settings &settings, QWi
         tr("When enabled, the Validation panel refreshes the whole project after project, document, and file changes."));
     formLayout->addRow(QString(), automaticProjectValidationCheckBox_);
 
+    joinOpensSeparateWindowCheckBox_ =
+        new QCheckBox(tr("Opening a join shows the second drawing in a separate window"), this);
+    joinOpensSeparateWindowCheckBox_->setChecked(settings.joinOpensSeparateWindow);
+    joinOpensSeparateWindowCheckBox_->setToolTip(
+        tr("Applies to double-click and Enter on the Joins page; the right-click menu offers the other choice."));
+    formLayout->addRow(QString(), joinOpensSeparateWindowCheckBox_);
+
     troubleshootingLogsCheckBox_ =
         new QCheckBox(tr("Enable troubleshooting logs for 24 hours"), this);
     troubleshootingLogsCheckBox_->setChecked(settings.troubleshootingLogsEnabled);
@@ -147,6 +154,8 @@ MainWindowSettingsDialog::Settings MainWindowSettingsDialog::settings() const
         : QStringLiteral("raw");
     result.automaticProjectValidationEnabled = automaticProjectValidationCheckBox_ != nullptr
         && automaticProjectValidationCheckBox_->isChecked();
+    result.joinOpensSeparateWindow = joinOpensSeparateWindowCheckBox_ != nullptr
+        && joinOpensSeparateWindowCheckBox_->isChecked();
     result.troubleshootingLogsEnabled = troubleshootingLogsCheckBox_ != nullptr
         && troubleshootingLogsCheckBox_->isChecked();
     return result;

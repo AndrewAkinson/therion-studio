@@ -3,6 +3,8 @@
 #include <QApplication>
 #include <QComboBox>
 #include <QLineEdit>
+#include <QMenu>
+#include <QTimer>
 #include <QSignalSpy>
 #include <QTreeView>
 #include <QtTest/QtTest>
@@ -62,7 +64,9 @@ private slots:
         QSignalSpy statusSpy(&panel, &ProjectJoinsPanel::statusMessageRequested);
         emit tree->activated(model->index(0, 0));
         QCOMPARE(joinSpy.count(), 1);
-        const ProjectJoinPair pair = joinSpy.takeFirst().at(0).value<ProjectJoinPair>();
+        const QList<QVariant> arguments = joinSpy.takeFirst();
+        QCOMPARE(arguments.at(1).toBool(), false); // default: both drawings as tabs
+        const ProjectJoinPair pair = arguments.at(0).value<ProjectJoinPair>();
         QCOMPARE(pair.first.drawing->sourceFile, QStringLiteral("upper.th2"));
         QCOMPARE(pair.second.drawing->sourceFile, QStringLiteral("lower.th2"));
 
@@ -71,6 +75,42 @@ private slots:
         QCOMPARE(joinSpy.count(), 0);
         QCOMPARE(statusSpy.count(), 1);
         QVERIFY(statusSpy.takeFirst().at(0).toString().contains(QStringLiteral("3@side")));
+
+        // The Settings option swaps double-click to open the second drawing in a separate window.
+        panel.setActivationOpensSeparateWindow(true);
+        emit tree->activated(model->index(0, 0));
+        QCOMPARE(joinSpy.count(), 1);
+        QCOMPARE(joinSpy.takeFirst().at(1).toBool(), true);
+    }
+
+    void keyboardContextMenuTargetsTheCurrentRow()
+    {
+        ProjectJoinsPanel panel;
+        panel.resize(400, 400);
+        panel.setProjectIndex(joinSnapshot());
+        panel.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&panel));
+        auto *tree = panel.findChild<QTreeView *>();
+        tree->setFocus();
+        // Row 1 is a multi-station group: its menu has no `Open Join` (that is per pair), unlike row 0.
+        tree->setCurrentIndex(tree->model()->index(1, 0));
+
+        // Read the popup's actions, then close it so the modal menu returns.
+        QStringList menuActions;
+        QTimer::singleShot(0, [&menuActions]() {
+            if (auto *menu = qobject_cast<QMenu *>(QApplication::activePopupWidget())) {
+                for (const QAction *action : menu->actions()) {
+                    menuActions.append(action->text());
+                }
+                menu->close();
+            }
+        });
+        // The Menu key / Shift+F10 sends a keyboard context-menu event to the focused view.
+        QContextMenuEvent keyboardMenu(QContextMenuEvent::Keyboard, QPoint(0, 0));
+        QCoreApplication::sendEvent(tree, &keyboardMenu);
+
+        QVERIFY2(menuActions.contains(tr("Go to Equate in Source")), qPrintable(menuActions.join(QLatin1Char('|'))));
+        QVERIFY2(!menuActions.contains(tr("Open Join")), qPrintable(menuActions.join(QLatin1Char('|'))));
     }
 
     void keepsProjectionAndFiltersRows()

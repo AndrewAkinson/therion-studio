@@ -47,6 +47,9 @@ public:
 
     virtual bool automaticProjectValidationEnabled() const = 0;
     virtual void setAutomaticProjectValidationEnabled(bool enabled) = 0;
+    // When true, activating a Joins row opens the second drawing's map in a separate window.
+    virtual bool joinOpensSeparateWindow() const = 0;
+    virtual void setJoinOpensSeparateWindow(bool enabled) = 0;
 
     virtual QDateTime troubleshootingLogsEnabledUntilUtc() const = 0;
     virtual void setTroubleshootingLogsEnabledUntilUtc(const QDateTime &enabledUntilUtc) = 0;

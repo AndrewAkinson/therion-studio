@@ -89,29 +89,7 @@ void MainWindow::initializeDocumentStatusWidgets()
     statusMapJoinButton_->setMenu(new QMenu(statusMapJoinButton_));
     statusMapJoinButton_->setVisible(false);
     connect(statusMapJoinButton_->menu(), &QMenu::aboutToShow, this, [this]() {
-        QMenu *menu = statusMapJoinButton_->menu();
-        menu->clear();
-        auto *mapTab = qobject_cast<TherionStudio::MapEditorTab *>(currentDocumentWidget());
-        for (const TherionStudio::MapEditorJoinPair &pair : TherionStudio::mapEditorJoinPairsFor(mapTab)) {
-            menu->addSection(pair.partner->displayName());
-            if (pair.link != nullptr) {
-                QAction *linkViews = menu->addAction(tr("Link Views"));
-                linkViews->setCheckable(true);
-                linkViews->setChecked(pair.link->isEnabled());
-                connect(linkViews, &QAction::toggled, pair.link, &TherionStudio::MapEditorJoinViewLink::setEnabled);
-            }
-            QAction *showOutline = menu->addAction(tr("Show Outline"));
-            showOutline->setCheckable(true);
-            showOutline->setChecked(pair.outline->isOutlineVisible());
-            connect(showOutline, &QAction::toggled, pair.outline, &TherionStudio::MapEditorJoinOutline::setOutlineVisible);
-            QAction *removeJoin = menu->addAction(tr("Remove Join"));
-            const QPointer<TherionStudio::MapEditorTab> host(mapTab);
-            const QPointer<TherionStudio::MapEditorTab> partner(pair.partner);
-            connect(removeJoin, &QAction::triggered, this, [this, host, partner]() {
-                TherionStudio::closeMapEditorJoinPair(host, partner);
-                refreshDocumentStatusWidgets();
-            });
-        }
+        populateMapJoinMenu(statusMapJoinButton_->menu());
     });
 
     statusBar()->addWidget(statusHintLabel_, 1);
@@ -188,6 +166,37 @@ void MainWindow::refreshDocumentStatusWidgets()
     }
 
     updateDocumentMenuActionState();
+}
+
+void MainWindow::populateMapJoinMenu(QMenu *menu)
+{
+    menu->clear();
+    auto *mapTab = qobject_cast<TherionStudio::MapEditorTab *>(currentDocumentWidget());
+    const QVector<TherionStudio::MapEditorJoinPair> pairs = TherionStudio::mapEditorJoinPairsFor(mapTab);
+    if (pairs.isEmpty()) {
+        menu->addAction(tr("No joined drawings"))->setEnabled(false);
+        return;
+    }
+    for (const TherionStudio::MapEditorJoinPair &pair : pairs) {
+        menu->addSection(pair.partner->displayName());
+        if (pair.link != nullptr) {
+            QAction *linkViews = menu->addAction(tr("Link Views"));
+            linkViews->setCheckable(true);
+            linkViews->setChecked(pair.link->isEnabled());
+            connect(linkViews, &QAction::toggled, pair.link, &TherionStudio::MapEditorJoinViewLink::setEnabled);
+        }
+        QAction *showOutline = menu->addAction(tr("Show Outline"));
+        showOutline->setCheckable(true);
+        showOutline->setChecked(pair.outline->isOutlineVisible());
+        connect(showOutline, &QAction::toggled, pair.outline, &TherionStudio::MapEditorJoinOutline::setOutlineVisible);
+        QAction *removeJoin = menu->addAction(tr("Remove Join"));
+        const QPointer<TherionStudio::MapEditorTab> host(mapTab);
+        const QPointer<TherionStudio::MapEditorTab> partner(pair.partner);
+        connect(removeJoin, &QAction::triggered, this, [this, host, partner]() {
+            TherionStudio::closeMapEditorJoinPair(host, partner);
+            refreshDocumentStatusWidgets();
+        });
+    }
 }
 
 void MainWindow::refreshMapJoinStatusButton(TherionStudio::MapEditorTab *mapTab)

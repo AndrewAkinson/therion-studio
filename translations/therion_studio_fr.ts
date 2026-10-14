@@ -447,6 +447,11 @@
         <translation>Affiche ou masque la loupe du dessin dans les éditeurs de dessin.</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindow.cpp" line="676"/>
+        <source>Joined Drawings</source>
+        <translation>Dessins joints</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindow.cpp" line="679"/>
         <source>Enter or exit full screen mode.</source>
         <translation>Active ou désactive le mode plein écran.</translation>
@@ -1300,6 +1305,11 @@ Si le fichier est ouvert, il sera d&apos;abord fermé.</translation>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="139"/>
         <source>M: Insert</source>
         <translation>M : Insertion</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="177"/>
+        <source>No joined drawings</source>
+        <translation>Aucun dessin joint</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="201"/>
@@ -3709,6 +3719,16 @@ Lignes de points : %1</translation>
         <location filename="../src/app/MainWindowSettingsDialog.cpp" line="92"/>
         <source>When enabled, the Validation panel refreshes the whole project after project, document, and file changes.</source>
         <translation>Lorsque cette option est activée, le panneau Validation actualise l&apos;ensemble du projet après chaque modification de projet, de document ou de fichier.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="96"/>
+        <source>Opening a join shows the second drawing in a separate window</source>
+        <translation>L’ouverture d’une jonction affiche le second dessin dans une fenêtre séparée</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="99"/>
+        <source>Applies to double-click and Enter on the Joins page; the right-click menu offers the other choice.</source>
+        <translation>S’applique au double-clic et à Entrée dans la page Jonctions ; le menu contextuel propose l’autre choix.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowSettingsDialog.cpp" line="96"/>
@@ -6345,6 +6365,16 @@ Supprimer le sommet malgré tout ?</translation>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="246"/>
         <source>Open Join</source>
         <translation>Ouvrir la jonction</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="267"/>
+        <source>Open Join in Tabs</source>
+        <translation>Ouvrir la jonction dans des onglets</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="267"/>
+        <source>Open Join with Separate Window</source>
+        <translation>Ouvrir la jonction avec une fenêtre séparée</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="250"/>

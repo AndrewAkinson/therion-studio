@@ -455,6 +455,11 @@
         <translation>Zobraziť alebo skryť prekrytie lupy v mapových editoroch.</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindow.cpp" line="676"/>
+        <source>Joined Drawings</source>
+        <translation>Spojené kresby</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindow.cpp" line="679"/>
         <source>Enter or exit full screen mode.</source>
         <translation>Vstúpiť do režimu celej obrazovky alebo ho ukončiť.</translation>
@@ -1340,6 +1345,11 @@ Ak je súbor otvorený, najprv sa zavrie.</translation>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="139"/>
         <source>M: Insert</source>
         <translation>M: Vložiť</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="177"/>
+        <source>No joined drawings</source>
+        <translation>Žiadne spojené kresby</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="201"/>
@@ -3773,6 +3783,16 @@ Line-point options: %1</translation>
         <location filename="../src/app/MainWindowSettingsDialog.cpp" line="92"/>
         <source>When enabled, the Validation panel refreshes the whole project after project, document, and file changes.</source>
         <translation>Keď je zapnuté, panel Validácia obnoví celý projekt po zmenách projektu, dokumentov a súborov.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="96"/>
+        <source>Opening a join shows the second drawing in a separate window</source>
+        <translation>Otvorenie spojenia zobrazí druhú kresbu v samostatnom okne</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="99"/>
+        <source>Applies to double-click and Enter on the Joins page; the right-click menu offers the other choice.</source>
+        <translation>Platí pre dvojklik a Enter na stránke Spojenia; ponuka pravého tlačidla ponúka druhú možnosť.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowSettingsDialog.cpp" line="96"/>
@@ -6510,6 +6530,16 @@ subtype blocks</translation>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="246"/>
         <source>Open Join</source>
         <translation>Otvoriť spojenie</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="267"/>
+        <source>Open Join in Tabs</source>
+        <translation>Otvoriť spojenie v kartách</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="267"/>
+        <source>Open Join with Separate Window</source>
+        <translation>Otvoriť spojenie so samostatným oknom</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="250"/>

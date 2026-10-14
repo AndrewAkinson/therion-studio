@@ -1,6 +1,7 @@
 #include "ProjectJoinsPanel.h"
 
 #include <QComboBox>
+#include <QContextMenuEvent>
 #include <QFileInfo>
 #include <QHeaderView>
 #include <QLabel>
@@ -87,6 +88,9 @@ ProjectJoinsPanel::ProjectJoinsPanel(QWidget *parent)
     connect(filterEdit_, &QLineEdit::textChanged, proxyModel_, &QSortFilterProxyModel::setFilterFixedString);
     connect(tree_, &QTreeView::activated, this, &ProjectJoinsPanel::activateRow);
     connect(tree_, &QTreeView::customContextMenuRequested, this, &ProjectJoinsPanel::showContextMenu);
+    // A keyboard-opened menu (Menu key, Shift+F10) must act on the current row, not the row under the pointer.
+    tree_->installEventFilter(this);
+    tree_->viewport()->installEventFilter(this);
 }
 
 void ProjectJoinsPanel::setProjectIndex(const ProjectIndexSnapshot &snapshot)
@@ -102,6 +106,19 @@ void ProjectJoinsPanel::setProjectIndex(const ProjectIndexSnapshot &snapshot)
         projectionCombo_->setCurrentIndex(keptIndex >= 0 ? keptIndex : (projections.isEmpty() ? -1 : 0));
     }
     rebuildRows();
+}
+
+bool ProjectJoinsPanel::eventFilter(QObject *watched, QEvent *event)
+{
+    if (event->type() == QEvent::ContextMenu && (watched == tree_ || watched == tree_->viewport())) {
+        contextMenuFromKeyboard_ = static_cast<QContextMenuEvent *>(event)->reason() == QContextMenuEvent::Keyboard;
+    }
+    return QWidget::eventFilter(watched, event);
+}
+
+void ProjectJoinsPanel::setActivationOpensSeparateWindow(bool separateWindow)
+{
+    activationOpensSeparateWindow_ = separateWindow;
 }
 
 void ProjectJoinsPanel::rebuildRows()
@@ -225,12 +242,14 @@ void ProjectJoinsPanel::activateRow(const QModelIndex &proxyIndex)
         emit statusMessageRequested(unavailableReason(*pair));
         return;
     }
-    emit joinRequested(*pair);
+    emit joinRequested(*pair, activationOpensSeparateWindow_);
 }
 
 void ProjectJoinsPanel::showContextMenu(const QPoint &position)
 {
-    const QModelIndex proxyIndex = tree_->indexAt(position);
+    const QModelIndex proxyIndex = contextMenuFromKeyboard_ ? tree_->currentIndex() : tree_->indexAt(position);
+    const QPoint menuPosition = contextMenuFromKeyboard_ ? tree_->visualRect(proxyIndex).bottomLeft() : position;
+    contextMenuFromKeyboard_ = false;
     const ProjectJoinGroup *group = groupForIndex(proxyIndex);
     if (group == nullptr) {
         return;
@@ -243,9 +262,13 @@ void ProjectJoinsPanel::showContextMenu(const QPoint &position)
         : std::nullopt;
     QMenu menu(this);
     if (pair.has_value()) {
+        const bool separate = activationOpensSeparateWindow_;
         QAction *openJoin = menu.addAction(tr("Open Join"));
+        QAction *openOther = menu.addAction(separate ? tr("Open Join in Tabs") : tr("Open Join with Separate Window"));
         openJoin->setEnabled(pair->isAvailable());
-        connect(openJoin, &QAction::triggered, this, [this, pair]() { emit joinRequested(*pair); });
+        openOther->setEnabled(pair->isAvailable());
+        connect(openJoin, &QAction::triggered, this, [this, pair, separate]() { emit joinRequested(*pair, separate); });
+        connect(openOther, &QAction::triggered, this, [this, pair, separate]() { emit joinRequested(*pair, !separate); });
     }
     QAction *goToEquate = menu.addAction(tr("Go to Equate in Source"));
     connect(goToEquate, &QAction::triggered, this, [this, link]() {
@@ -264,6 +287,6 @@ void ProjectJoinsPanel::showContextMenu(const QPoint &position)
             });
         }
     }
-    menu.exec(tree_->viewport()->mapToGlobal(position));
+    menu.exec(tree_->viewport()->mapToGlobal(menuPosition));
 }
 }

@@ -228,7 +228,7 @@ private:
     QByteArray documentFileFingerprint(const QString &filePath) const;
     void openStructureSourceIndex(const QModelIndex &current, QTreeView *sourceTree);
     QWidget *openProjectSourceLocation(const QString &sourceFile, int lineNumber);
-    void openProjectJoin(const TherionStudio::ProjectJoinPair &pair);
+    void openProjectJoin(const TherionStudio::ProjectJoinPair &pair, bool separateWindow);
     void handleStructureItemActivated(const QModelIndex &index, QTreeView *sourceTree);
     bool confirmCloseTab(int index);
     bool closeOpenDocumentForFilePath(const QString &filePath);
@@ -294,6 +294,7 @@ private:
     void refreshDocumentStatusWidgets();
     void updateStatusHintLabel(const QString &text);
     void refreshMapJoinStatusButton(TherionStudio::MapEditorTab *mapTab);
+    void populateMapJoinMenu(QMenu *menu);
     void updateDocumentMenuActionState();
     void setCompilerStatusIdle();
     void setCompilerStatusRunning(const QString &configPath);

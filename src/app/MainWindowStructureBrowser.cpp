@@ -1186,7 +1186,7 @@ QWidget *MainWindow::openProjectSourceLocation(const QString &sourceFile, int li
     return tabWidget;
 }
 
-void MainWindow::openProjectJoin(const TherionStudio::ProjectJoinPair &pair)
+void MainWindow::openProjectJoin(const TherionStudio::ProjectJoinPair &pair, bool separateWindow)
 {
     if (!pair.isAvailable()) {
         return;
@@ -1203,7 +1203,11 @@ void MainWindow::openProjectJoin(const TherionStudio::ProjectJoinPair &pair)
     }
 
     // Outline each drawing in the other and link their views, aligned at the join station.
-    if (!TherionStudio::openMapEditorJoinPair(firstTab, firstLine, secondTab, secondLine)) {
+    if (separateWindow) {
+        // The main window shows the first drawing; the second drawing's map is in its separate window.
+        editorTabs_->setCurrentWidget(firstTab);
+    }
+    if (!TherionStudio::openMapEditorJoinPair(firstTab, firstLine, secondTab, secondLine, separateWindow)) {
         statusBar()->showMessage(tr("Cannot align the joined drawings: a scrap has no XVI centreline stations or -scale."),
                                  5000);
     }

@@ -21,6 +21,7 @@ const auto kStructureNameOverridesKey = QStringLiteral("session/structureNameOve
 const auto kApplicationLanguageKey = QStringLiteral("settings/applicationLanguage");
 const auto kDefaultTextEditorModeKey = QStringLiteral("settings/defaultTextEditorMode");
 const auto kAutomaticProjectValidationEnabledKey = QStringLiteral("settings/automaticProjectValidationEnabled");
+const auto kJoinOpensSeparateWindowKey = QStringLiteral("settings/joinOpensSeparateWindow");
 const auto kTroubleshootingLogsEnabledUntilUtcKey = QStringLiteral("settings/troubleshootingLogsEnabledUntilUtc");
 const auto kTherionExecutablePathKey = QStringLiteral("session/therionExecutablePath");
 const auto kTherionWorkingDirectoryKey = QStringLiteral("session/therionWorkingDirectory");
@@ -207,6 +208,16 @@ bool SessionSettingsStore::automaticProjectValidationEnabled() const
 void SessionSettingsStore::setAutomaticProjectValidationEnabled(bool enabled)
 {
     settings_->setValue(kAutomaticProjectValidationEnabledKey, enabled);
+}
+
+bool SessionSettingsStore::joinOpensSeparateWindow() const
+{
+    return settings_->value(kJoinOpensSeparateWindowKey, false).toBool();
+}
+
+void SessionSettingsStore::setJoinOpensSeparateWindow(bool enabled)
+{
+    settings_->setValue(kJoinOpensSeparateWindowKey, enabled);
 }
 
 QDateTime SessionSettingsStore::troubleshootingLogsEnabledUntilUtc() const
@@ -447,6 +458,16 @@ void InMemorySessionStore::setAutomaticProjectValidationEnabled(bool enabled)
     automaticProjectValidationEnabled_ = enabled;
 }
 
+bool InMemorySessionStore::joinOpensSeparateWindow() const
+{
+    return joinOpensSeparateWindow_;
+}
+
+void InMemorySessionStore::setJoinOpensSeparateWindow(bool enabled)
+{
+    joinOpensSeparateWindow_ = enabled;
+}
+
 QDateTime InMemorySessionStore::troubleshootingLogsEnabledUntilUtc() const
 {
     return troubleshootingLogsEnabledUntilUtc_;
@@ -547,4 +568,20 @@ void InMemorySessionStore::setTherionMapBackgroundLayers(const QString &json)
     therionMapBackgroundLayers_ = json;
 }
 
+
+void copyApplicationSettings(const ISessionStore &source, ISessionStore &target)
+{
+    target.setApplicationLanguage(source.applicationLanguage());
+    target.setDefaultTextEditorMode(source.defaultTextEditorMode());
+    target.setTherionExecutablePath(source.therionExecutablePath());
+    target.setTherionRunTargetMode(source.therionRunTargetMode());
+    target.setAutomaticProjectValidationEnabled(source.automaticProjectValidationEnabled());
+    target.setJoinOpensSeparateWindow(source.joinOpensSeparateWindow());
+    target.setTroubleshootingLogsEnabledUntilUtc(source.troubleshootingLogsEnabledUntilUtc());
+    target.setTherionMapMagnifierEnabled(source.therionMapMagnifierEnabled());
+    target.setTherionMapObjectsAutoCollapseExpandScrapsEnabled(
+        source.therionMapObjectsAutoCollapseExpandScrapsEnabled());
+    target.setLastProjectParentDirectory(source.lastProjectParentDirectory());
+    target.setRecentProjectPaths(source.recentProjectPaths());
+}
 }

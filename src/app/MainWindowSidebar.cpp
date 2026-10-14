@@ -386,6 +386,9 @@ void MainWindow::buildStructureSidebar()
     structureViewStack_->addWidget(surveyStructurePage);
     structureViewStack_->addWidget(mapStructurePage);
     projectJoinsPanel_ = new TherionStudio::ProjectJoinsPanel(structureViewStack_);
+    if (sessionStore_ != nullptr) {
+        projectJoinsPanel_->setActivationOpensSeparateWindow(sessionStore_->joinOpensSeparateWindow());
+    }
     structureViewStack_->addWidget(projectJoinsPanel_);
     connect(projectJoinsPanel_, &TherionStudio::ProjectJoinsPanel::joinRequested, this, &MainWindow::openProjectJoin);
     connect(projectJoinsPanel_,

@@ -50,6 +50,8 @@ public:
 
     bool automaticProjectValidationEnabled() const override { return automaticProjectValidationEnabled_; }
     void setAutomaticProjectValidationEnabled(bool enabled) override { automaticProjectValidationEnabled_ = enabled; }
+    bool joinOpensSeparateWindow() const override { return joinOpensSeparateWindow_; }
+    void setJoinOpensSeparateWindow(bool enabled) override { joinOpensSeparateWindow_ = enabled; }
 
     QDateTime troubleshootingLogsEnabledUntilUtc() const override { return troubleshootingLogsEnabledUntilUtc_; }
     void setTroubleshootingLogsEnabledUntilUtc(const QDateTime &enabledUntilUtc) override
@@ -109,6 +111,7 @@ private:
     QString applicationLanguage_ = QStringLiteral("system");
     QString defaultTextEditorMode_ = QStringLiteral("raw");
     bool automaticProjectValidationEnabled_ = false;
+    bool joinOpensSeparateWindow_ = false;
     QDateTime troubleshootingLogsEnabledUntilUtc_;
     QString therionExecutablePath_;
     QString therionWorkingDirectory_;
