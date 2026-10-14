@@ -106,7 +106,7 @@ private slots:
             }
         });
         // The Menu key / Shift+F10 sends a keyboard context-menu event to the focused view.
-        QContextMenuEvent keyboardMenu(QContextMenuEvent::Keyboard, QPoint(0, 0));
+        QContextMenuEvent keyboardMenu(QContextMenuEvent::Keyboard, QPoint(0, 0), tree->mapToGlobal(QPoint(0, 0)));
         QCoreApplication::sendEvent(tree, &keyboardMenu);
 
         QVERIFY2(menuActions.contains(tr("Go to Equate in Source")), qPrintable(menuActions.join(QLatin1Char('|'))));
