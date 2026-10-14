@@ -1272,6 +1272,26 @@ Si le fichier est ouvert, il sera d&apos;abord fermé.</translation>
         <translation>Instructions de l&apos;éditeur de dessin</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="88"/>
+        <source>Drawings joined to this one through an equate</source>
+        <translation>Dessins reliés à celui-ci par une commande equate</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="98"/>
+        <source>Link Views</source>
+        <translation>Lier les vues</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="103"/>
+        <source>Show Outline</source>
+        <translation>Afficher le contour</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="107"/>
+        <source>Remove Join</source>
+        <translation>Supprimer la jonction</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="139"/>
         <source>M: Select</source>
         <translation>M : Sélection</translation>
@@ -1280,6 +1300,16 @@ Si le fichier est ouvert, il sera d&apos;abord fermé.</translation>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="139"/>
         <source>M: Insert</source>
         <translation>M : Insertion</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="201"/>
+        <source>Joined: %1</source>
+        <translation>Joint : %1</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="203"/>
+        <source>Joined: %1 drawings</source>
+        <translation>Dessins joints : %1</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="197"/>

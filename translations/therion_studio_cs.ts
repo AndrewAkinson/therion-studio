@@ -1312,6 +1312,26 @@ Pokud je soubor otevřený, nejprve se zavře.</translation>
         <translation>Pokyny map editoru</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="88"/>
+        <source>Drawings joined to this one through an equate</source>
+        <translation>Kresby spojené s touto kresbou příkazem equate</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="98"/>
+        <source>Link Views</source>
+        <translation>Propojit pohledy</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="103"/>
+        <source>Show Outline</source>
+        <translation>Zobrazit obrys</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="107"/>
+        <source>Remove Join</source>
+        <translation>Odebrat spojení</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="139"/>
         <source>M: Select</source>
         <translation>M: Vybrat</translation>
@@ -1320,6 +1340,16 @@ Pokud je soubor otevřený, nejprve se zavře.</translation>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="139"/>
         <source>M: Insert</source>
         <translation>M: Vložit</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="201"/>
+        <source>Joined: %1</source>
+        <translation>Spojeno: %1</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="203"/>
+        <source>Joined: %1 drawings</source>
+        <translation>Spojené kresby: %1</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="197"/>

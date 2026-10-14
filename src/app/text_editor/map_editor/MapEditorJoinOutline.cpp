@@ -57,12 +57,21 @@ MapEditorJoinOutline *MapEditorJoinOutline::attach(MapEditorTab *host,
     if (host == nullptr || partner == nullptr || host == partner) {
         return nullptr;
     }
-    for (MapEditorJoinOutline *existing : host->findChildren<MapEditorJoinOutline *>(Qt::FindDirectChildrenOnly)) {
-        if (existing->partner() == partner) {
-            delete existing;
+    delete find(host, partner);
+    return new MapEditorJoinOutline(host, partner, partnerToHost);
+}
+
+MapEditorJoinOutline *MapEditorJoinOutline::find(MapEditorTab *host, const MapEditorTab *partner)
+{
+    if (host == nullptr) {
+        return nullptr;
+    }
+    for (MapEditorJoinOutline *outline : host->findChildren<MapEditorJoinOutline *>(Qt::FindDirectChildrenOnly)) {
+        if (outline->partner() == partner) {
+            return outline;
         }
     }
-    return new MapEditorJoinOutline(host, partner, partnerToHost);
+    return nullptr;
 }
 
 MapEditorJoinOutline::MapEditorJoinOutline(MapEditorTab *host,

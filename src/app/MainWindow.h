@@ -293,6 +293,7 @@ private:
     void initializeDocumentStatusWidgets();
     void refreshDocumentStatusWidgets();
     void updateStatusHintLabel(const QString &text);
+    void refreshMapJoinStatusButton(TherionStudio::MapEditorTab *mapTab);
     void updateDocumentMenuActionState();
     void setCompilerStatusIdle();
     void setCompilerStatusRunning(const QString &configPath);
@@ -464,6 +465,7 @@ private:
     QLabel *statusMapZoomLabel_ = nullptr;
     QLabel *statusMapModeLabel_ = nullptr;
     QToolButton *statusCompilerButton_ = nullptr;
+    QToolButton *statusMapJoinButton_ = nullptr;
     QLabel *statusDocumentEncodingLabel_ = nullptr;
     QString activeTherionRunConfigPath_;
     QString activeTherionRunWorkingDirectory_;

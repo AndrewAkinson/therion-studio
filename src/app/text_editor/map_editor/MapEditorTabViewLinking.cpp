@@ -48,6 +48,11 @@ qreal MapEditorTab::mapViewPixelsPerSourceUnit() const
     return std::hypot(viewTransform.m11(), viewTransform.m21()) * sceneUnitsPerSourceUnit;
 }
 
+int MapEditorTab::mapViewportPixelWidth() const
+{
+    return mapView_ != nullptr && mapView_->viewport() != nullptr ? mapView_->viewport()->width() : 0;
+}
+
 void MapEditorTab::setMapViewCentreAndScale(const QPointF &sourceCentre, qreal pixelsPerSourceUnit)
 {
     if (mapView_ == nullptr || pixelsPerSourceUnit <= 0.0) {

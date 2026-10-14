@@ -1,6 +1,6 @@
 #include "MainWindow.h"
 #include "ProjectJoinsPanel.h"
-#include "text_editor/map_editor/MapEditorJoinOutline.h"
+#include "text_editor/map_editor/MapEditorJoinPairs.h"
 
 #include "MainWindowDocumentHelpers.h"
 #include "MainWindowStructureRoles.h"
@@ -1202,20 +1202,12 @@ void MainWindow::openProjectJoin(const TherionStudio::ProjectJoinPair &pair)
         return;
     }
 
-    // Show each drawing faded inside the other, aligned at the join station through the centreline.
-    const TherionStudio::Th2CentrelineFit firstFit = firstTab->centrelineFitForSourceLine(firstLine);
-    const TherionStudio::Th2CentrelineFit secondFit = secondTab->centrelineFitForSourceLine(secondLine);
-    const std::optional<QPointF> firstJoin = firstTab->stationPointSourcePosition(firstLine);
-    const std::optional<QPointF> secondJoin = secondTab->stationPointSourcePosition(secondLine);
-    if (!firstFit.isValid() || !secondFit.isValid() || !firstJoin.has_value() || !secondJoin.has_value()) {
+    // Outline each drawing in the other and link their views, aligned at the join station.
+    if (!TherionStudio::openMapEditorJoinPair(firstTab, firstLine, secondTab, secondLine)) {
         statusBar()->showMessage(tr("Cannot align the joined drawings: a scrap has no XVI centreline stations or -scale."),
                                  5000);
-        return;
     }
-    const TherionStudio::Th2SimilarityTransform secondToFirst =
-        TherionStudio::joinPartnerToThisTransform(firstFit, *firstJoin, secondFit, *secondJoin);
-    TherionStudio::MapEditorJoinOutline::attach(firstTab, secondTab, secondToFirst);
-    TherionStudio::MapEditorJoinOutline::attach(secondTab, firstTab, secondToFirst.inverted());
+    refreshDocumentStatusWidgets();
 }
 
 void MainWindow::handleStructureItemActivated(const QModelIndex &index, QTreeView *sourceTree)

@@ -1,4 +1,5 @@
 #include "../src/app/text_editor/map_editor/MapEditorJoinOutline.h"
+#include "../src/app/text_editor/map_editor/MapEditorJoinPairs.h"
 #include "../src/app/text_editor/map_editor/MapEditorJoinViewLink.h"
 #include "../src/app/text_editor/map_editor/MapEditorTab.h"
 #include "../src/core/CommandCatalogStore.h"
@@ -63,10 +64,11 @@ bool centredOn(const MapEditorTab *tab, const QPointF &sourcePoint, qreal pixels
     return near(tab->mapViewCentreSourcePosition(), sourcePoint, pixels / tab->mapViewPixelsPerSourceUnit());
 }
 
-// Both views show the same real point: the second follows where the first actually is.
+// Both views show the same real point. Each view rounds its centre to whole pixels on both axes, so two
+// views can differ by up to about 2.8 pixels.
 bool showSamePoint(const MapEditorTab *first, const MapEditorTab *second, const Th2SimilarityTransform &secondToFirst)
 {
-    return centredOn(first, secondToFirst.map(second->mapViewCentreSourcePosition()));
+    return centredOn(first, secondToFirst.map(second->mapViewCentreSourcePosition()), 3.0);
 }
 }
 
@@ -167,6 +169,40 @@ private slots:
         delete second_;
         second_ = nullptr;
         QTRY_VERIFY(guard.isNull());
+    }
+
+    void opensLinksAndClosesAJoinPair()
+    {
+        // A line that is not a station point cannot be placed; nothing is created.
+        QVERIFY(!openMapEditorJoinPair(first_, 2, second_, kSecondJoinLine));
+        QVERIFY(mapEditorJoinPairsFor(first_).isEmpty());
+
+        QVERIFY(openMapEditorJoinPair(first_, kFirstJoinLine, second_, kSecondJoinLine));
+        // Opening the same join again replaces it.
+        QVERIFY(openMapEditorJoinPair(first_, kFirstJoinLine, second_, kSecondJoinLine));
+        const QVector<MapEditorJoinPair> firstPairs = mapEditorJoinPairsFor(first_);
+        const QVector<MapEditorJoinPair> secondPairs = mapEditorJoinPairsFor(second_);
+        QCOMPARE(firstPairs.size(), 1);
+        QCOMPARE(secondPairs.size(), 1);
+        QVERIFY(firstPairs.first().partner == second_);
+        QVERIFY(firstPairs.first().link != nullptr && firstPairs.first().link == secondPairs.first().link);
+        QVERIFY(firstPairs.first().outline != nullptr && secondPairs.first().outline != nullptr);
+
+        // Both views open zoomed onto the join, about 30 m across the first view. Views settle once Qt has laid
+        // out their scrollbars, so wait for the event loop.
+        QTRY_VERIFY(centredOn(first_, kFirstJoin));
+        QTRY_VERIFY(showSamePoint(first_, second_, secondToFirst_));
+        const qreal metresAcross = first_->mapViewportPixelWidth() / first_->mapViewPixelsPerSourceUnit() / 78.74;
+        QVERIFY2(metresAcross > 25.0 && metresAcross < 35.0, qPrintable(QString::number(metresAcross)));
+
+        // The pair's link keeps the views together.
+        second_->setMapViewCentreAndScale(kSecondJoin + QPointF(19.685, 0), second_->mapViewPixelsPerSourceUnit());
+        QTRY_VERIFY(showSamePoint(first_, second_, secondToFirst_));
+
+        closeMapEditorJoinPair(second_, first_);
+        QVERIFY(mapEditorJoinPairsFor(first_).isEmpty());
+        QVERIFY(mapEditorJoinPairsFor(second_).isEmpty());
+        QVERIFY(first_->findChildren<MapEditorJoinViewLink *>().isEmpty());
     }
 
 private:

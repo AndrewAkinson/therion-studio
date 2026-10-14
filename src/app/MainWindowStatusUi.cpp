@@ -1,4 +1,7 @@
 #include "MainWindow.h"
+#include "text_editor/map_editor/MapEditorJoinOutline.h"
+#include "text_editor/map_editor/MapEditorJoinPairs.h"
+#include "text_editor/map_editor/MapEditorJoinViewLink.h"
 
 #include "ui/ApplicationStyleSheets.h"
 #include "text_editor/TextEditorTab.h"
@@ -14,6 +17,8 @@
 #include <QStatusBar>
 #include <QTime>
 #include <QToolButton>
+#include <QPointer>
+#include <QMenu>
 
 void MainWindow::initializeDocumentStatusWidgets()
 {
@@ -74,7 +79,43 @@ void MainWindow::initializeDocumentStatusWidgets()
         showSidebarPane(SidebarPane::Console);
     });
 
+    statusMapJoinButton_ = new QToolButton(statusBar());
+    statusMapJoinButton_->setAutoRaise(true);
+    statusMapJoinButton_->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    statusMapJoinButton_->setPopupMode(QToolButton::InstantPopup);
+    statusMapJoinButton_->setFont(statusMapModeLabel_->font());
+    statusMapJoinButton_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+    statusMapJoinButton_->setToolTip(tr("Drawings joined to this one through an equate"));
+    statusMapJoinButton_->setMenu(new QMenu(statusMapJoinButton_));
+    statusMapJoinButton_->setVisible(false);
+    connect(statusMapJoinButton_->menu(), &QMenu::aboutToShow, this, [this]() {
+        QMenu *menu = statusMapJoinButton_->menu();
+        menu->clear();
+        auto *mapTab = qobject_cast<TherionStudio::MapEditorTab *>(currentDocumentWidget());
+        for (const TherionStudio::MapEditorJoinPair &pair : TherionStudio::mapEditorJoinPairsFor(mapTab)) {
+            menu->addSection(pair.partner->displayName());
+            if (pair.link != nullptr) {
+                QAction *linkViews = menu->addAction(tr("Link Views"));
+                linkViews->setCheckable(true);
+                linkViews->setChecked(pair.link->isEnabled());
+                connect(linkViews, &QAction::toggled, pair.link, &TherionStudio::MapEditorJoinViewLink::setEnabled);
+            }
+            QAction *showOutline = menu->addAction(tr("Show Outline"));
+            showOutline->setCheckable(true);
+            showOutline->setChecked(pair.outline->isOutlineVisible());
+            connect(showOutline, &QAction::toggled, pair.outline, &TherionStudio::MapEditorJoinOutline::setOutlineVisible);
+            QAction *removeJoin = menu->addAction(tr("Remove Join"));
+            const QPointer<TherionStudio::MapEditorTab> host(mapTab);
+            const QPointer<TherionStudio::MapEditorTab> partner(pair.partner);
+            connect(removeJoin, &QAction::triggered, this, [this, host, partner]() {
+                TherionStudio::closeMapEditorJoinPair(host, partner);
+                refreshDocumentStatusWidgets();
+            });
+        }
+    });
+
     statusBar()->addWidget(statusHintLabel_, 1);
+    statusBar()->addPermanentWidget(statusMapJoinButton_, 0);
     statusBar()->addPermanentWidget(statusMapZoomLabel_, 0);
     statusBar()->addPermanentWidget(statusMapModeLabel_, 0);
     statusBar()->addPermanentWidget(statusCompilerButton_, 0);
@@ -113,6 +154,8 @@ void MainWindow::refreshDocumentStatusWidgets()
         }
     }
 
+    refreshMapJoinStatusButton(qobject_cast<TherionStudio::MapEditorTab *>(tabWidget));
+
     if (encodingText.trimmed().isEmpty()) {
         statusDocumentEncodingLabel_->clear();
         statusDocumentEncodingLabel_->setToolTip(QString());
@@ -145,6 +188,20 @@ void MainWindow::refreshDocumentStatusWidgets()
     }
 
     updateDocumentMenuActionState();
+}
+
+void MainWindow::refreshMapJoinStatusButton(TherionStudio::MapEditorTab *mapTab)
+{
+    if (statusMapJoinButton_ == nullptr) {
+        return;
+    }
+    const QVector<TherionStudio::MapEditorJoinPair> pairs = TherionStudio::mapEditorJoinPairsFor(mapTab);
+    statusMapJoinButton_->setVisible(!pairs.isEmpty());
+    if (pairs.size() == 1) {
+        statusMapJoinButton_->setText(tr("Joined: %1").arg(pairs.first().partner->displayName()));
+    } else if (pairs.size() > 1) {
+        statusMapJoinButton_->setText(tr("Joined: %1 drawings").arg(pairs.size()));
+    }
 }
 
 void MainWindow::updateStatusHintLabel(const QString &text)

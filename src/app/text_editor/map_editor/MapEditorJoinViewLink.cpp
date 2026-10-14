@@ -37,6 +37,11 @@ bool MapEditorJoinViewLink::isEnabled() const
     return enabled_;
 }
 
+bool MapEditorJoinViewLink::connects(const MapEditorTab *a, const MapEditorTab *b) const
+{
+    return (first_ == a && second_ == b) || (first_ == b && second_ == a);
+}
+
 void MapEditorJoinViewLink::showFirstAt(const QPointF &firstCentre, qreal pixelsPerFirstUnit)
 {
     if (first_ == nullptr) {

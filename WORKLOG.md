@@ -294,9 +294,10 @@ Active planning only. Completed history belongs in archive files. Stable archite
 - Slice 3 (done): `Joins` sidebar page (`ProjectJoinsPanel` over `ProjectJoinList`) opening both drawings
   centred on the join station.
 - Slice 4 (done): view linking API and `MapEditorJoinViewLink`, not yet used by the UI.
-- Slice 5 (awaiting review): `Open Join` shows each drawing's partner as a faded `MapEditorJoinOutline`.
-- Next: wire `Open Join` to link the two views, with a linked indicator and Unlink. Hosting stays with normal tabs plus
-  the existing separated map window, which keeps save/close/session handling covering both drawings.
+- Slice 5 (done): `Open Join` shows each drawing's partner as a faded `MapEditorJoinOutline`.
+- Slice 6 (awaiting review): `Open Join` links the two views through `MapEditorJoinPairs` and zooms onto the join; a
+  `Joined` status indicator toggles the link and outline or removes the join. Hosting stays with normal tabs plus the
+  existing separated map window, which keeps save/close/session handling covering both drawings.
 
 ### Raster Background Placement (issue #30)
 

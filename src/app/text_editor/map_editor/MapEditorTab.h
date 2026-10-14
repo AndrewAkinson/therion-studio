@@ -286,6 +286,7 @@ public slots:
     // Visible map area in drawing (source) coordinates, used to link two map views.
     QPointF mapViewCentreSourcePosition() const;
     qreal mapViewPixelsPerSourceUnit() const;
+    int mapViewportPixelWidth() const;
     void setMapViewCentreAndScale(const QPointF &sourceCentre, qreal pixelsPerSourceUnit);
     // Centreline placement of the scrap containing `lineNumber`, from the current text and cached XVI backgrounds.
     Th2CentrelineFit centrelineFitForSourceLine(int lineNumber);

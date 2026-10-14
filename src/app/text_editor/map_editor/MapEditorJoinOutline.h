@@ -41,6 +41,8 @@ public:
                                         MapEditorTab *partner,
                                         const Th2SimilarityTransform &partnerToHost);
 
+    [[nodiscard]] static MapEditorJoinOutline *find(MapEditorTab *host, const MapEditorTab *partner);
+
     void setOutlineVisible(bool visible);
     [[nodiscard]] bool isOutlineVisible() const;
     [[nodiscard]] MapEditorTab *partner() const;

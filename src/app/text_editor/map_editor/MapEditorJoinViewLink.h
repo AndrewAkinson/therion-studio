@@ -24,6 +24,8 @@ public:
 
     void setEnabled(bool enabled);
     [[nodiscard]] bool isEnabled() const;
+    // True when this link joins `a` and `b`, in either order.
+    [[nodiscard]] bool connects(const MapEditorTab *a, const MapEditorTab *b) const;
     // Shows `firstCentre` in the first editor at `pixelsPerFirstUnit`, then aligns the second editor.
     void showFirstAt(const QPointF &firstCentre, qreal pixelsPerFirstUnit);
 

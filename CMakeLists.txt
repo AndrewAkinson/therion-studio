@@ -803,6 +803,8 @@ set(THERION_MAP_EDITOR_SOURCES
     src/app/text_editor/map_editor/MapEditorTabViewLinking.cpp
     src/app/text_editor/map_editor/MapEditorJoinOutline.cpp
     src/app/text_editor/map_editor/MapEditorJoinOutline.h
+    src/app/text_editor/map_editor/MapEditorJoinPairs.cpp
+    src/app/text_editor/map_editor/MapEditorJoinPairs.h
     src/app/text_editor/map_editor/MapEditorJoinViewLink.cpp
     src/app/text_editor/map_editor/MapEditorJoinViewLink.h
     src/app/text_editor/map_editor/MapEditorUndoArbitrationService.cpp
