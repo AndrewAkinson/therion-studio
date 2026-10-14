@@ -287,7 +287,9 @@ Active planning only. Completed history belongs in archive files. Stable archite
 - Plan: `plans/JOIN_VIEWER_PLAN.md`. Add a `Joins` sidebar page listing cross-survey `equate` links and a Join view
   that opens both `.th2` drawings side by side, aligned on the join station through XVI centreline station fits, each
   editable and saved independently, with a faded partner outline.
-- Slice 1 (in progress): core equate-link data in the project index and station-point lookup per survey/projection.
+- Slice 1 (done): `ProjectIndexSnapshot` carries cross-survey `equateLinks` and
+  `stationDrawingPointsByStationKey`.
+- Next: slice 2, `Th2CentrelineAlignment` (XVI grid/station fit, join transform).
 
 ### Raster Background Placement (issue #30)
 

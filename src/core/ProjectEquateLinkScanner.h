@@ -1,0 +1,36 @@
+#pragma once
+
+#include "ProjectStructureIndex.h"
+
+#include <QHash>
+#include <QString>
+#include <QVector>
+
+#include <functional>
+
+namespace TherionStudio
+{
+class TherionSourceLogicalDocument;
+
+// Inputs owned by ProjectStructureIndex so equate scanning reuses its namespace and
+// station-reference resolution instead of duplicating those rules.
+struct ProjectEquateLinkScanInput
+{
+    QVector<QString> sourceFiles;
+    QHash<QString, QVector<ProjectStructureEntry>> entriesByFile;
+    QHash<QString, ProjectStructureEntry> entriesByObjectId;
+    std::function<const TherionSourceLogicalDocument &(const QString &sourceFile)> logicalDocumentForFile;
+    std::function<QString(const QString &sourceFile, int lineNumber)> ownerNamespacePath;
+    std::function<ProjectEquateStation(const QString &reference, const QString &ownerNamespacePath)> resolveStation;
+    std::function<bool()> shouldCancel;
+};
+
+struct ProjectEquateLinkScanResult
+{
+    QVector<ProjectEquateLink> equateLinks;
+    QHash<QString, QVector<ProjectStationDrawingPoint>> stationDrawingPointsByStationKey;
+};
+
+[[nodiscard]] QString normalizedScrapProjection(QString projection);
+[[nodiscard]] ProjectEquateLinkScanResult scanProjectEquateLinks(const ProjectEquateLinkScanInput &input);
+}

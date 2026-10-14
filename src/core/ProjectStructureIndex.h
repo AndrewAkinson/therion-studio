@@ -82,6 +82,33 @@ struct ProjectIndexDiagnostic
     int candidateCount = 0;
 };
 
+struct ProjectEquateStation
+{
+    QString reference;
+    QString stationKey;
+    QString namespacePath;
+    bool resolved = false;
+};
+
+// One `equate` command whose stations resolve to more than one survey namespace.
+struct ProjectEquateLink
+{
+    QString sourceFile;
+    int lineNumber = 0;
+    QVector<ProjectEquateStation> stations;
+};
+
+// A `point ... station -name` in a `.th2` scrap that draws an equated station.
+struct ProjectStationDrawingPoint
+{
+    QString stationKey;
+    QString sourceFile;
+    int lineNumber = 0;
+    QString scrapName;
+    QString surveyName;
+    QString projection;
+};
+
 struct ProjectStructureIndexScanStats
 {
     int logicalDocumentBuilds = 0;
@@ -99,6 +126,8 @@ struct ProjectIndexSnapshot
     QHash<QString, QSet<QString>> mapChildReferencesByMapKey;
     QHash<QString, QSet<QString>> mapPreviewReferencesByMapKey;
     QHash<QString, QSet<QString>> stationReferenceCandidateKeysByLookupKey;
+    QVector<ProjectEquateLink> equateLinks;
+    QHash<QString, QVector<ProjectStationDrawingPoint>> stationDrawingPointsByStationKey;
     QVector<ProjectIndexDiagnostic> diagnostics;
     ProjectStructureIndexScanStats scanStats;
     bool canceled = false;

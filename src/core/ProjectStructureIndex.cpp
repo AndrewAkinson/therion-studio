@@ -1,6 +1,7 @@
 #include "ProjectStructureIndex.h"
 
 #include "DocumentFile.h"
+#include "ProjectEquateLinkScanner.h"
 #include "TherionCommandLineModel.h"
 #include "TherionFileTypes.h"
 #include "TherionSourceLogicalDocument.h"
@@ -127,6 +128,12 @@ StationReferenceIndex stationReferencesFromProject(
     ParsedFileCache *cache,
     const QHash<QString, QString> &inMemoryFileContentsByPath,
     const std::function<bool()> &shouldCancel);
+ProjectEquateLinkScanResult scanEquateLinks(const QVector<ProjectStructureEntry> &entries,
+                                            const QSet<QString> &sourceFiles,
+                                            const StationReferenceIndex &stationIndex,
+                                            ParsedFileCache *cache,
+                                            const QHash<QString, QString> &inMemoryFileContentsByPath,
+                                            const std::function<bool()> &shouldCancel);
 QVector<ProjectIndexDiagnostic> scanDuplicateObjectIds(const QVector<ProjectStructureEntry> &entries,
                                                        ParsedFileCache *cache,
                                                        const QHash<QString, QString> &inMemoryFileContentsByPath,
@@ -1589,6 +1596,13 @@ ProjectIndexSnapshot scanProjectIndexFromFilePaths(const QString &projectRootPat
         }
         snapshot.stationReferenceCandidateKeysByLookupKey.insert(it.key(), candidateKeys);
     }
+    ProjectEquateLinkScanResult equateLinkScan =
+        scanEquateLinks(snapshot.entries, sourceFiles, stationReferenceIndex, &cache, inMemoryFileContentsByPath, shouldCancel);
+    snapshot.equateLinks = std::move(equateLinkScan.equateLinks);
+    snapshot.stationDrawingPointsByStationKey = std::move(equateLinkScan.stationDrawingPointsByStationKey);
+    if (projectIndexScanShouldCancel(shouldCancel)) {
+        return cancelSnapshot();
+    }
     snapshot.diagnostics += scanStationReferences(snapshot.entries,
                                                   stationReferenceIndex,
                                                   &cache,
@@ -1912,6 +1926,42 @@ QVector<ProjectIndexDiagnostic> scanJoinReferences(const QVector<ProjectStructur
     }
 
     return diagnostics;
+}
+
+ProjectEquateLinkScanResult scanEquateLinks(const QVector<ProjectStructureEntry> &entries,
+                                            const QSet<QString> &sourceFiles,
+                                            const StationReferenceIndex &stationIndex,
+                                            ParsedFileCache *cache,
+                                            const QHash<QString, QString> &inMemoryFileContentsByPath,
+                                            const std::function<bool()> &shouldCancel)
+{
+    ProjectEquateLinkScanInput input;
+    input.sourceFiles = QVector<QString>(sourceFiles.cbegin(), sourceFiles.cend());
+    std::sort(input.sourceFiles.begin(), input.sourceFiles.end());
+    for (const ProjectStructureEntry &entry : entries) {
+        input.entriesByFile[normalizedFilePathKey(entry.sourceFile)].append(entry);
+        input.entriesByObjectId.insert(entry.objectId, entry);
+    }
+    const NamespaceEntriesByFile namespaceEntries = namespaceEntriesByFile(entries);
+    input.logicalDocumentForFile = [&](const QString &sourceFile) -> const TherionSourceLogicalDocument & {
+        return logicalDocumentForFile(sourceFile, cache, inMemoryFileContentsByPath);
+    };
+    input.ownerNamespacePath = [&](const QString &sourceFile, int lineNumber) {
+        return nearestNamespaceEntryForLine(namespaceEntries, sourceFile, lineNumber).namespacePath;
+    };
+    input.resolveStation = [&](const QString &reference, const QString &ownerNamespacePath) {
+        const MapReferenceParts parts = parseMapReference(reference);
+        ProjectEquateStation station;
+        station.reference = reference;
+        station.namespacePath = parts.hasNamespace
+            ? namespacePathForReference(ownerNamespacePath, parts.namespacePath)
+            : ownerNamespacePath;
+        station.stationKey = stationReferenceCandidateKey(reference, ownerNamespacePath);
+        station.resolved = stationIndex.keysByExactReference.contains(station.stationKey);
+        return station;
+    };
+    input.shouldCancel = shouldCancel;
+    return scanProjectEquateLinks(input);
 }
 
 bool commandIsInCenterline(const TherionSourceLogicalCommand &command)

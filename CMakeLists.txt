@@ -135,6 +135,8 @@ set(THERION_CORE_SOURCES
     src/core/TherionSourceValidationCatalog.h
     src/core/TherionSourceValidator.cpp
     src/core/TherionSourceValidator.h
+    src/core/ProjectEquateLinkScanner.cpp
+    src/core/ProjectEquateLinkScanner.h
     src/core/ProjectStructureIndex.cpp
     src/core/ProjectStructureIndex.h
     src/core/TherionStationNameRules.cpp
