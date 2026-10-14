@@ -1449,6 +1449,11 @@ Pokud je soubor otevřený, nejprve se zavře.</translation>
         <translation>V aktuálním dokumentu nebyly nalezeny žádné TH2 scrappy, body, linie ani plochy</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindowStructureBrowser.cpp" line="1211"/>
+        <source>Cannot align the joined drawings: a scrap has no XVI centreline stations or -scale.</source>
+        <translation>Spojené kresby nelze zarovnat: scrap nemá stanice centreline z XVI ani -scale.</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindowTherionRunner.cpp" line="141"/>
         <source>Console output is empty</source>
         <translation>Výstup konzole je prázdný</translation>

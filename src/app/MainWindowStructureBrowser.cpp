@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "ProjectJoinsPanel.h"
+#include "text_editor/map_editor/MapEditorJoinOutline.h"
 
 #include "MainWindowDocumentHelpers.h"
 #include "MainWindowStructureRoles.h"
@@ -26,6 +27,7 @@
 #include <QSet>
 #include <QStandardItem>
 #include <QStandardItemModel>
+#include <QStatusBar>
 #include <QStyle>
 #include <QStringList>
 #include <QSvgRenderer>
@@ -1164,10 +1166,10 @@ void MainWindow::openStructureSourceIndex(const QModelIndex &current, QTreeView 
     openProjectSourceLocation(current.data(SourceFileRole).toString(), current.data(LineNumberRole).toInt());
 }
 
-void MainWindow::openProjectSourceLocation(const QString &sourceFile, int lineNumber)
+QWidget *MainWindow::openProjectSourceLocation(const QString &sourceFile, int lineNumber)
 {
     if (sourceFile.isEmpty()) {
-        return;
+        return nullptr;
     }
 
     QWidget *tabWidget = nullptr;
@@ -1181,6 +1183,7 @@ void MainWindow::openProjectSourceLocation(const QString &sourceFile, int lineNu
     if (tabWidget != nullptr && lineNumber > 0) {
         documentGoToLineForWidget(tabWidget, lineNumber);
     }
+    return tabWidget;
 }
 
 void MainWindow::openProjectJoin(const TherionStudio::ProjectJoinPair &pair)
@@ -1189,8 +1192,30 @@ void MainWindow::openProjectJoin(const TherionStudio::ProjectJoinPair &pair)
         return;
     }
     // Each drawing opens centred on its join-station point.
-    openProjectSourceLocation(pair.first.drawing->sourceFile, pair.first.drawing->lineNumber);
-    openProjectSourceLocation(pair.second.drawing->sourceFile, pair.second.drawing->lineNumber);
+    const int firstLine = pair.first.drawing->lineNumber;
+    const int secondLine = pair.second.drawing->lineNumber;
+    auto *firstTab = qobject_cast<TherionStudio::MapEditorTab *>(
+        openProjectSourceLocation(pair.first.drawing->sourceFile, firstLine));
+    auto *secondTab = qobject_cast<TherionStudio::MapEditorTab *>(
+        openProjectSourceLocation(pair.second.drawing->sourceFile, secondLine));
+    if (firstTab == nullptr || secondTab == nullptr || firstTab == secondTab) {
+        return;
+    }
+
+    // Show each drawing faded inside the other, aligned at the join station through the centreline.
+    const TherionStudio::Th2CentrelineFit firstFit = firstTab->centrelineFitForSourceLine(firstLine);
+    const TherionStudio::Th2CentrelineFit secondFit = secondTab->centrelineFitForSourceLine(secondLine);
+    const std::optional<QPointF> firstJoin = firstTab->stationPointSourcePosition(firstLine);
+    const std::optional<QPointF> secondJoin = secondTab->stationPointSourcePosition(secondLine);
+    if (!firstFit.isValid() || !secondFit.isValid() || !firstJoin.has_value() || !secondJoin.has_value()) {
+        statusBar()->showMessage(tr("Cannot align the joined drawings: a scrap has no XVI centreline stations or -scale."),
+                                 5000);
+        return;
+    }
+    const TherionStudio::Th2SimilarityTransform secondToFirst =
+        TherionStudio::joinPartnerToThisTransform(firstFit, *firstJoin, secondFit, *secondJoin);
+    TherionStudio::MapEditorJoinOutline::attach(firstTab, secondTab, secondToFirst);
+    TherionStudio::MapEditorJoinOutline::attach(secondTab, firstTab, secondToFirst.inverted());
 }
 
 void MainWindow::handleStructureItemActivated(const QModelIndex &index, QTreeView *sourceTree)

@@ -105,4 +105,52 @@ Th2CentrelineFit MapEditorTab::centrelineFitForSourceLine(int lineNumber)
     }
     return fitTh2ScrapContainingLine(snapshot->logicalCommands, lineNumber, xviDocuments);
 }
+
+std::optional<QPointF> MapEditorTab::stationPointSourcePosition(int lineNumber) const
+{
+    const MapEditorSourceProjectionSnapshotPtr snapshot = sourceProjectionSnapshotForCurrentDocument();
+    if (snapshot == nullptr) {
+        return std::nullopt;
+    }
+    const std::optional<Th2ScrapStationPoint> point = th2StationPointAtLine(snapshot->logicalCommands, lineNumber);
+    return point.has_value() ? std::optional<QPointF>(point->position) : std::nullopt;
+}
+
+QPainterPath MapEditorTab::mapOutlineScenePath() const
+{
+    const MapEditorSourceProjectionSnapshotPtr snapshot = sourceProjectionSnapshotForCurrentDocument();
+    const QRectF previewBounds = mapPreviewBounds();
+    if (snapshot == nullptr || !sourceProjectionUsable(snapshot->sourceBounds, previewBounds)) {
+        return QPainterPath();
+    }
+    constexpr qreal kStationMarkerRadius = 3.0;
+    QPainterPath outline;
+    for (const MapGeometryFeature &feature :
+         collectGeometryFeatures(snapshot->geometryProjection, snapshot->logicalCommands)) {
+        if (feature.kind == MapGeometryFeature::Kind::Line) {
+            outline.addPath(linePathForFeature(feature, snapshot->sourceBounds, previewBounds));
+        } else if (feature.stationPoint && feature.hasSourceAnchor) {
+            outline.addEllipse(mapGeometryPointToPreview(feature.sourceAnchor, snapshot->sourceBounds, previewBounds),
+                               kStationMarkerRadius,
+                               kStationMarkerRadius);
+        }
+    }
+    return outline;
+}
+
+QTransform MapEditorTab::mapSourceToSceneTransform() const
+{
+    // The source-to-scene mapping is affine (uniform scale, y flip, shift); recover it from three points.
+    const QPointF origin = scenePointFromSourcePosition(QPointF(0.0, 0.0));
+    const QPointF unitX = scenePointFromSourcePosition(QPointF(1.0, 0.0)) - origin;
+    const QPointF unitY = scenePointFromSourcePosition(QPointF(0.0, 1.0)) - origin;
+    return QTransform(unitX.x(), unitX.y(), unitY.x(), unitY.y(), origin.x(), origin.y());
+}
+
+void MapEditorTab::addMapOverlayItem(QGraphicsItem *item)
+{
+    if (mapScene_ != nullptr && item != nullptr && item->scene() != mapScene_) {
+        mapScene_->addItem(item);
+    }
+}
 }

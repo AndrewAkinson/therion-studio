@@ -96,7 +96,10 @@ The main project sidebar surfaces have distinct responsibilities. `Files`, `Surv
 - `Joins`: navigation between drawings of different surveys linked by `equate`. Two map editors are kept aligned by
   `MapEditorJoinViewLink`, which only reads and sets each editor's view centre and scale (in drawing units) through
   `MapEditorTab`'s view-linking API; it never touches document text. A linked view may widen its own scroll area so the
-  join can be centred at a drawing edge; scene rects remain owned by scene refresh. `ProjectJoinsPanel` presents rows built by the pure `ProjectJoinList` projection over the shared project index; it emits open/navigate requests and does not read files or own document state. Unresolved equate stations remain Validation diagnostics.
+  join can be centred at a drawing edge; scene rects remain owned by scene refresh.
+  `MapEditorJoinOutline` (owned by the host editor) draws the partner drawing as a display-only
+  `MapEditorJoinOutlineItem`; full scene refreshes delete overlay items, so the controller re-adds its item on
+  `sceneProjectionRefreshCompleted` instead of the scene-clear path learning about join overlays. `ProjectJoinsPanel` presents rows built by the pure `ProjectJoinList` projection over the shared project index; it emits open/navigate requests and does not read files or own document state. Unresolved equate stations remain Validation diagnostics.
 - `Structure`: orientation and navigation for project objects and relationships. It may show structural relationship warnings that affect orientation, such as unresolved map/scrap composition references, but shall not become the general validation UI.
 - `Validation`: all validation and problem identification, including command/catalog diagnostics, context/document-type diagnostics, parse/round-trip-sensitive findings, safe fixes, and project-wide problem scans.
 - `Compiler`: Therion execution, target config selection, run output, and compiler-facing workflow state.

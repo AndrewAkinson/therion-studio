@@ -126,6 +126,8 @@ private slots:
         QCOMPARE(th2ScrapStartLineContaining(th2.commands(), 6), 4);
         QCOMPARE(th2ScrapStartLineContaining(th2.commands(), 2), 1);
         QCOMPARE(th2ScrapStartLineContaining(th2.commands(), 8), 0);
+        QCOMPARE(th2StationPointAtLine(th2.commands(), 6)->position, QPointF(88.74, 20));
+        QVERIFY(!th2StationPointAtLine(th2.commands(), 4).has_value());
 
         const TherionXviDocument unrelated = xviDocument(QStringLiteral(
             "set XVIgrids {1 m}\nset XVIstations {\n  {0 0 77}\n}\nset XVIgrid {0 0 10 0 0 10 1 1}\n"));

@@ -1,0 +1,194 @@
+#include "../src/app/text_editor/map_editor/MapEditorJoinOutline.h"
+#include "../src/app/text_editor/map_editor/MapEditorJoinViewLink.h"
+#include "../src/app/text_editor/map_editor/MapEditorTab.h"
+#include "../src/core/CommandCatalogStore.h"
+#include "../src/core/QtFileSystem.h"
+#include "FakeSessionStore.h"
+
+#include <QApplication>
+#include <QDir>
+#include <QFile>
+#include <QGraphicsScene>
+#include <QGraphicsView>
+#include <QPointer>
+#include <QHBoxLayout>
+#include <QTemporaryDir>
+#include <QtTest/QtTest>
+
+#include <memory>
+
+using namespace TherionStudio;
+
+namespace
+{
+bool writeTextFile(const QString &path, const QString &text)
+{
+    QFile file(path);
+    return file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)
+        && file.write(text.toUtf8()) == text.toUtf8().size();
+}
+
+// A scrap whose station points sit on XVI stations drawn at `unitsPerMetre`.
+QString drawing(const QString &xviName, qreal unitsPerMetre)
+{
+    return QStringLiteral("##XTHERION## xth_me_image_insert {0.00 1 1.0} {0.00 {}} %1 0 {}\n"
+                          "scrap s -projection plan\n"
+                          "point 0 0 station -name 1\n"
+                          "point %2 0 station -name 2\n"
+                          "point %2 %3 station -name 3\n"
+                          "endscrap\n")
+        .arg(xviName, QString::number(10 * unitsPerMetre), QString::number(5 * unitsPerMetre));
+}
+
+QString xvi(qreal unitsPerMetre)
+{
+    return QStringLiteral("set XVIgrids {1 m}\n"
+                          "set XVIstations {\n"
+                          "  {0 0 1}\n"
+                          "  {%1 0 2}\n"
+                          "  {%1 %2 3}\n"
+                          "}\n"
+                          "set XVIgrid {0 0 %3 0 0 %3 10 10}\n")
+        .arg(QString::number(10 * unitsPerMetre), QString::number(5 * unitsPerMetre), QString::number(unitsPerMetre));
+}
+
+bool near(const QPointF &left, const QPointF &right, qreal tolerance)
+{
+    return QLineF(left, right).length() <= tolerance;
+}
+
+// Views scroll in whole pixels on each axis, so compare centres to within 2 screen pixels.
+bool centredOn(const MapEditorTab *tab, const QPointF &sourcePoint, qreal pixels = 2.0)
+{
+    return near(tab->mapViewCentreSourcePosition(), sourcePoint, pixels / tab->mapViewPixelsPerSourceUnit());
+}
+
+// Both views show the same real point: the second follows where the first actually is.
+bool showSamePoint(const MapEditorTab *first, const MapEditorTab *second, const Th2SimilarityTransform &secondToFirst)
+{
+    return centredOn(first, secondToFirst.map(second->mapViewCentreSourcePosition()));
+}
+}
+
+class MapEditorJoinTest final : public QObject
+{
+    Q_OBJECT
+
+private slots:
+    // Two editors side by side; station 3 of the first drawing is equated with station 1 of the second.
+    void init()
+    {
+        QVERIFY(dir_.isValid());
+        const QDir root(dir_.path());
+        QVERIFY(writeTextFile(root.filePath(QStringLiteral("a.xvi")), xvi(78.74)));
+        QVERIFY(writeTextFile(root.filePath(QStringLiteral("b.xvi")), xvi(19.685)));
+        QVERIFY(writeTextFile(root.filePath(QStringLiteral("a.th2")), drawing(QStringLiteral("a.xvi"), 78.74)));
+        QVERIFY(writeTextFile(root.filePath(QStringLiteral("b.th2")), drawing(QStringLiteral("b.xvi"), 19.685)));
+
+        host_ = std::make_unique<QWidget>();
+        host_->resize(1400, 800);
+        auto *layout = new QHBoxLayout(host_.get());
+        first_ = new MapEditorTab(fileSystem_, sessionStore_, CommandCatalogStore(), host_.get());
+        second_ = new MapEditorTab(fileSystem_, sessionStore_, CommandCatalogStore(), host_.get());
+        layout->addWidget(first_);
+        layout->addWidget(second_);
+        QVERIFY(first_->loadFile(root.filePath(QStringLiteral("a.th2"))));
+        QVERIFY(second_->loadFile(root.filePath(QStringLiteral("b.th2"))));
+        host_->show();
+        QVERIFY(QTest::qWaitForWindowExposed(host_.get()));
+
+        const Th2CentrelineFit firstFit = first_->centrelineFitForSourceLine(kFirstJoinLine);
+        const Th2CentrelineFit secondFit = second_->centrelineFitForSourceLine(kSecondJoinLine);
+        QCOMPARE(firstFit.source, Th2CentrelineFitSource::XviStations);
+        QCOMPARE(secondFit.stationCount, 3);
+        QCOMPARE(first_->stationPointSourcePosition(kFirstJoinLine).value_or(QPointF()), kFirstJoin);
+        QCOMPARE(second_->stationPointSourcePosition(kSecondJoinLine).value_or(QPointF(-1, -1)), kSecondJoin);
+        secondToFirst_ = joinPartnerToThisTransform(firstFit, kFirstJoin, secondFit, kSecondJoin);
+        QVERIFY(near(secondToFirst_.map(kSecondJoin), kFirstJoin, 1e-6));
+    }
+
+    void cleanup()
+    {
+        host_.reset();
+    }
+
+    void linksTwoEditorsAtTheJoinStation()
+    {
+        MapEditorJoinViewLink link(first_, second_, secondToFirst_);
+        link.showFirstAt(kFirstJoin, first_->mapViewPixelsPerSourceUnit());
+        QVERIFY(centredOn(first_, kFirstJoin));
+        QVERIFY(showSamePoint(first_, second_, secondToFirst_));
+        QVERIFY(centredOn(second_, kSecondJoin, 3.0));
+        // One metre is 78.74 first units and 19.685 second units, so it spans the same pixels in both.
+        QVERIFY(qAbs(second_->mapViewPixelsPerSourceUnit() / first_->mapViewPixelsPerSourceUnit() - 4.0) < 0.05);
+
+        // Panning the second editor one metre east moves the first one metre east.
+        second_->setMapViewCentreAndScale(kSecondJoin + QPointF(19.685, 0), second_->mapViewPixelsPerSourceUnit());
+        QVERIFY(showSamePoint(first_, second_, secondToFirst_));
+        QVERIFY(centredOn(first_, kFirstJoin + QPointF(78.74, 0), 3.0));
+
+        // Unlinked views move independently.
+        link.setEnabled(false);
+        const QPointF firstBefore = first_->mapViewCentreSourcePosition();
+        second_->setMapViewCentreAndScale(kSecondJoin, second_->mapViewPixelsPerSourceUnit());
+        QVERIFY(near(first_->mapViewCentreSourcePosition(), firstBefore, 1e-6));
+    }
+
+    void showsPartnerOutlineAlignedAtTheJoin()
+    {
+        MapEditorJoinOutline *outline = MapEditorJoinOutline::attach(first_, second_, secondToFirst_);
+        QVERIFY(outline != nullptr);
+        // Attaching the same partner again replaces the outline rather than stacking a second one.
+        outline = MapEditorJoinOutline::attach(first_, second_, secondToFirst_);
+        QCOMPARE(first_->findChildren<MapEditorJoinOutline *>(Qt::FindDirectChildrenOnly).size(), 1);
+
+        MapEditorJoinOutlineItem *item = outline->item();
+        QVERIFY(item != nullptr);
+        QVERIFY(item->scene() == first_->findChild<QGraphicsView *>()->scene());
+        QVERIFY(!item->outlinePath().isEmpty());
+        QCOMPARE(item->acceptedMouseButtons(), Qt::NoButton);
+
+        // The partner's join station lands on this drawing's join station.
+        const QPointF partnerStationScene = second_->mapSourceToSceneTransform().map(kSecondJoin);
+        QVERIFY(near(item->mapToScene(partnerStationScene), first_->mapSourceToSceneTransform().map(kFirstJoin), 1e-6));
+
+        // A full refresh of the host deletes scene items; the outline is rebuilt and re-added.
+        const QPointer<MapEditorJoinOutlineItem> originalItem(item);
+        QVERIFY(first_->loadFile(QDir(dir_.path()).filePath(QStringLiteral("a.th2"))));
+        QTRY_VERIFY(originalItem.isNull());
+        QTRY_VERIFY(outline->item() != nullptr
+                    && outline->item()->scene() == first_->findChild<QGraphicsView *>()->scene());
+
+        outline->setOutlineVisible(false);
+        QVERIFY(!outline->item()->isVisible());
+
+        // Closing the partner removes the outline.
+        const QPointer<MapEditorJoinOutline> guard(outline);
+        delete second_;
+        second_ = nullptr;
+        QTRY_VERIFY(guard.isNull());
+    }
+
+private:
+    static constexpr int kFirstJoinLine = 5;
+    static constexpr int kSecondJoinLine = 3;
+    const QPointF kFirstJoin = QPointF(10 * 78.74, 5 * 78.74);
+    const QPointF kSecondJoin = QPointF(0, 0);
+
+    QTemporaryDir dir_;
+    QtFileSystem fileSystem_;
+    FakeSessionStore sessionStore_;
+    std::unique_ptr<QWidget> host_;
+    MapEditorTab *first_ = nullptr;
+    MapEditorTab *second_ = nullptr;
+    Th2SimilarityTransform secondToFirst_;
+};
+
+int main(int argc, char **argv)
+{
+    QApplication app(argc, argv);
+    MapEditorJoinTest test;
+    return QTest::qExec(&test, argc, argv);
+}
+
+#include "MapEditorJoinTest.moc"

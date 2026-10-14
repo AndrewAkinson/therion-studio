@@ -801,6 +801,8 @@ set(THERION_MAP_EDITOR_SOURCES
     src/app/text_editor/map_editor/MapEditorTabCommandSurfaceDelegates.cpp
     src/app/text_editor/map_editor/MapEditorTabWorkspaceDelegates.cpp
     src/app/text_editor/map_editor/MapEditorTabViewLinking.cpp
+    src/app/text_editor/map_editor/MapEditorJoinOutline.cpp
+    src/app/text_editor/map_editor/MapEditorJoinOutline.h
     src/app/text_editor/map_editor/MapEditorJoinViewLink.cpp
     src/app/text_editor/map_editor/MapEditorJoinViewLink.h
     src/app/text_editor/map_editor/MapEditorUndoArbitrationService.cpp
@@ -1744,10 +1746,10 @@ qt_add_executable(ProjectJoinsPanelTest
     tests/ProjectJoinsPanelTest.cpp)
 target_link_libraries(ProjectJoinsPanelTest PRIVATE therion_app Qt6::Test)
 
-therion_add_map_editor_ui_test(MapEditorJoinViewLinkTest
-    tests/MapEditorJoinViewLinkTest.cpp
-    "MapEditorJoinViewLinkResources")
-target_link_libraries(MapEditorJoinViewLinkTest PRIVATE Qt6::Test)
+therion_add_map_editor_ui_test(MapEditorJoinTest
+    tests/MapEditorJoinTest.cpp
+    "MapEditorJoinResources")
+target_link_libraries(MapEditorJoinTest PRIVATE Qt6::Test)
 
 therion_add_map_editor_ui_test(MapEditorDetachedPaneTest
     tests/MapEditorDetachedPaneTest.cpp
@@ -1889,7 +1891,7 @@ set(THERION_UI_TEST_TARGETS
     TextEditorImportInsertionTransactionTest
     TextEditorSystemNormalizationTransactionTest
     MapEditorDetachedPaneTest
-    MapEditorJoinViewLinkTest
+    MapEditorJoinTest
     MapEditorDragUndoRedoSmokeTest
     MapEditorLargeScenePerformanceSmokeTest
     MapEditorSplitAreaBorderSmokeTest

@@ -293,9 +293,10 @@ Active planning only. Completed history belongs in archive files. Stable archite
   (`XVIgrids` now parsed), falls back to scrap `-scale`, and links two drawings at the join station.
 - Slice 3 (done): `Joins` sidebar page (`ProjectJoinsPanel` over `ProjectJoinList`) opening both drawings
   centred on the join station.
-- Slice 4 (in progress): view linking done (`MapEditorTab` view centre/scale API and `centrelineFitForSourceLine`,
-  `MapEditorJoinViewLink`). Blocked on hosting: map editors outside the tab strip or detached windows are not seen by
-  save/close/session handling; choose a host before wiring `Open Join`.
+- Slice 4 (done): view linking API and `MapEditorJoinViewLink`, not yet used by the UI.
+- Slice 5 (awaiting review): `Open Join` shows each drawing's partner as a faded `MapEditorJoinOutline`.
+- Next: wire `Open Join` to link the two views, with a linked indicator and Unlink. Hosting stays with normal tabs plus
+  the existing separated map window, which keeps save/close/session handling covering both drawings.
 
 ### Raster Background Placement (issue #30)
 

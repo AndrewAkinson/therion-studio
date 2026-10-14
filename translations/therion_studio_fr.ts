@@ -1409,6 +1409,11 @@ Si le fichier est ouvert, il sera d&apos;abord fermé.</translation>
         <translation>Aucun scrap, point, ligne ou aire TH2 trouvé dans le document actuel</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindowStructureBrowser.cpp" line="1211"/>
+        <source>Cannot align the joined drawings: a scrap has no XVI centreline stations or -scale.</source>
+        <translation>Impossible d’aligner les dessins joints : un scrap n’a ni stations de centreline XVI ni -scale.</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindowTherionRunner.cpp" line="141"/>
         <source>Console output is empty</source>
         <translation>La sortie de la console est vide</translation>

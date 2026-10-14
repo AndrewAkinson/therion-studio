@@ -90,6 +90,11 @@ struct Th2CentrelineFit
 // Start line of the scrap that contains `lineNumber`, or 0 when the line is outside any scrap.
 [[nodiscard]] int th2ScrapStartLineContaining(const QVector<TherionSourceLogicalCommand> &commands, int lineNumber);
 
+// The `point ... station` command starting at `lineNumber`, if there is one inside a scrap.
+[[nodiscard]] std::optional<Th2ScrapStationPoint> th2StationPointAtLine(
+    const QVector<TherionSourceLogicalCommand> &commands,
+    int lineNumber);
+
 // Fits the scrap containing `lineNumber`, using whichever XVI matches most of its station points.
 [[nodiscard]] Th2CentrelineFit fitTh2ScrapContainingLine(const QVector<TherionSourceLogicalCommand> &commands,
                                                          int lineNumber,

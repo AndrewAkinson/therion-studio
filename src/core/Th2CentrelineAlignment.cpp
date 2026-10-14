@@ -285,6 +285,21 @@ int th2ScrapStartLineContaining(const QVector<TherionSourceLogicalCommand> &comm
     return scrapStartLine;
 }
 
+std::optional<Th2ScrapStationPoint> th2StationPointAtLine(const QVector<TherionSourceLogicalCommand> &commands,
+                                                          int lineNumber)
+{
+    const int scrapStartLine = th2ScrapStartLineContaining(commands, lineNumber);
+    if (scrapStartLine <= 0) {
+        return std::nullopt;
+    }
+    for (const Th2ScrapStationPoint &point : th2ScrapStationPoints(commands, scrapStartLine)) {
+        if (point.lineNumber == lineNumber) {
+            return point;
+        }
+    }
+    return std::nullopt;
+}
+
 Th2CentrelineFit fitTh2ScrapContainingLine(const QVector<TherionSourceLogicalCommand> &commands,
                                            int lineNumber,
                                            const QVector<TherionXviDocument> &xviDocuments)

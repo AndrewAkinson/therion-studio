@@ -227,7 +227,7 @@ private:
     bool reloadDocumentWidgetFromDisk(QWidget *documentWidget, QString *errorMessage = nullptr);
     QByteArray documentFileFingerprint(const QString &filePath) const;
     void openStructureSourceIndex(const QModelIndex &current, QTreeView *sourceTree);
-    void openProjectSourceLocation(const QString &sourceFile, int lineNumber);
+    QWidget *openProjectSourceLocation(const QString &sourceFile, int lineNumber);
     void openProjectJoin(const TherionStudio::ProjectJoinPair &pair);
     void handleStructureItemActivated(const QModelIndex &index, QTreeView *sourceTree);
     bool confirmCloseTab(int index);

@@ -13,7 +13,9 @@
 #include <QElapsedTimer>
 #include <QSet>
 #include <QVector>
+#include <QPainterPath>
 #include <QPointer>
+#include <QTransform>
 #include <QPersistentModelIndex>
 #include <functional>
 #include <memory>
@@ -287,6 +289,12 @@ public slots:
     void setMapViewCentreAndScale(const QPointF &sourceCentre, qreal pixelsPerSourceUnit);
     // Centreline placement of the scrap containing `lineNumber`, from the current text and cached XVI backgrounds.
     Th2CentrelineFit centrelineFitForSourceLine(int lineNumber);
+    std::optional<QPointF> stationPointSourcePosition(int lineNumber) const;
+    // Lines and station points of the current drawing as one path in scene coordinates.
+    QPainterPath mapOutlineScenePath() const;
+    QTransform mapSourceToSceneTransform() const;
+    // Adds a display-only item to the map scene; full scene refreshes remove it, so owners re-add it.
+    void addMapOverlayItem(QGraphicsItem *item);
 
 signals:
     void titleChanged();
