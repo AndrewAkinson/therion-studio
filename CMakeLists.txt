@@ -107,6 +107,8 @@ set(THERION_CORE_SOURCES
     src/core/TherionXviParser.cpp
     src/core/TherionXviParser.h
     src/core/TherionFileTypes.h
+    src/core/Th2CentrelineAlignment.cpp
+    src/core/Th2CentrelineAlignment.h
     src/core/Th2GeometryProjection.cpp
     src/core/Th2GeometryProjection.h
     src/core/ThreeDViewerCamera.cpp
@@ -181,6 +183,7 @@ set(THERION_CORE_QTEST_SUITES
     MapBackgroundPlacementTest
     PocketTopoImportTest
     Th2GeometryProjectionTest
+    Th2CentrelineAlignmentTest
     TherionFileTypesTest
     TherionBackgroundMetadataTest
     TherionDocumentParserTest
@@ -1203,6 +1206,7 @@ therion_add_core_qtest_runner(TherionCoreQTests
     tests/core/MapBackgroundPlacementTest.cpp
     tests/PocketTopoImportTest.cpp
     tests/core/Th2GeometryProjectionTest.cpp
+    tests/core/Th2CentrelineAlignmentTest.cpp
     tests/core/ThreeDViewerCameraTest.cpp
     tests/core/TherionFileTypesTest.cpp
     tests/core/TherionBackgroundMetadataTest.cpp

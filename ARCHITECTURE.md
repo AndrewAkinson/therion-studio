@@ -59,6 +59,9 @@ The main source-model contracts are:
   context, catalog metadata, and logical command lookup.
 - `Th2GeometryProjection` for read-only `.th2` point, line, area, scrap, map, geometry, and background metadata
   projection used by Map consumers.
+- `Th2CentrelineAlignment` for pure scrap-to-centreline placement: station points fitted to XVI centreline stations
+  (XVI grid scale) or scrap `-scale`, and the transform that links two drawings at an equated station. It uses a
+  QtCore-only `Th2SimilarityTransform`; file loading stays in application services.
 - `TextEditorSourceTransactionController` and map source transaction helpers for user-visible source mutations, undo/redo,
   dirty state, revision checks, projection invalidation, and selection/cursor restoration.
 

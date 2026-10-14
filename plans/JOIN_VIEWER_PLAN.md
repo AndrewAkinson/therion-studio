@@ -47,8 +47,9 @@ at the equated station.
 1. For each drawing, collect matched pairs: `point x y station -name N` (drawing coordinates) and the centreline
    position of `N` in metres.
 2. Centreline positions, in order of preference:
-   - the XVI referenced by `xth_me_image_insert`: XVI station position placed by the image-insert offset, converted to
-     metres with the XVI grid (`XVIgrid` vector length per `XVIgrids` unit);
+   - the XVI referenced by `xth_me_image_insert` (the one matching most station names): XVI station positions
+     converted to metres with the XVI grid (`XVIgrid` vector length per `XVIgrids` unit). The XVI placement offset
+     is not needed because the fit maps drawing points straight onto XVI coordinates;
    - fallback when no usable XVI exists: scrap `-scale` (if set), translation-only at the join station;
    - otherwise the pair is listed but marked "no scale"; the panes open centred on the station without linking.
 3. With two or more matched stations, fit a 2D similarity transform (scale, rotation, translation; least squares)
@@ -64,8 +65,8 @@ Notes:
   join station coincides but passage direction may differ.
 - Possible later upgrade: use Therion-computed coordinates from a `.lox` (already loadable by
   `ThreeDViewerLoxLoader`) for true cross-survey placement. Not in the first slice because it needs a fresh compile.
-- No external library: the fit is a closed-form 2D similarity (a few lines); Qt provides `QTransform`, `QSplitter`,
-  `QGraphicsView`.
+- No external library: the fit is a closed-form 2D similarity. Core stays QtCore-only, so it uses a small
+  `Th2SimilarityTransform` value type; the app layer converts it to `QTransform` for `QGraphicsView`.
 
 ## Sidebar: Joins Page
 

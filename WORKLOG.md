@@ -289,7 +289,9 @@ Active planning only. Completed history belongs in archive files. Stable archite
   editable and saved independently, with a faded partner outline.
 - Slice 1 (done): `ProjectIndexSnapshot` carries cross-survey `equateLinks` and
   `stationDrawingPointsByStationKey`.
-- Next: slice 2, `Th2CentrelineAlignment` (XVI grid/station fit, join transform).
+- Slice 2 (awaiting review): `Th2CentrelineAlignment` fits scrap station points to XVI centreline stations
+  (`XVIgrids` now parsed), falls back to scrap `-scale`, and links two drawings at the join station.
+- Next: slice 3, Joins sidebar page opening both drawings centred on the join station.
 
 ### Raster Background Placement (issue #30)
 

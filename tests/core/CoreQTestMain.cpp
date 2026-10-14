@@ -7,6 +7,7 @@ int runCommandOptionParserTest(int argc, char **argv);
 int runMapBackgroundPlacementTest(int argc, char **argv);
 int runPocketTopoImportTest(int argc, char **argv);
 int runTh2GeometryProjectionTest(int argc, char **argv);
+int runTh2CentrelineAlignmentTest(int argc, char **argv);
 int runTherionSourceTextTest(int argc, char **argv);
 int runTherionSourceDocumentTest(int argc, char **argv);
 int runTherionSourceFormatterTest(int argc, char **argv);
@@ -37,6 +38,7 @@ int main(int argc, char **argv)
         {"MapBackgroundPlacementTest", runMapBackgroundPlacementTest},
         {"PocketTopoImportTest", runPocketTopoImportTest},
         {"Th2GeometryProjectionTest", runTh2GeometryProjectionTest},
+        {"Th2CentrelineAlignmentTest", runTh2CentrelineAlignmentTest},
         {"TherionFileTypesTest", runTherionFileTypesTest},
         {"TherionBackgroundMetadataTest", runTherionBackgroundMetadataTest},
         {"TherionDocumentParserTest", runTherionDocumentParserTest},
