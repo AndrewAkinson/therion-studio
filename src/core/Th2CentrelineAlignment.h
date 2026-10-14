@@ -8,7 +8,7 @@
 
 namespace TherionStudio
 {
-class TherionSourceLogicalDocument;
+struct TherionSourceLogicalCommand;
 struct TherionXviDocument;
 
 // 2D similarity without reflection: p' = [a -b; b a] p + (tx, ty).
@@ -64,7 +64,7 @@ struct Th2CentrelineFit
 [[nodiscard]] std::optional<qreal> therionLengthUnitMetres(const QString &unit);
 
 // Station points of the scrap that starts at `scrapStartLine` (no scrap station-name transform applied).
-[[nodiscard]] QVector<Th2ScrapStationPoint> th2ScrapStationPoints(const TherionSourceLogicalDocument &document,
+[[nodiscard]] QVector<Th2ScrapStationPoint> th2ScrapStationPoints(const QVector<TherionSourceLogicalCommand> &commands,
                                                                   int scrapStartLine);
 
 // Metres per drawing unit from the XVI grid (`XVIgrid` step length per `XVIgrids` real length).
@@ -75,7 +75,7 @@ struct Th2CentrelineFit
                                                             const TherionXviDocument &xvi);
 
 // The scrap `-scale` option as a drawing-to-metres similarity (rotation and scale; translation is arbitrary).
-[[nodiscard]] std::optional<Th2SimilarityTransform> th2ScrapScaleTransform(const TherionSourceLogicalDocument &document,
+[[nodiscard]] std::optional<Th2SimilarityTransform> th2ScrapScaleTransform(const QVector<TherionSourceLogicalCommand> &commands,
                                                                int scrapStartLine);
 
 // Least-squares similarity fit of drawing positions onto centreline metres; needs two or more pairs.
@@ -86,6 +86,14 @@ struct Th2CentrelineFit
 [[nodiscard]] Th2CentrelineFit fitTh2ScrapToCentreline(const QVector<Th2StationFitPair> &xviPairs,
                                                        std::optional<qreal> xviMetresPerUnit,
                                                        std::optional<Th2SimilarityTransform> scrapScaleTransform);
+
+// Start line of the scrap that contains `lineNumber`, or 0 when the line is outside any scrap.
+[[nodiscard]] int th2ScrapStartLineContaining(const QVector<TherionSourceLogicalCommand> &commands, int lineNumber);
+
+// Fits the scrap containing `lineNumber`, using whichever XVI matches most of its station points.
+[[nodiscard]] Th2CentrelineFit fitTh2ScrapContainingLine(const QVector<TherionSourceLogicalCommand> &commands,
+                                                         int lineNumber,
+                                                         const QVector<TherionXviDocument> &xviDocuments);
 
 // Maps partner drawing coordinates into this drawing so the two join station points coincide.
 [[nodiscard]] Th2SimilarityTransform joinPartnerToThisTransform(const Th2CentrelineFit &thisFit,

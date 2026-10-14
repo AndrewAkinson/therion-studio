@@ -23,6 +23,7 @@
 #include "MapEditorInteractiveDrawContext.h"
 #include "MapEditorInteractiveDrawLogic.h"
 #include "MapEditorBackgroundAssetCache.h"
+#include "../../../core/Th2CentrelineAlignment.h"
 #include "MapEditorLogicalSourceContext.h"
 #include "MapEditorObjectDetailsLogic.h"
 #include "MapEditorObjectStyleCatalog.h"
@@ -280,6 +281,13 @@ public slots:
     void setWorkspaceMode(WorkspaceMode mode);
     void toggleMapPaneWindow();
 
+    // Visible map area in drawing (source) coordinates, used to link two map views.
+    QPointF mapViewCentreSourcePosition() const;
+    qreal mapViewPixelsPerSourceUnit() const;
+    void setMapViewCentreAndScale(const QPointF &sourceCentre, qreal pixelsPerSourceUnit);
+    // Centreline placement of the scrap containing `lineNumber`, from the current text and cached XVI backgrounds.
+    Th2CentrelineFit centrelineFitForSourceLine(int lineNumber);
+
 signals:
     void titleChanged();
     void dirtyStateChanged(bool dirty);
@@ -294,6 +302,7 @@ signals:
     void workspaceModeChanged(TherionStudio::MapEditorTab::WorkspaceMode mode);
     void mapPaneDetachStateChanged(bool detached);
     void zoomStatusChanged(int zoomPercent);
+    void mapViewChanged();
     void commandSurfaceStateChanged();
     void openDedicatedWindowRequested(TherionStudio::MapEditorTab *tab);
 
@@ -552,6 +561,7 @@ private:
     void fitMapToView(bool includeBackgroundImages = false);
     void fitMapToViewAfterViewportResize(bool includeBackgroundImages = false);
     void syncZoomFactorFromView();
+    void ensureMapViewCanCentreOn(const QPointF &sceneCentre);
     void applyZoomAtViewportPosition(qreal factor, const QPointF &viewportPosition);
     void refreshToolbarSummary();
     void adjustMapZoom(qreal factor);
@@ -841,6 +851,7 @@ private:
     bool mapViewportPreservationInProgress_ = false;
     bool autoFitEnabled_ = true;
     qreal zoomFactor_ = 1.0;
+    bool mapViewScrollAreaExtended_ = false;
     bool fitBackgroundRequested_ = false;
     mutable bool cachedParsedLinesValid_ = false;
     mutable int cachedParsedLinesRevision_ = -1;

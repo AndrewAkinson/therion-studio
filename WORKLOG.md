@@ -291,9 +291,11 @@ Active planning only. Completed history belongs in archive files. Stable archite
   `stationDrawingPointsByStationKey`.
 - Slice 2 (done): `Th2CentrelineAlignment` fits scrap station points to XVI centreline stations
   (`XVIgrids` now parsed), falls back to scrap `-scale`, and links two drawings at the join station.
-- Slice 3 (awaiting review): `Joins` sidebar page (`ProjectJoinsPanel` over `ProjectJoinList`) opening both drawings
+- Slice 3 (done): `Joins` sidebar page (`ProjectJoinsPanel` over `ProjectJoinList`) opening both drawings
   centred on the join station.
-- Next: slice 4, Join view tab with two linked map editors.
+- Slice 4 (in progress): view linking done (`MapEditorTab` view centre/scale API and `centrelineFitForSourceLine`,
+  `MapEditorJoinViewLink`). Blocked on hosting: map editors outside the tab strip or detached windows are not seen by
+  save/close/session handling; choose a host before wiring `Open Join`.
 
 ### Raster Background Placement (issue #30)
 

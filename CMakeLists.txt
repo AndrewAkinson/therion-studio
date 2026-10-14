@@ -800,6 +800,9 @@ set(THERION_MAP_EDITOR_SOURCES
     src/app/text_editor/map_editor/MapEditorTabWorkspace.cpp
     src/app/text_editor/map_editor/MapEditorTabCommandSurfaceDelegates.cpp
     src/app/text_editor/map_editor/MapEditorTabWorkspaceDelegates.cpp
+    src/app/text_editor/map_editor/MapEditorTabViewLinking.cpp
+    src/app/text_editor/map_editor/MapEditorJoinViewLink.cpp
+    src/app/text_editor/map_editor/MapEditorJoinViewLink.h
     src/app/text_editor/map_editor/MapEditorUndoArbitrationService.cpp
     src/app/text_editor/map_editor/MapEditorUndoArbitrationService.h
     src/app/text_editor/map_editor/MapEditorTabDocumentValidation.cpp
@@ -1741,6 +1744,11 @@ qt_add_executable(ProjectJoinsPanelTest
     tests/ProjectJoinsPanelTest.cpp)
 target_link_libraries(ProjectJoinsPanelTest PRIVATE therion_app Qt6::Test)
 
+therion_add_map_editor_ui_test(MapEditorJoinViewLinkTest
+    tests/MapEditorJoinViewLinkTest.cpp
+    "MapEditorJoinViewLinkResources")
+target_link_libraries(MapEditorJoinViewLinkTest PRIVATE Qt6::Test)
+
 therion_add_map_editor_ui_test(MapEditorDetachedPaneTest
     tests/MapEditorDetachedPaneTest.cpp
     "MapEditorDetachedPaneResources")
@@ -1881,6 +1889,7 @@ set(THERION_UI_TEST_TARGETS
     TextEditorImportInsertionTransactionTest
     TextEditorSystemNormalizationTransactionTest
     MapEditorDetachedPaneTest
+    MapEditorJoinViewLinkTest
     MapEditorDragUndoRedoSmokeTest
     MapEditorLargeScenePerformanceSmokeTest
     MapEditorSplitAreaBorderSmokeTest

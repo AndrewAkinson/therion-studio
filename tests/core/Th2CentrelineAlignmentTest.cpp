@@ -98,7 +98,7 @@ private slots:
             "point 88.74 177.48 station -name 3\n"
             "point 0 0 station -name unknown\n"
             "endscrap\n"));
-        const QVector<Th2ScrapStationPoint> points = th2ScrapStationPoints(th2, 4);
+        const QVector<Th2ScrapStationPoint> points = th2ScrapStationPoints(th2.commands(), 4);
         QCOMPARE(points.size(), 4);
         QCOMPARE(points.first().position, QPointF(10, 20));
         QCOMPARE(points.first().lineNumber, 5);
@@ -111,6 +111,32 @@ private slots:
         QCOMPARE(fit.stationCount, 3);
         QVERIFY(nearlyEqual(fit.rmsResidualMetres, 0.0));
         QVERIFY(nearlyEqual(fit.drawingToMetres.map(QPointF(88.74, 177.48)), QPointF(1.0, 2.0)));
+    }
+
+    void fitsScrapContainingLineWithBestXvi()
+    {
+        const TherionSourceLogicalDocument th2 = TherionSourceLogicalDocument::fromText(QStringLiteral(
+            "scrap first\n"
+            "point 0 0 station -name 9\n"
+            "endscrap\n"
+            "scrap s1 -scale [1 m]\n"
+            "point 10 20 station -name 1\n"
+            "point 88.74 20 station -name 2\n"
+            "endscrap\n"));
+        QCOMPARE(th2ScrapStartLineContaining(th2.commands(), 6), 4);
+        QCOMPARE(th2ScrapStartLineContaining(th2.commands(), 2), 1);
+        QCOMPARE(th2ScrapStartLineContaining(th2.commands(), 8), 0);
+
+        const TherionXviDocument unrelated = xviDocument(QStringLiteral(
+            "set XVIgrids {1 m}\nset XVIstations {\n  {0 0 77}\n}\nset XVIgrid {0 0 10 0 0 10 1 1}\n"));
+        const Th2CentrelineFit fit = fitTh2ScrapContainingLine(th2.commands(), 5, {unrelated, xviDocument(kXviText)});
+        QCOMPARE(fit.source, Th2CentrelineFitSource::XviStations);
+        QCOMPARE(fit.stationCount, 2);
+        QVERIFY(nearlyEqual(fit.drawingToMetres.scale(), 1.0 / 78.74));
+
+        const Th2CentrelineFit scaleOnly = fitTh2ScrapContainingLine(th2.commands(), 5, {});
+        QCOMPARE(scaleOnly.source, Th2CentrelineFitSource::ScrapScale);
+        QVERIFY(!fitTh2ScrapContainingLine(th2.commands(), 8, {}).isValid());
     }
 
     void usesXviGridScaleForSingleStation()
@@ -132,13 +158,13 @@ private slots:
             "endscrap\n"
             "scrap u\n"
             "endscrap\n"));
-        const std::optional<Th2SimilarityTransform> eightPoint = th2ScrapScaleTransform(th2, 1);
+        const std::optional<Th2SimilarityTransform> eightPoint = th2ScrapScaleTransform(th2.commands(), 1);
         QVERIFY(eightPoint.has_value());
         QVERIFY(nearlyEqual(eightPoint->map(QPointF(787.40, 0.0)), QPointF(10.0, 0.0)));
-        const std::optional<Th2SimilarityTransform> length = th2ScrapScaleTransform(th2, 3);
+        const std::optional<Th2SimilarityTransform> length = th2ScrapScaleTransform(th2.commands(), 3);
         QVERIFY(length.has_value());
         QVERIFY(nearlyEqual(length->map(QPointF(100, 0)), QPointF(2.0, 0.0)));
-        QVERIFY(!th2ScrapScaleTransform(th2, 5).has_value());
+        QVERIFY(!th2ScrapScaleTransform(th2.commands(), 5).has_value());
 
         const Th2CentrelineFit fit = fitTh2ScrapToCentreline({}, std::nullopt, eightPoint);
         QCOMPARE(fit.source, Th2CentrelineFitSource::ScrapScale);

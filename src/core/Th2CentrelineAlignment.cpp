@@ -13,9 +13,9 @@ namespace TherionStudio
 {
 namespace
 {
-const TherionSourceLogicalCommand *commandStartingAt(const TherionSourceLogicalDocument &document, int startLine)
+const TherionSourceLogicalCommand *commandStartingAt(const QVector<TherionSourceLogicalCommand> &commands, int startLine)
 {
-    for (const TherionSourceLogicalCommand &command : document.commands()) {
+    for (const TherionSourceLogicalCommand &command : commands) {
         if (command.startLineNumber == startLine) {
             return &command;
         }
@@ -93,11 +93,11 @@ std::optional<qreal> therionLengthUnitMetres(const QString &unit)
     return it == metresByUnit.constEnd() ? std::nullopt : std::optional<qreal>(it.value());
 }
 
-QVector<Th2ScrapStationPoint> th2ScrapStationPoints(const TherionSourceLogicalDocument &document, int scrapStartLine)
+QVector<Th2ScrapStationPoint> th2ScrapStationPoints(const QVector<TherionSourceLogicalCommand> &commands, int scrapStartLine)
 {
     QVector<Th2ScrapStationPoint> points;
     bool inScrap = false;
-    for (const TherionSourceLogicalCommand &command : document.commands()) {
+    for (const TherionSourceLogicalCommand &command : commands) {
         const QString &commandName = command.metadata.commandName;
         if (commandName == QStringLiteral("scrap")) {
             inScrap = command.startLineNumber == scrapStartLine;
@@ -159,9 +159,9 @@ QVector<Th2StationFitPair> xviStationFitPairs(const QVector<Th2ScrapStationPoint
     return pairs;
 }
 
-std::optional<Th2SimilarityTransform> th2ScrapScaleTransform(const TherionSourceLogicalDocument &document, int scrapStartLine)
+std::optional<Th2SimilarityTransform> th2ScrapScaleTransform(const QVector<TherionSourceLogicalCommand> &commands, int scrapStartLine)
 {
-    const TherionSourceLogicalCommand *scrap = commandStartingAt(document, scrapStartLine);
+    const TherionSourceLogicalCommand *scrap = commandStartingAt(commands, scrapStartLine);
     if (scrap == nullptr) {
         return std::nullopt;
     }
@@ -267,6 +267,43 @@ Th2CentrelineFit fitTh2ScrapToCentreline(const QVector<Th2StationFitPair> &xviPa
         fit.drawingToMetres = *scrapScaleTransform;
     }
     return fit;
+}
+
+int th2ScrapStartLineContaining(const QVector<TherionSourceLogicalCommand> &commands, int lineNumber)
+{
+    int scrapStartLine = 0;
+    for (const TherionSourceLogicalCommand &command : commands) {
+        if (command.startLineNumber > lineNumber) {
+            break;
+        }
+        if (command.metadata.commandName == QStringLiteral("scrap")) {
+            scrapStartLine = command.startLineNumber;
+        } else if (command.metadata.commandName == QStringLiteral("endscrap")) {
+            scrapStartLine = 0;
+        }
+    }
+    return scrapStartLine;
+}
+
+Th2CentrelineFit fitTh2ScrapContainingLine(const QVector<TherionSourceLogicalCommand> &commands,
+                                           int lineNumber,
+                                           const QVector<TherionXviDocument> &xviDocuments)
+{
+    const int scrapStartLine = th2ScrapStartLineContaining(commands, lineNumber);
+    if (scrapStartLine <= 0) {
+        return Th2CentrelineFit();
+    }
+    const QVector<Th2ScrapStationPoint> points = th2ScrapStationPoints(commands, scrapStartLine);
+    QVector<Th2StationFitPair> bestPairs;
+    std::optional<qreal> bestMetresPerUnit;
+    for (const TherionXviDocument &xvi : xviDocuments) {
+        const QVector<Th2StationFitPair> pairs = xviStationFitPairs(points, xvi);
+        if (!bestMetresPerUnit.has_value() || pairs.size() > bestPairs.size()) {
+            bestPairs = pairs;
+            bestMetresPerUnit = xviMetresPerDrawingUnit(xvi);
+        }
+    }
+    return fitTh2ScrapToCentreline(bestPairs, bestMetresPerUnit, th2ScrapScaleTransform(commands, scrapStartLine));
 }
 
 Th2SimilarityTransform joinPartnerToThisTransform(const Th2CentrelineFit &thisFit,
