@@ -4,7 +4,6 @@
 #include "LucideIconFactory.h"
 #include "text_editor/map_editor/MapEditorJoinOutline.h"
 #include "text_editor/map_editor/MapEditorJoinPairs.h"
-#include "text_editor/map_editor/MapEditorJoinViewLink.h"
 
 #include "ui/ApplicationStyleSheets.h"
 #include "text_editor/TextEditorTab.h"
@@ -177,17 +176,32 @@ void MainWindow::populateMapJoinMenu(QMenu *menu)
     auto *mapTab = qobject_cast<TherionStudio::MapEditorTab *>(currentDocumentWidget());
     const QVector<TherionStudio::MapEditorJoinPair> pairs = TherionStudio::mapEditorJoinPairsFor(mapTab);
     if (pairs.isEmpty()) {
-        menu->addAction(tr("No joined drawings"))->setEnabled(false);
+        menu->addAction(tr("No linked drawings"))->setEnabled(false);
         return;
     }
     for (const TherionStudio::MapEditorJoinPair &pair : pairs) {
-        menu->addSection(pair.partner->displayName());
-        if (pair.link != nullptr) {
-            QAction *linkViews = menu->addAction(tr("Link Views"));
-            linkViews->setCheckable(true);
-            linkViews->setChecked(pair.link->isEnabled());
-            connect(linkViews, &QAction::toggled, pair.link, &TherionStudio::MapEditorJoinViewLink::setEnabled);
+        if (!menu->isEmpty()) {
+            menu->addSeparator();
         }
+        // The drawing's name brings it to the front: its separate map window, or its tab.
+        QAction *showDrawing = menu->addAction(pair.partner->displayName());
+        QFont nameFont = showDrawing->font();
+        nameFont.setBold(true);
+        showDrawing->setFont(nameFont);
+        const QPointer<TherionStudio::MapEditorTab> shown(pair.partner);
+        connect(showDrawing, &QAction::triggered, this, [this, shown]() {
+            if (shown == nullptr) {
+                return;
+            }
+            if (shown->isMapPaneDetached()) {
+                shown->focusDetachedMapPaneWindow();
+            } else if (editorTabs_->indexOf(shown) >= 0) {
+                editorTabs_->setCurrentWidget(shown);
+            } else {
+                shown->window()->raise();
+                shown->window()->activateWindow();
+            }
+        });
         QAction *showOutline = menu->addAction(tr("Show Outline"));
         showOutline->setCheckable(true);
         showOutline->setChecked(pair.outline->isOutlineVisible());
@@ -228,10 +242,10 @@ void MainWindow::refreshMapJoinLinkIcons()
             continue;
         }
         mapTabs.append(mapTab);
-        editorTabs_->setTabIcon(index, TherionStudio::mapEditorHasEnabledJoinLink(mapTab) ? linkIcon : QIcon());
+        editorTabs_->setTabIcon(index, TherionStudio::mapEditorHasJoinLink(mapTab) ? linkIcon : QIcon());
     }
     for (TherionStudio::MapEditorTab *mapTab : std::as_const(mapTabs)) {
-        mapTab->setMapPaneWindowIcon(TherionStudio::mapEditorHasEnabledJoinLink(mapTab) ? linkIcon : QIcon());
+        mapTab->setMapPaneWindowIcon(TherionStudio::mapEditorHasJoinLink(mapTab) ? linkIcon : QIcon());
     }
 }
 

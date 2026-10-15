@@ -597,6 +597,11 @@
         <translation>Les changements de langue prendront effet après le redémarrage de Therion Studio.</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindow.cpp" line="676"/>
+        <source>Linked Drawings</source>
+        <translation>Dessins liés</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindow.cpp" line="1007"/>
         <source>Open Therion Project</source>
         <translation>Ouvrir un projet Therion</translation>
@@ -1280,6 +1285,11 @@ Si le fichier est ouvert, il sera d&apos;abord fermé.</translation>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="88"/>
         <source>Drawings joined to this one through an equate</source>
         <translation>Dessins reliés à celui-ci par une commande equate</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="180"/>
+        <source>No linked drawings</source>
+        <translation>Aucun dessin lié</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="98"/>

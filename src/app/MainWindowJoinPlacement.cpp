@@ -138,10 +138,9 @@ void MainWindow::openProjectJoinDrawings(const QString &firstFile,
     if (!TherionStudio::openMapEditorJoinPair(firstTab, firstLine, secondTab, secondLine, separateWindow, placement)) {
         statusBar()->showMessage(failureMessage, 5000);
     }
-    // Keep the Joined indicator and link icons current as the link is toggled, removed, or its drawing closed.
+    // Keep the Joined indicator and link icons current as the join is removed or its drawing closed.
     for (const TherionStudio::MapEditorJoinPair &joinPair : TherionStudio::mapEditorJoinPairsFor(firstTab)) {
         if (joinPair.partner == secondTab && joinPair.link != nullptr) {
-            connect(joinPair.link, &TherionStudio::MapEditorJoinViewLink::enabledChanged, this, &MainWindow::refreshDocumentStatusWidgets);
             connect(joinPair.link, &QObject::destroyed, this, &MainWindow::refreshDocumentStatusWidgets, Qt::QueuedConnection);
         }
     }

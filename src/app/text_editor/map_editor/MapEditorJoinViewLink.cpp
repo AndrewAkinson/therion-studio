@@ -24,22 +24,6 @@ MapEditorJoinViewLink::MapEditorJoinViewLink(MapEditorTab *first,
     }
 }
 
-void MapEditorJoinViewLink::setEnabled(bool enabled)
-{
-    if (enabled_ != enabled) {
-        enabled_ = enabled;
-        emit enabledChanged(enabled_);
-    }
-    if (enabled_) {
-        alignSecondToFirst();
-    }
-}
-
-bool MapEditorJoinViewLink::isEnabled() const
-{
-    return enabled_;
-}
-
 bool MapEditorJoinViewLink::connects(const MapEditorTab *a, const MapEditorTab *b) const
 {
     return (first_ == a && second_ == b) || (first_ == b && second_ == a);
@@ -59,7 +43,7 @@ void MapEditorJoinViewLink::showFirstAt(const QPointF &firstCentre, qreal pixels
 
 void MapEditorJoinViewLink::alignSecondToFirst()
 {
-    if (!enabled_ || aligning_ || first_ == nullptr || second_ == nullptr) {
+    if (aligning_ || first_ == nullptr || second_ == nullptr) {
         return;
     }
     const QScopedValueRollback<bool> guard(aligning_, true);
@@ -70,7 +54,7 @@ void MapEditorJoinViewLink::alignSecondToFirst()
 
 void MapEditorJoinViewLink::alignFirstToSecond()
 {
-    if (!enabled_ || aligning_ || first_ == nullptr || second_ == nullptr) {
+    if (aligning_ || first_ == nullptr || second_ == nullptr) {
         return;
     }
     const QScopedValueRollback<bool> guard(aligning_, true);

@@ -49,6 +49,7 @@ bool openMapEditorJoinPair(MapEditorTab *first,
 
 void closeMapEditorJoinPair(MapEditorTab *first, MapEditorTab *second);
 
-// True while `tab` is part of a join whose views are linked; drives the link icon on its tab and map window.
-[[nodiscard]] bool mapEditorHasEnabledJoinLink(MapEditorTab *tab);
+// True while `tab` is part of a join (joined views always move together); drives the link icon on its tab and map
+// window.
+[[nodiscard]] bool mapEditorHasJoinLink(MapEditorTab *tab);
 }

@@ -290,7 +290,7 @@ Active planning only. Completed history belongs in archive files. Stable archite
   activation default (SPECIFICATION 3.8.6, 3.12).
 - Specification review for the join work (2026-10-14): the `Survey`/`Map` "only surveys, maps, and scraps" rule is
   scoped to those views so the `Joins` view does not contradict it (3.5, 3.8.6, 8.1.5); the join viewer is listed as
-  Post-MVP (9.2); keyboard routes added for the `Joins` context menu and `View -> Joined Drawings` (3.13.1, 3.9);
+  Post-MVP (9.2); keyboard routes added for the `Joins` context menu and `View -> Linked Drawings` (3.13.1, 3.9);
   Czech, French, and Slovak manuals now cover `Joins` (3.14, 8.1.12).
 - Phase 2 slice B (awaiting review): Lucide `link` icon on linked drawings' tabs and separate map windows
   (SPECIFICATION 3.8.6).
@@ -303,6 +303,8 @@ Active planning only. Completed history belongs in archive files. Stable archite
 - Phase 2 stage C4 (awaiting review): joined drawings placed from Therion-computed station positions (background
   `export database -fmt sql` run outside the project, shared-frame fit per scrap; XVI fit stays as the fallback);
   join-only rows open aligned (SPECIFICATION 3.8.6, 8.1.5). Open joins are not re-placed when positions arrive.
+- Review changes (awaiting commit): `View -> Joined Drawings` renamed `Linked Drawings` (empty entry
+  `No linked drawings`), and the `Link Views` toggle removed so joined drawings always move together, and each drawing's name in that menu brings it to the front (tab or separate map window).
 - Phase 2 stage C5 (fallback placement without Therion) dropped: Therion Studio already needs Therion for much of
   its work; without positions the XVI fit remains. Extended elevations without an equate stay unlinked (no work
   planned). Phase 2 is complete pending review and the PR.

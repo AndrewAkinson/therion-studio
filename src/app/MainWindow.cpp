@@ -673,7 +673,7 @@ void MainWindow::buildMenus()
     });
 
 #if !defined(Q_OS_MACOS)
-    QMenu *joinedDrawingsMenu = viewMenu->addMenu(tr("Joined Drawings"));
+    QMenu *joinedDrawingsMenu = viewMenu->addMenu(tr("Linked Drawings"));
     connect(joinedDrawingsMenu, &QMenu::aboutToShow, this, [this, joinedDrawingsMenu]() { populateMapJoinMenu(joinedDrawingsMenu); });
     viewMenu->addSeparator();
     fullScreenAction_ = viewMenu->addAction(QString());

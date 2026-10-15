@@ -139,12 +139,6 @@ private slots:
         second_->setMapViewCentreAndScale(kSecondJoin + QPointF(19.685, 0), second_->mapViewPixelsPerSourceUnit());
         QVERIFY(centredOn(second_, kSecondJoin + QPointF(19.685, 0)));
         QVERIFY(showSamePoint(first_, second_, secondToFirst_));
-
-        // Unlinked views move independently.
-        link.setEnabled(false);
-        const QPointF firstBefore = first_->mapViewCentreSourcePosition();
-        second_->setMapViewCentreAndScale(kSecondJoin, second_->mapViewPixelsPerSourceUnit());
-        QVERIFY(near(first_->mapViewCentreSourcePosition(), firstBefore, 1e-6));
     }
 
     void showsPartnerOutlineAlignedAtTheJoin()
@@ -230,7 +224,7 @@ private slots:
         QVERIFY(openMapEditorJoinPair(first_, kFirstJoinLine, second_, kSecondJoinLine));
         // Opening the same join again replaces it.
         QVERIFY(openMapEditorJoinPair(first_, kFirstJoinLine, second_, kSecondJoinLine));
-        QVERIFY(mapEditorHasEnabledJoinLink(first_) && mapEditorHasEnabledJoinLink(second_));
+        QVERIFY(mapEditorHasJoinLink(first_) && mapEditorHasJoinLink(second_));
         const QVector<MapEditorJoinPair> firstPairs = mapEditorJoinPairsFor(first_);
         const QVector<MapEditorJoinPair> secondPairs = mapEditorJoinPairsFor(second_);
         QCOMPARE(firstPairs.size(), 1);
@@ -250,13 +244,6 @@ private slots:
         second_->setMapViewCentreAndScale(kSecondJoin + QPointF(19.685, 0), second_->mapViewPixelsPerSourceUnit());
         QTRY_VERIFY(showSamePoint(first_, second_, secondToFirst_));
 
-        // Turning the link off is signalled and clears the linked state that drives the link icon.
-        QSignalSpy enabledSpy(firstPairs.first().link.data(), &MapEditorJoinViewLink::enabledChanged);
-        firstPairs.first().link->setEnabled(false);
-        QCOMPARE(enabledSpy.count(), 1);
-        QVERIFY(!mapEditorHasEnabledJoinLink(first_) && !mapEditorHasEnabledJoinLink(second_));
-        firstPairs.first().link->setEnabled(true);
-
         // An icon set before the separate map window opens is applied when it opens, and updates while open.
         QPixmap linkPixmap(16, 16);
         linkPixmap.fill(Qt::darkGreen);
@@ -275,7 +262,7 @@ private slots:
         QCOMPARE(mapEditorJoinPairsFor(first_).size(), 1);
 
         closeMapEditorJoinPair(second_, first_);
-        QVERIFY(!mapEditorHasEnabledJoinLink(first_));
+        QVERIFY(!mapEditorHasJoinLink(first_));
         QVERIFY(mapEditorJoinPairsFor(first_).isEmpty());
         QVERIFY(mapEditorJoinPairsFor(second_).isEmpty());
         QVERIFY(first_->findChildren<MapEditorJoinViewLink *>().isEmpty());

@@ -291,6 +291,8 @@ public:
 public slots:
     void setWorkspaceMode(WorkspaceMode mode);
     void toggleMapPaneWindow();
+    // Brings the separate map window to the front, when the map pane is in one.
+    void focusDetachedMapPaneWindow();
 
     // Visible map area in drawing (source) coordinates, used to link two map views.
     QPointF mapViewCentreSourcePosition() const;
@@ -715,7 +717,6 @@ private:
     void syncMapSelectionFromTextCursor(int lineNumber, int columnNumber);
     void detachMapPaneToWindow();
     void reattachMapPaneFromWindow();
-    void focusDetachedMapPaneWindow();
     void refreshTitle();
     void refreshStatus();
     QString displayPath() const;

@@ -104,10 +104,10 @@ QVector<MapEditorJoinPair> mapEditorJoinPairsFor(MapEditorTab *tab)
     return pairs;
 }
 
-bool mapEditorHasEnabledJoinLink(MapEditorTab *tab)
+bool mapEditorHasJoinLink(MapEditorTab *tab)
 {
     for (const MapEditorJoinPair &pair : mapEditorJoinPairsFor(tab)) {
-        if (pair.link != nullptr && pair.link->isEnabled()) {
+        if (pair.link != nullptr) {
             return true;
         }
     }

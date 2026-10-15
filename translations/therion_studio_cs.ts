@@ -316,6 +316,11 @@
         <translation>Zavřít kartu</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindow.cpp" line="676"/>
+        <source>Linked Drawings</source>
+        <translation>Propojené kresby</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindow.cpp" line="862"/>
         <source>Open Existing Project...</source>
         <translation>Otevřít existující projekt...</translation>
@@ -1320,6 +1325,11 @@ Pokud je soubor otevřený, nejprve se zavře.</translation>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="88"/>
         <source>Drawings joined to this one through an equate</source>
         <translation>Kresby spojené s touto kresbou příkazem equate</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="180"/>
+        <source>No linked drawings</source>
+        <translation>Žádné propojené kresby</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="98"/>

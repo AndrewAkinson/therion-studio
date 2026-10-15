@@ -22,15 +22,10 @@ public:
                           const Th2SimilarityTransform &secondToFirst,
                           QObject *parent = nullptr);
 
-    void setEnabled(bool enabled);
-    [[nodiscard]] bool isEnabled() const;
     // True when this link joins `a` and `b`, in either order.
     [[nodiscard]] bool connects(const MapEditorTab *a, const MapEditorTab *b) const;
     // Shows `firstCentre` in the first editor at `pixelsPerFirstUnit`, then aligns the second editor.
     void showFirstAt(const QPointF &firstCentre, qreal pixelsPerFirstUnit);
-
-signals:
-    void enabledChanged(bool enabled);
 
 private:
     void alignSecondToFirst();
@@ -40,7 +35,6 @@ private:
     QPointer<MapEditorTab> second_;
     Th2SimilarityTransform secondToFirst_;
     Th2SimilarityTransform firstToSecond_;
-    bool enabled_ = true;
     bool aligning_ = false;
 };
 }

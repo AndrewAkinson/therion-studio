@@ -107,7 +107,8 @@ Notes:
   scene refresh) and re-adds its item after host scene refreshes.
 - `MapEditorJoinPairs` opens, lists, and closes a join (fit, outlines both ways, one link) and zooms both views to about
   30 m across the first view. A `Joined: <drawing>` status-bar indicator offers `Link Views`, `Show Outline`, and
-  `Remove Join` per joined drawing.
+  `Remove Join` per joined drawing. Changed 2026-10-15 after review: `Link Views` removed (joined drawings always move
+  together), and the View menu entry renamed `Linked Drawings`.
 
 ## Changes From The Original Plan
 

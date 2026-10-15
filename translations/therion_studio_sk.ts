@@ -316,6 +316,11 @@
         <translation>Zavrieť kartu</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindow.cpp" line="676"/>
+        <source>Linked Drawings</source>
+        <translation>Prepojené kresby</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindow.cpp" line="862"/>
         <source>Open Existing Project...</source>
         <translation>Otvoriť existujúci projekt...</translation>
@@ -1320,6 +1325,11 @@ Ak je súbor otvorený, najprv sa zavrie.</translation>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="88"/>
         <source>Drawings joined to this one through an equate</source>
         <translation>Kresby spojené s touto kresbou príkazom equate</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="180"/>
+        <source>No linked drawings</source>
+        <translation>Žiadne prepojené kresby</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="98"/>
