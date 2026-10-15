@@ -302,6 +302,13 @@ public slots:
     // Centreline placement of the scrap containing `lineNumber`, from the current text and cached XVI backgrounds.
     Th2CentrelineFit centrelineFitForSourceLine(int lineNumber);
     std::optional<QPointF> stationPointSourcePosition(int lineNumber) const;
+    // Fit of the scrap containing `lineNumber` to station positions computed by Therion.
+    Th2CentrelineFit stationPositionFitForSourceLine(int lineNumber,
+                                                     const QHash<int, QString> &stationKeysByLine,
+                                                     const QHash<QString, Th2StationPosition> &positionsByStationKey,
+                                                     const QString &projection) const;
+    // Middle of the station points of the scrap containing `lineNumber`.
+    std::optional<QPointF> scrapStationCentroidForSourceLine(int lineNumber) const;
     // Lines and station points of the current drawing as one path in scene coordinates.
     QPainterPath mapOutlineScenePath() const;
     QTransform mapSourceToSceneTransform() const;

@@ -20,6 +20,7 @@ int runTherionSourceValidatorProjectionTest(int argc, char **argv);
 int runProjectStructureIndexQTest(int argc, char **argv);
 int runProjectJoinListTest(int argc, char **argv);
 int runProjectJoinRulesTest(int argc, char **argv);
+int runTherionStationPositionExportTest(int argc, char **argv);
 int runThreeDViewerLoxLoaderTest(int argc, char **argv);
 int runThreeDViewerLoxCorpusPolicyTest(int argc, char **argv);
 int runThreeDViewerCameraTest(int argc, char **argv);
@@ -63,5 +64,6 @@ int main(int argc, char **argv)
         {"ProjectStructureIndexQTest", runProjectStructureIndexQTest},
         {"ProjectJoinListTest", runProjectJoinListTest},
         {"ProjectJoinRulesTest", runProjectJoinRulesTest},
+        {"TherionStationPositionExportTest", runTherionStationPositionExportTest},
         {"TherionTokenRulesTest", runTherionTokenRulesTest}});
 }

@@ -137,6 +137,8 @@ ProjectEquateLinkScanResult scanProjectEquateLinks(const ProjectEquateLinkScanIn
             if (station.stationKey.isEmpty()) {
                 continue;
             }
+            result.stationPointsByScrapObjectId[scrapEntry.objectId].append(
+                ProjectScrapStationPoint{command.startLineNumber, station.stationKey});
             drawingPoints.append(ProjectStationDrawingPoint{station.stationKey,
                                                             sourceFile,
                                                             command.startLineNumber,

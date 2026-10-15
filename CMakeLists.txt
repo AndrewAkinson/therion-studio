@@ -147,6 +147,8 @@ set(THERION_CORE_SOURCES
     src/core/ProjectStructureIndex.h
     src/core/TherionStationNameRules.cpp
     src/core/TherionStationNameRules.h
+    src/core/TherionStationPositionExport.cpp
+    src/core/TherionStationPositionExport.h
     src/core/TherionDocumentParser.cpp
     src/core/TherionDocumentParser.h
     src/core/SessionStore.cpp
@@ -190,6 +192,7 @@ set(THERION_CORE_QTEST_SUITES
     Th2CentrelineAlignmentTest
     ProjectJoinListTest
     ProjectJoinRulesTest
+    TherionStationPositionExportTest
     TherionFileTypesTest
     TherionBackgroundMetadataTest
     TherionDocumentParserTest
@@ -429,6 +432,8 @@ set(THERION_APP_SOURCES
     src/app/TherionRunnerLifecyclePresenter.h
     src/app/TherionRunnerOutputLinker.cpp
     src/app/TherionRunnerOutputLinker.h
+    src/app/ProjectStationPositionService.cpp
+    src/app/ProjectStationPositionService.h
     src/app/TherionRunnerService.cpp
     src/app/TherionRunnerService.h
     src/app/TherionRunnerStartResultPresenter.cpp
@@ -524,6 +529,7 @@ set(THERION_MAIN_WINDOW_SOURCES
     src/app/MainWindowHelpDialog.cpp
     src/app/MainWindowHelpDialog.h
     src/app/MainWindowMapBackground.cpp
+    src/app/MainWindowJoinPlacement.cpp
     src/app/MainWindowProjectFileWatcher.cpp
     src/app/MainWindowProjectBrowserSidebar.cpp
     src/app/MainWindowOutputsSidebar.cpp
@@ -1245,6 +1251,7 @@ therion_add_core_qtest_runner(TherionCoreQTests
     tests/core/ProjectStructureIndexQTest.cpp
     tests/core/ProjectJoinListTest.cpp
     tests/core/ProjectJoinRulesTest.cpp
+    tests/core/TherionStationPositionExportTest.cpp
     tests/core/TherionSourceTextTest.cpp
     tests/core/TherionTokenRulesTest.cpp)
 
@@ -1486,6 +1493,10 @@ target_link_libraries(TherionRunnerSupportQTests PRIVATE therion_app Qt6::Test)
 
 therion_add_app_unit_test(TherionRunnerServiceTest
     tests/TherionRunnerServiceTest.cpp)
+
+therion_add_app_unit_test(ProjectStationPositionServiceTest
+    tests/ProjectStationPositionServiceTest.cpp)
+target_link_libraries(ProjectStationPositionServiceTest PRIVATE Qt6::Test)
 
 therion_add_app_unit_test(MainWindowTherionRunnerControllerTest
     tests/MainWindowTherionRunnerControllerTest.cpp)
@@ -1887,6 +1898,7 @@ set(THERION_UNIT_TEST_TARGETS
     BlockEditorToolboxControllerTest
     TherionRunnerSupportQTests
     TherionRunnerServiceTest
+    ProjectStationPositionServiceTest
     MainWindowValidationFixApplyServiceTest)
 
 set(THERION_UI_TEST_TARGETS

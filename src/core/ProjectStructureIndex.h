@@ -175,6 +175,13 @@ struct ProjectStationDrawingPoint
     QString scrapObjectId;
 };
 
+// A `point ... station -name` of a scrap, by line, with the station it resolves to.
+struct ProjectScrapStationPoint
+{
+    int lineNumber = 0;
+    QString stationKey;
+};
+
 struct ProjectStructureIndexScanStats
 {
     int logicalDocumentBuilds = 0;
@@ -196,6 +203,8 @@ struct ProjectIndexSnapshot
     QHash<QString, QVector<ProjectStationDrawingPoint>> stationDrawingPointsByStationKey;
     QVector<ProjectJoinCommand> joinCommands;
     QVector<ProjectJoinRuleViolation> joinRuleViolations;
+    // Every station point of every scrap that has a projection, for fitting scraps to computed station positions.
+    QHash<QString, QVector<ProjectScrapStationPoint>> stationPointsByScrapObjectId;
     // Normalized `-projection` of every scrap, by scrap object ID.
     QHash<QString, QString> scrapProjectionByObjectId;
     QVector<ProjectIndexDiagnostic> diagnostics;
@@ -247,5 +256,8 @@ public:
     static QVector<ProjectStructureEntry> scanTh2Objects(const QString &sourceFile,
                                                          const QVector<TherionSourceLogicalCommand> &commands);
     static QString structureEntryNodeKey(const ProjectStructureEntry &entry);
+    // Station key of `name` in the survey namespace `namespacePath` (innermost first, as Therion writes
+    // `survey.parent`), matching ProjectEquateStation::stationKey.
+    static QString stationKey(const QString &name, const QString &namespacePath);
 };
 }

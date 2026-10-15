@@ -435,7 +435,11 @@ void ProjectJoinsPanel::activateRow(const QModelIndex &proxyIndex)
     if (pair == nullptr) {
         const ProjectJoinGroup *group = groupForIndex(proxyIndex);
         if (group != nullptr && group->joinOnly.has_value()) {
-            openJoinOnlyScraps(*group);
+            if (group->joinOnlyScraps.size() == 2) {
+                emit joinOnlyRequested(*group, activationOpensSeparateWindow_);
+            } else {
+                openJoinOnlyScraps(*group);
+            }
             return;
         }
         tree_->setExpanded(proxyIndex, !tree_->isExpanded(proxyIndex));

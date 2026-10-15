@@ -1,7 +1,5 @@
 #include "MainWindow.h"
 #include "ProjectJoinsPanel.h"
-#include "text_editor/map_editor/MapEditorJoinPairs.h"
-#include "text_editor/map_editor/MapEditorJoinViewLink.h"
 
 #include "MainWindowDocumentHelpers.h"
 #include "MainWindowStructureRoles.h"
@@ -27,6 +25,7 @@
 #include <QSignalBlocker>
 #include <QSet>
 #include <QStandardItem>
+#include <QStackedWidget>
 #include <QStandardItemModel>
 #include <QStatusBar>
 #include <QStyle>
@@ -719,6 +718,9 @@ void MainWindow::applyStructureSidebarIndex(const TherionStudio::ProjectIndexSna
     lastStructureSidebarProjectIndex_ = projectIndex;
     if (projectJoinsPanel_ != nullptr) {
         projectJoinsPanel_->setProjectIndex(projectIndex);
+        if (structureViewStack_ != nullptr && structureViewStack_->currentWidget() == projectJoinsPanel_) {
+            requestJoinStationPositions();
+        }
     }
 
     const QString currentExpansionProjectRootPath = normalizedStructurePathKey(projectRootPath_);
@@ -1191,41 +1193,6 @@ QWidget *MainWindow::openProjectSourceLocation(const QString &sourceFile, int li
         documentGoToLineForWidget(tabWidget, lineNumber);
     }
     return tabWidget;
-}
-
-void MainWindow::openProjectJoin(const TherionStudio::ProjectJoinPair &pair, bool separateWindow)
-{
-    if (!pair.isAvailable()) {
-        return;
-    }
-    // Each drawing opens centred on its join-station point.
-    const int firstLine = pair.first.drawing->lineNumber;
-    const int secondLine = pair.second.drawing->lineNumber;
-    auto *firstTab = qobject_cast<TherionStudio::MapEditorTab *>(
-        openProjectSourceLocation(pair.first.drawing->sourceFile, firstLine));
-    auto *secondTab = qobject_cast<TherionStudio::MapEditorTab *>(
-        openProjectSourceLocation(pair.second.drawing->sourceFile, secondLine));
-    if (firstTab == nullptr || secondTab == nullptr || firstTab == secondTab) {
-        return;
-    }
-
-    // Outline each drawing in the other and link their views, aligned at the join station.
-    if (separateWindow) {
-        // The main window shows the first drawing; the second drawing's map is in its separate window.
-        editorTabs_->setCurrentWidget(firstTab);
-    }
-    if (!TherionStudio::openMapEditorJoinPair(firstTab, firstLine, secondTab, secondLine, separateWindow)) {
-        statusBar()->showMessage(tr("Cannot align the joined drawings: a scrap has no XVI centreline stations or -scale."),
-                                 5000);
-    }
-    // Keep the Joined indicator and link icons current as the link is toggled, removed, or its drawing closed.
-    for (const TherionStudio::MapEditorJoinPair &pair : TherionStudio::mapEditorJoinPairsFor(firstTab)) {
-        if (pair.partner == secondTab && pair.link != nullptr) {
-            connect(pair.link, &TherionStudio::MapEditorJoinViewLink::enabledChanged, this, &MainWindow::refreshDocumentStatusWidgets);
-            connect(pair.link, &QObject::destroyed, this, &MainWindow::refreshDocumentStatusWidgets, Qt::QueuedConnection);
-        }
-    }
-    refreshDocumentStatusWidgets();
 }
 
 void MainWindow::handleStructureItemActivated(const QModelIndex &index, QTreeView *sourceTree)

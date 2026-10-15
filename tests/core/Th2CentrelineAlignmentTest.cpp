@@ -192,6 +192,67 @@ private slots:
         const QPointF partnerMetreEast = partnerJoin + QPointF(19.685, 0.0);
         QVERIFY(nearlyEqual(partnerToThis.map(partnerMetreEast), thisJoin + QPointF(78.74, 0.0), 1e-6));
     }
+
+    void projectsStationPositionsIntoScrapViews()
+    {
+        const Th2StationPosition position{3.0, 4.0, 5.0};
+        QCOMPARE(*projectedStationMetres(position, QStringLiteral("plan")), QPointF(3.0, 4.0));
+        QVERIFY(nearlyEqual(*projectedStationMetres(position, QStringLiteral("elevation 0")), QPointF(3.0, 5.0)));
+        // Looking east (90): north is to the left.
+        QVERIFY(nearlyEqual(*projectedStationMetres(position, QStringLiteral("elevation 90")), QPointF(-4.0, 5.0)));
+        // Looking north-west (315): north-east is to the right.
+        QVERIFY(nearlyEqual(*projectedStationMetres(position, QStringLiteral("elevation 315")),
+                            QPointF((3.0 + 4.0) * qSqrt(0.5), 5.0)));
+        QVERIFY(!projectedStationMetres(position, QStringLiteral("extended")).has_value());
+        QVERIFY(!projectedStationMetres(position, QStringLiteral("elevation")).has_value());
+        QVERIFY(!projectedStationMetres(position, QStringLiteral("elevation 100 grad")).has_value());
+    }
+
+    void fitsScrapsToComputedPositionsInOneFrame()
+    {
+        const TherionSourceLogicalDocument first = TherionSourceLogicalDocument::fromText(QStringLiteral(
+            "scrap a\n"
+            "point 0 0 station -name 1\n"
+            "point 100 0 station -name 2\n"
+            "point 5 5 station -name unknown\n"
+            "endscrap\n"
+            "scrap single\n"
+            "point 0 0 station -name 1\n"
+            "endscrap\n"));
+        const TherionSourceLogicalDocument second = TherionSourceLogicalDocument::fromText(QStringLiteral(
+            "scrap b\n"
+            "point 0 0 station -name 2\n"
+            "point 0 50 station -name 3\n"
+            "endscrap\n"));
+        const QHash<QString, Th2StationPosition> positions = {{QStringLiteral("1@x"), {1000.0, 2000.0, 0.0}},
+                                                             {QStringLiteral("2@x"), {1010.0, 2000.0, 0.0}},
+                                                             {QStringLiteral("3@y"), {1010.0, 2005.0, 0.0}}};
+        const QHash<int, QString> firstKeys = {{2, QStringLiteral("1@x")},
+                                               {3, QStringLiteral("2@x")},
+                                               {4, QStringLiteral("missing@x")},
+                                               {7, QStringLiteral("1@x")}};
+        const QHash<int, QString> secondKeys = {{2, QStringLiteral("2@x")}, {3, QStringLiteral("3@y")}};
+
+        const Th2CentrelineFit firstFit =
+            fitTh2ScrapToStationPositions(first.commands(), 2, firstKeys, positions, QStringLiteral("plan"));
+        const Th2CentrelineFit secondFit =
+            fitTh2ScrapToStationPositions(second.commands(), 3, secondKeys, positions, QStringLiteral("plan"));
+        QCOMPARE(firstFit.source, Th2CentrelineFitSource::ComputedStations);
+        QCOMPARE(firstFit.stationCount, 2);
+        QVERIFY(nearlyEqual(firstFit.drawingToMetres.scale(), 0.1));
+        QVERIFY(nearlyEqual(firstFit.rmsResidualMetres, 0.0));
+
+        // No anchor is needed: both drawings are placed in Therion's frame.
+        const Th2SimilarityTransform secondToFirst = sharedFramePartnerToThisTransform(firstFit, secondFit);
+        QVERIFY(nearlyEqual(secondToFirst.map(QPointF(0, 0)), QPointF(100, 0), 1e-6));
+        QVERIFY(nearlyEqual(secondToFirst.map(QPointF(0, 50)), QPointF(100, 50), 1e-6));
+
+        // One matched point, or a projection with no fixed frame, gives no fit.
+        QVERIFY(!fitTh2ScrapToStationPositions(first.commands(), 7, firstKeys, positions, QStringLiteral("plan"))
+                     .isValid());
+        QVERIFY(!fitTh2ScrapToStationPositions(first.commands(), 2, firstKeys, positions, QStringLiteral("extended"))
+                     .isValid());
+    }
 };
 
 int runTh2CentrelineAlignmentTest(int argc, char **argv)

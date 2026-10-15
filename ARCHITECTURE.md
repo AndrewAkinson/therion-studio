@@ -187,6 +187,12 @@ Validation should be conservative and catalog-backed.
 - `join` commands (scrap or point/line mode, `-count`, each item resolved to its scrap), recorded by the same scan that
   validates join references rather than a second pass; `ProjectJoinRules` checks them per scrap pair once per index
   scan, and the result feeds both the Validation warnings and the `Joins` row marker
+- every station point of every scrap with its resolved station key (`stationPointsByScrapObjectId`), so joined
+  drawings can be fitted to Therion-computed station positions. Those positions come from
+  `ProjectStationPositionService`, an application service composed by `MainWindow` that runs Therion on its own
+  `TherionRunnerService` instance in a temporary folder (never the project) and reads the SQL export through
+  `TherionSqlReportDatabase` off the UI thread; the config text and row-to-key rules are pure core functions
+  (`TherionStationPositionExport`), and the fit and projection live in `Th2CentrelineAlignment`
 
 The project navigation sidebar displays file navigation and project structure projections. Its default `Survey` tree follows survey namespace and definition ownership; map composition references are graph relationships and must not reparent map or scrap definition nodes in that projection. A separate `Map` projection may display map composition using those graph relationships. Structure should not list general validation diagnostics. Validation-owned diagnostics should be surfaced in the Validation panel and may reference project-index objects when that improves navigation.
 

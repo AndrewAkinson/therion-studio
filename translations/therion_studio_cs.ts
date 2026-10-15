@@ -1489,9 +1489,24 @@ Pokud je soubor otevřený, nejprve se zavře.</translation>
         <translation>V aktuálním dokumentu nebyly nalezeny žádné TH2 scrappy, body, linie ani plochy</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="32"/>
+        <source>Computing station positions with Therion for joined drawings...</source>
+        <translation>Therion počítá polohy stanic pro spojené kresby...</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindowStructureBrowser.cpp" line="1211"/>
         <source>Cannot align the joined drawings: a scrap has no XVI centreline stations or -scale.</source>
         <translation>Spojené kresby nelze zarovnat: scrap nemá stanice centreline z XVI ani -scale.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="107"/>
+        <source>No station is shared by these drawings; they will line up once Therion has computed the station positions. Open the join again then.</source>
+        <translation>Tyto kresby nemají společnou stanici; zarovnají se, až Therion vypočítá polohy stanic. Pak spojení otevřete znovu.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="109"/>
+        <source>No station is shared by these drawings, so they open without alignment.</source>
+        <translation>Žádná stanice není těmto kresbám společná, proto se otevřou bez zarovnání.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowTherionRunner.cpp" line="141"/>
@@ -6712,6 +6727,55 @@ subtype blocks</translation>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="261"/>
         <source>Open %1</source>
         <translation>Otevřít %1</translation>
+    </message>
+</context>
+<context>
+    <name>TherionStudio::ProjectStationPositionService</name>
+    <message>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="34"/>
+        <source>Therion could not compute station positions: %1</source>
+        <translation>Therion nemohl vypočítat polohy stanic: %1</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="110"/>
+        <source>Station positions could not be computed: no temporary folder.</source>
+        <translation>Polohy stanic nelze vypočítat: chybí dočasná složka.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="115"/>
+        <source>Station positions could not be computed: %1 could not be read.</source>
+        <translation>Polohy stanic nelze vypočítat: %1 nelze přečíst.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="121"/>
+        <source>Station positions could not be computed: the target config has no source.</source>
+        <translation>Polohy stanic nelze vypočítat: cílová konfigurace nemá žádný source.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="128"/>
+        <source>Station positions could not be computed: the temporary config could not be written.</source>
+        <translation>Polohy stanic nelze vypočítat: dočasnou konfiguraci nelze zapsat.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="135"/>
+        <source>Station positions could not be computed: Therion was not found.</source>
+        <translation>Polohy stanic nelze vypočítat: Therion nebyl nalezen.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="137"/>
+        <source>Station positions could not be computed: Therion did not start.</source>
+        <translation>Polohy stanic nelze vypočítat: Therion se nespustil.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="148"/>
+        <source>Therion could not compute station positions (exit code %1); check the project in the Compiler.</source>
+        <translation>Therion nemohl vypočítat polohy stanic (návratový kód %1); zkontrolujte projekt v Kompilátoru.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="196"/>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="203"/>
+        <source>Station positions could not be read: %1</source>
+        <translation>Polohy stanic nelze načíst: %1</translation>
     </message>
 </context>
 <context>

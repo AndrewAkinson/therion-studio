@@ -332,4 +332,61 @@ Th2SimilarityTransform joinPartnerToThisTransform(const Th2CentrelineFit &thisFi
     return partnerFit.drawingToMetres.then(Th2SimilarityTransform::fromTranslation(joinOffset))
         .then(thisFit.drawingToMetres.inverted());
 }
+
+std::optional<QPointF> projectedStationMetres(const Th2StationPosition &position, const QString &projection)
+{
+    if (projection == QStringLiteral("plan")) {
+        return QPointF(position.x, position.y);
+    }
+    const QStringList parts = projection.split(QLatin1Char(' '), Qt::SkipEmptyParts);
+    if (parts.size() != 2 || parts.first() != QStringLiteral("elevation")) {
+        return std::nullopt;
+    }
+    bool ok = false;
+    const qreal angle = qDegreesToRadians(parts.at(1).toDouble(&ok));
+    if (!ok) {
+        return std::nullopt;
+    }
+    return QPointF(position.x * qCos(angle) - position.y * qSin(angle), position.z);
+}
+
+Th2CentrelineFit fitTh2ScrapToStationPositions(const QVector<TherionSourceLogicalCommand> &commands,
+                                               int lineNumber,
+                                               const QHash<int, QString> &stationKeyByLine,
+                                               const QHash<QString, Th2StationPosition> &positionsByStationKey,
+                                               const QString &projection)
+{
+    const int scrapStartLine = th2ScrapStartLineContaining(commands, lineNumber);
+    if (scrapStartLine <= 0) {
+        return Th2CentrelineFit();
+    }
+    QVector<Th2StationFitPair> pairs;
+    for (const Th2ScrapStationPoint &point : th2ScrapStationPoints(commands, scrapStartLine)) {
+        const auto position = positionsByStationKey.constFind(stationKeyByLine.value(point.lineNumber));
+        if (position == positionsByStationKey.cend()) {
+            continue;
+        }
+        const std::optional<QPointF> metres = projectedStationMetres(*position, projection);
+        if (metres.has_value()) {
+            pairs.append(Th2StationFitPair{point.stationName, point.position, *metres});
+        }
+    }
+    Th2CentrelineFit fit;
+    qreal rmsResidual = 0.0;
+    const std::optional<Th2SimilarityTransform> transform = similarityFit(pairs, &rmsResidual);
+    if (!transform.has_value()) {
+        return fit;
+    }
+    fit.source = Th2CentrelineFitSource::ComputedStations;
+    fit.drawingToMetres = *transform;
+    fit.stationCount = static_cast<int>(pairs.size());
+    fit.rmsResidualMetres = rmsResidual;
+    return fit;
+}
+
+Th2SimilarityTransform sharedFramePartnerToThisTransform(const Th2CentrelineFit &thisFit,
+                                                         const Th2CentrelineFit &partnerFit)
+{
+    return partnerFit.drawingToMetres.then(thisFit.drawingToMetres.inverted());
+}
 }

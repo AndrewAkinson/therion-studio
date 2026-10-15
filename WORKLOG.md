@@ -300,6 +300,9 @@ Active planning only. Completed history belongs in archive files. Stable archite
   branch until `NamespaceOffBug` is merged.
 - Phase 2 stage C3 (awaiting review): join-rule Validation warnings per scrap pair (mixed kinds, repeated scrap
   join, single point/line join) and a warning marker on affected Joins rows (SPECIFICATION 3.8.2, 3.8.6, 8.1.5; THERION_COMPATIBILITY).
+- Phase 2 stage C4 (awaiting review): joined drawings placed from Therion-computed station positions (background
+  `export database -fmt sql` run outside the project, shared-frame fit per scrap; XVI fit stays as the fallback);
+  join-only rows open aligned (SPECIFICATION 3.8.6, 8.1.5). Open joins are not re-placed when positions arrive.
 - Found during C1 (pre-existing, not from the join work): references such as `EntranceSP2@Entrance` to objects in a
   `-namespace off` survey resolve in Therion but not in the project index, so Validation reports false
   `unknown join reference` warnings and C2 would leave those joins uncoloured. Proposed as its own fix branch.

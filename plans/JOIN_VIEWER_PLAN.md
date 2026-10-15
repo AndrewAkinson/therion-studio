@@ -216,6 +216,22 @@ Staged implementation:
   once with the existing XVI anchor; when it is ready, every row (equate, `nosurvey`, join-only) is placed by fitting
   each drawing's station points to the computed positions projected into its projection (plan, or elevation at its
   angle), so both drawings share one frame and no anchor is needed.
+  C4 details (decided 2026-10-15, to confirm in review):
+  - Temporary config in an app cache folder (never in the project): `encoding utf-8`, one `source` line per `source`
+    of the target config (absolute paths), and `export database -fmt sql`. Therion runs with that folder as its working
+    directory, so `therion.log` also stays out of the project. About 0.5 s on the test project.
+  - Station positions keyed like the index (`name@namespace`, namespace innermost first, matching the SQL
+    `SURVEY.FULL_NAME`); every station point of every scrap is kept per scrap (line number and station key).
+  - Projection into drawing metres: plan (X, Y); `elevation θ` (degrees) (X cos θ - Y sin θ, Z). Checked on 114
+    scraps of a real project: 0.00-0.54 m RMS; the mirrored sign gives metres. Extended and other elevations: none.
+  - Each scrap with two or more matched station points gets a similarity fit; partner-to-this is partner fit then
+    the inverse of this fit, with no anchor. Otherwise the XVI anchor (equate rows) is used as now.
+  - Run policy: one run at a time on its own runner; a request while running is queued once. Starts when the Joins
+    page gets a project index and when a join opens while the export is missing or older than the project sources
+    (saved files; Therion reads the disk). The status bar shows the run; a failed run leaves the XVI behaviour and says why.
+  - Join-only rows open both drawings aligned when both fits exist, centred between the two scraps.
+  - Slices: C4a core (positions, projection, fit, index station points), C4b service (export run, cache, load),
+    C4c wiring (join open, join-only rows, status).
 - **C5 Fallback without computed positions** (Therion not configured or the run fails). For a point/line join, anchor
   on the joined points (the closest pair when several are joined); for a scrap join, on the closest pair of wall-line
   ends between the two scraps. The scale still comes from each drawing's own fit, so only the position is

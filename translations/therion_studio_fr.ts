@@ -1449,9 +1449,24 @@ Si le fichier est ouvert, il sera d&apos;abord fermé.</translation>
         <translation>Aucun scrap, point, ligne ou aire TH2 trouvé dans le document actuel</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="32"/>
+        <source>Computing station positions with Therion for joined drawings...</source>
+        <translation>Therion calcule les positions des stations pour les dessins joints...</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindowStructureBrowser.cpp" line="1211"/>
         <source>Cannot align the joined drawings: a scrap has no XVI centreline stations or -scale.</source>
         <translation>Impossible d’aligner les dessins joints : un scrap n’a ni stations de centreline XVI ni -scale.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="107"/>
+        <source>No station is shared by these drawings; they will line up once Therion has computed the station positions. Open the join again then.</source>
+        <translation>Ces dessins n’ont aucune station commune ; ils seront alignés quand Therion aura calculé les positions des stations. Rouvrez alors la jonction.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="109"/>
+        <source>No station is shared by these drawings, so they open without alignment.</source>
+        <translation>Aucune station n’est commune à ces dessins ; ils s’ouvrent donc sans alignement.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowTherionRunner.cpp" line="141"/>
@@ -6547,6 +6562,55 @@ Supprimer le sommet malgré tout ?</translation>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="261"/>
         <source>Open %1</source>
         <translation>Ouvrir %1</translation>
+    </message>
+</context>
+<context>
+    <name>TherionStudio::ProjectStationPositionService</name>
+    <message>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="34"/>
+        <source>Therion could not compute station positions: %1</source>
+        <translation>Therion n’a pas pu calculer les positions des stations : %1</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="110"/>
+        <source>Station positions could not be computed: no temporary folder.</source>
+        <translation>Impossible de calculer les positions des stations : aucun dossier temporaire.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="115"/>
+        <source>Station positions could not be computed: %1 could not be read.</source>
+        <translation>Impossible de calculer les positions des stations : %1 n’a pas pu être lu.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="121"/>
+        <source>Station positions could not be computed: the target config has no source.</source>
+        <translation>Impossible de calculer les positions des stations : la configuration cible n’a aucun source.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="128"/>
+        <source>Station positions could not be computed: the temporary config could not be written.</source>
+        <translation>Impossible de calculer les positions des stations : la configuration temporaire n’a pas pu être écrite.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="135"/>
+        <source>Station positions could not be computed: Therion was not found.</source>
+        <translation>Impossible de calculer les positions des stations : Therion est introuvable.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="137"/>
+        <source>Station positions could not be computed: Therion did not start.</source>
+        <translation>Impossible de calculer les positions des stations : Therion n’a pas démarré.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="148"/>
+        <source>Therion could not compute station positions (exit code %1); check the project in the Compiler.</source>
+        <translation>Therion n’a pas pu calculer les positions des stations (code de sortie %1) ; vérifiez le projet dans le Compilateur.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="196"/>
+        <location filename="../src/app/ProjectStationPositionService.cpp" line="203"/>
+        <source>Station positions could not be read: %1</source>
+        <translation>Impossible de lire les positions des stations : %1</translation>
     </message>
 </context>
 <context>

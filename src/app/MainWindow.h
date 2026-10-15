@@ -63,6 +63,9 @@ class TherionRunnerService;
 class ProjectScanCacheService;
 class ProjectJoinsPanel;
 struct ProjectJoinPair;
+struct ProjectJoinGroup;
+struct MapEditorJoinPlacement;
+class ProjectStationPositionService;
 }
 
 class MainWindow final : public QMainWindow
@@ -229,6 +232,21 @@ private:
     void openStructureSourceIndex(const QModelIndex &current, QTreeView *sourceTree);
     QWidget *openProjectSourceLocation(const QString &sourceFile, int lineNumber);
     void openProjectJoin(const TherionStudio::ProjectJoinPair &pair, bool separateWindow);
+    void openProjectJoinOnly(const TherionStudio::ProjectJoinGroup &group, bool separateWindow);
+    // Opens two drawings, links and outlines them; shared by equate and join-only rows (MainWindowJoinPlacement).
+    void openProjectJoinDrawings(const QString &firstFile,
+                                 int firstLine,
+                                 const QString &secondFile,
+                                 int secondLine,
+                                 bool separateWindow,
+                                 const TherionStudio::MapEditorJoinPlacement &placement,
+                                 const QString &failureMessage);
+    void setupJoinStationPositions();
+    // Asks Therion for computed station positions when they are missing or older than the project sources.
+    void requestJoinStationPositions();
+    [[nodiscard]] TherionStudio::MapEditorJoinPlacement joinPlacement(const QString &firstScrapObjectId,
+                                                                      const QString &secondScrapObjectId,
+                                                                      const QString &projection) const;
     void handleStructureItemActivated(const QModelIndex &index, QTreeView *sourceTree);
     bool confirmCloseTab(int index);
     bool closeOpenDocumentForFilePath(const QString &filePath);
@@ -578,4 +596,5 @@ private:
     TherionStudio::ProjectValidationController *projectValidationController_ = nullptr;
     TherionStudio::ProjectStructureScanner *structureSidebarScanner_ = nullptr;
     TherionStudio::ProjectJoinsPanel *projectJoinsPanel_ = nullptr;
+    TherionStudio::ProjectStationPositionService *stationPositionService_ = nullptr;
 };

@@ -392,6 +392,8 @@ void MainWindow::buildStructureSidebar()
     applyJoinConnectionColors();
     structureViewStack_->addWidget(projectJoinsPanel_);
     connect(projectJoinsPanel_, &TherionStudio::ProjectJoinsPanel::joinRequested, this, &MainWindow::openProjectJoin);
+    connect(projectJoinsPanel_, &TherionStudio::ProjectJoinsPanel::joinOnlyRequested, this, &MainWindow::openProjectJoinOnly);
+    setupJoinStationPositions();
     connect(projectJoinsPanel_,
             &TherionStudio::ProjectJoinsPanel::sourceLocationRequested,
             this,
@@ -488,6 +490,7 @@ void MainWindow::setStructurePanelPage(int pageIndex)
     }
     // Joins has its own list; the shared Survey/Map tree and its view mode stay as they were.
     if (boundedPageIndex == StructurePanelJoinsPage) {
+        requestJoinStationPositions();
         return;
     }
 

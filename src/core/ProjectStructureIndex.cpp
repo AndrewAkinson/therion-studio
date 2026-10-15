@@ -501,9 +501,7 @@ QString stationReferenceCandidateKey(const QString &referenceName, const QString
     const QString namespacePath = reference.hasNamespace
         ? namespacePathForReference(ownerNamespacePath, reference.namespacePath)
         : ownerNamespacePath;
-    return namespacePath.trimmed().isEmpty()
-        ? normalizedStationReferenceToken(reference.name)
-        : normalizedStationReferenceToken(QStringLiteral("%1@%2").arg(reference.name, namespacePath));
+    return ProjectStructureIndex::stationKey(reference.name, namespacePath);
 }
 
 QString stationReferenceDefinitionKey(const QString &referenceName, const QString &ownerNamespacePath)
@@ -1632,6 +1630,7 @@ ProjectIndexSnapshot scanProjectIndexFromFilePaths(const QString &projectRootPat
     snapshot.equateLinks = std::move(equateLinkScan.equateLinks);
     snapshot.stationDrawingPointsByStationKey = std::move(equateLinkScan.stationDrawingPointsByStationKey);
     snapshot.scrapProjectionByObjectId = std::move(equateLinkScan.scrapProjectionByObjectId);
+    snapshot.stationPointsByScrapObjectId = std::move(equateLinkScan.stationPointsByScrapObjectId);
     if (projectIndexScanShouldCancel(shouldCancel)) {
         return cancelSnapshot();
     }
@@ -2567,6 +2566,13 @@ QVector<ProjectStructureEntry> ProjectStructureIndex::scanTh2Objects(
     const QVector<TherionSourceLogicalCommand> &commands)
 {
     return scanTh2ObjectsFromLogicalCommands(sourceFile, commands);
+}
+
+QString ProjectStructureIndex::stationKey(const QString &name, const QString &namespacePath)
+{
+    return namespacePath.trimmed().isEmpty()
+        ? normalizedStationReferenceToken(name)
+        : normalizedStationReferenceToken(QStringLiteral("%1@%2").arg(name, namespacePath));
 }
 
 QString ProjectStructureIndex::structureEntryNodeKey(const ProjectStructureEntry &entry)

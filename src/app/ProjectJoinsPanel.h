@@ -45,6 +45,8 @@ protected:
 
 signals:
     void joinRequested(const TherionStudio::ProjectJoinPair &pair, bool separateWindow);
+    // A join-only row between two scraps: no station is shared, so placement needs computed station positions.
+    void joinOnlyRequested(const TherionStudio::ProjectJoinGroup &group, bool separateWindow);
     void sourceLocationRequested(const QString &sourceFile, int lineNumber);
     void statusMessageRequested(const QString &message);
 

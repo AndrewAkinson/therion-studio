@@ -145,6 +145,14 @@ private slots:
         QCOMPARE(stationA.size(), 1);
         QCOMPARE(stationB.size(), 1);
         QVERIFY(!stationA.first().scrapObjectId.isEmpty());
+        // Every station point of every scrap is kept for fitting, equated or not (sa2 draws 1@a only).
+        QCOMPARE(snapshot.stationPointsByScrapObjectId.size(), 3);
+        QCOMPARE(snapshot.stationPointsByScrapObjectId.value(stationA.first().scrapObjectId).size(), 1);
+        QCOMPARE(snapshot.stationPointsByScrapObjectId.value(stationA.first().scrapObjectId).first().stationKey,
+                 leg.stations.at(0).stationKey);
+        // Therion's SQL export names the station's survey innermost first, like the index.
+        QCOMPARE(ProjectStructureIndex::stationKey(QStringLiteral("2"), QStringLiteral("A.Top")),
+                 leg.stations.at(0).stationKey);
         QVERIFY(stationA.first().scrapObjectId != stationB.first().scrapObjectId);
 
         QCOMPARE(snapshot.joinCommands.size(), 3);

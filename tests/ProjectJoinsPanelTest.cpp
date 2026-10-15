@@ -183,12 +183,12 @@ private slots:
         QVERIFY(joinOnly.data(Qt::ToolTipRole).toString().contains(QStringLiteral("Validation")));
         QVERIFY(joined.data(Qt::DecorationRole).value<QIcon>().isNull());
 
-        QSignalSpy openSpy(&panel, &ProjectJoinsPanel::sourceLocationRequested);
-        QSignalSpy statusSpy(&panel, &ProjectJoinsPanel::statusMessageRequested);
+        // Two scraps: opened as a pair, placed from computed station positions when they are available.
+        QSignalSpy joinOnlySpy(&panel, &ProjectJoinsPanel::joinOnlyRequested);
         emit tree->activated(joinOnly);
-        QCOMPARE(openSpy.count(), 2);
-        QCOMPARE(openSpy.at(1).at(0).toString(), QStringLiteral("far.th2"));
-        QCOMPARE(statusSpy.count(), 1);
+        QCOMPARE(joinOnlySpy.count(), 1);
+        const auto group = joinOnlySpy.at(0).at(0).value<ProjectJoinGroup>();
+        QCOMPARE(group.joinOnlyScraps.at(1).sourceFile, QStringLiteral("far.th2"));
     }
 
     void keepsProjectionAndFiltersRows()

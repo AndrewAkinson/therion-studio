@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QPointF>
+#include <QHash>
 #include <QString>
 #include <QVector>
 
@@ -28,6 +29,14 @@ struct Th2SimilarityTransform
     [[nodiscard]] qreal scale() const;
 };
 
+// A station position computed by Therion: X east, Y north, Z up, in metres.
+struct Th2StationPosition
+{
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.0;
+};
+
 struct Th2ScrapStationPoint
 {
     QString stationName;
@@ -47,6 +56,8 @@ enum class Th2CentrelineFitSource
     None,
     XviStations,
     ScrapScale,
+    // Station positions computed by Therion for the whole project: every fit shares one frame.
+    ComputedStations,
 };
 
 // Similarity transform from scrap drawing coordinates to survey-local metres, found the way
@@ -99,6 +110,22 @@ struct Th2CentrelineFit
 [[nodiscard]] Th2CentrelineFit fitTh2ScrapContainingLine(const QVector<TherionSourceLogicalCommand> &commands,
                                                          int lineNumber,
                                                          const QVector<TherionXviDocument> &xviDocuments);
+
+// A Therion-computed station position (X east, Y north, Z up, metres) seen in a scrap projection: `plan` gives
+// (X, Y); `elevation θ` (degrees) gives (X cos θ - Y sin θ, Z). Other projections have no fixed frame.
+[[nodiscard]] std::optional<QPointF> projectedStationMetres(const Th2StationPosition &position, const QString &projection);
+
+// Fits the scrap containing `lineNumber` to computed station positions; `stationKeyByLine` gives the station each
+// station point line draws. Needs two or more matched points.
+[[nodiscard]] Th2CentrelineFit fitTh2ScrapToStationPositions(const QVector<TherionSourceLogicalCommand> &commands,
+                                                             int lineNumber,
+                                                             const QHash<int, QString> &stationKeyByLine,
+                                                             const QHash<QString, Th2StationPosition> &positionsByStationKey,
+                                                             const QString &projection);
+
+// Maps partner drawing coordinates into this drawing when both fits share one frame (ComputedStations).
+[[nodiscard]] Th2SimilarityTransform sharedFramePartnerToThisTransform(const Th2CentrelineFit &thisFit,
+                                                                       const Th2CentrelineFit &partnerFit);
 
 // Maps partner drawing coordinates into this drawing so the two join station points coincide.
 [[nodiscard]] Th2SimilarityTransform joinPartnerToThisTransform(const Th2CentrelineFit &thisFit,

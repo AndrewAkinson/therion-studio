@@ -30,17 +30,46 @@ bool openMapEditorJoinPair(MapEditorTab *first,
                            int firstJoinLine,
                            MapEditorTab *second,
                            int secondJoinLine,
-                           bool separateSecondMap)
+                           bool separateSecondMap,
+                           const MapEditorJoinPlacement &placement)
 {
     if (first == nullptr || second == nullptr || first == second) {
         return false;
     }
-    const Th2CentrelineFit firstFit = first->centrelineFitForSourceLine(firstJoinLine);
-    const Th2CentrelineFit secondFit = second->centrelineFitForSourceLine(secondJoinLine);
     const std::optional<QPointF> firstJoin = first->stationPointSourcePosition(firstJoinLine);
     const std::optional<QPointF> secondJoin = second->stationPointSourcePosition(secondJoinLine);
-    if (!firstFit.isValid() || !secondFit.isValid() || !firstJoin.has_value() || !secondJoin.has_value()) {
+    Th2CentrelineFit firstFit;
+    Th2CentrelineFit secondFit;
+    if (placement.positions != nullptr) {
+        firstFit = first->stationPositionFitForSourceLine(
+            firstJoinLine, placement.firstStationKeysByLine, *placement.positions, placement.projection);
+        secondFit = second->stationPositionFitForSourceLine(
+            secondJoinLine, placement.secondStationKeysByLine, *placement.positions, placement.projection);
+    }
+    const bool sharedFrame = firstFit.isValid() && secondFit.isValid();
+    std::optional<Th2SimilarityTransform> placed;
+    if (sharedFrame) {
+        placed = sharedFramePartnerToThisTransform(firstFit, secondFit);
+    } else if (firstJoin.has_value() && secondJoin.has_value()) {
+        firstFit = first->centrelineFitForSourceLine(firstJoinLine);
+        secondFit = second->centrelineFitForSourceLine(secondJoinLine);
+        if (firstFit.isValid() && secondFit.isValid()) {
+            placed = joinPartnerToThisTransform(firstFit, *firstJoin, secondFit, *secondJoin);
+        }
+    }
+    if (!placed.has_value()) {
         return false;
+    }
+    const Th2SimilarityTransform secondToFirst = *placed;
+    // With no join station, look at the middle of the two scraps' station points.
+    std::optional<QPointF> viewCentre = firstJoin;
+    if (!viewCentre.has_value()) {
+        const std::optional<QPointF> firstMiddle = first->scrapStationCentroidForSourceLine(firstJoinLine);
+        const std::optional<QPointF> secondMiddle = second->scrapStationCentroidForSourceLine(secondJoinLine);
+        if (!firstMiddle.has_value() || !secondMiddle.has_value()) {
+            return false;
+        }
+        viewCentre = (*firstMiddle + secondToFirst.map(*secondMiddle)) / 2.0;
     }
 
     closeMapEditorJoinPair(first, second);
@@ -48,7 +77,6 @@ bool openMapEditorJoinPair(MapEditorTab *first,
     if (separateSecondMap && !second->isMapPaneDetached()) {
         second->toggleMapPaneWindow();
     }
-    const Th2SimilarityTransform secondToFirst = joinPartnerToThisTransform(firstFit, *firstJoin, secondFit, *secondJoin);
     MapEditorJoinOutline::attach(first, second, secondToFirst);
     MapEditorJoinOutline::attach(second, first, secondToFirst.inverted());
 
@@ -56,7 +84,7 @@ bool openMapEditorJoinPair(MapEditorTab *first,
     QObject::connect(second, &QObject::destroyed, link, &QObject::deleteLater);
     const qreal firstUnitsAcross = kJoinViewWidthMetres / firstFit.drawingToMetres.scale();
     const int viewWidthPixels = qMax(1, first->mapViewportPixelWidth());
-    link->showFirstAt(*firstJoin, viewWidthPixels / firstUnitsAcross);
+    link->showFirstAt(*viewCentre, viewWidthPixels / firstUnitsAcross);
     return true;
 }
 

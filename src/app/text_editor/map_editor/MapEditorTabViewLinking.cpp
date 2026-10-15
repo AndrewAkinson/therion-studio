@@ -121,6 +121,37 @@ std::optional<QPointF> MapEditorTab::stationPointSourcePosition(int lineNumber) 
     return point.has_value() ? std::optional<QPointF>(point->position) : std::nullopt;
 }
 
+Th2CentrelineFit MapEditorTab::stationPositionFitForSourceLine(int lineNumber,
+                                                              const QHash<int, QString> &stationKeysByLine,
+                                                              const QHash<QString, Th2StationPosition> &positionsByStationKey,
+                                                              const QString &projection) const
+{
+    const MapEditorSourceProjectionSnapshotPtr snapshot = sourceProjectionSnapshotForCurrentDocument();
+    if (snapshot == nullptr) {
+        return Th2CentrelineFit();
+    }
+    return fitTh2ScrapToStationPositions(
+        snapshot->logicalCommands, lineNumber, stationKeysByLine, positionsByStationKey, projection);
+}
+
+std::optional<QPointF> MapEditorTab::scrapStationCentroidForSourceLine(int lineNumber) const
+{
+    const MapEditorSourceProjectionSnapshotPtr snapshot = sourceProjectionSnapshotForCurrentDocument();
+    if (snapshot == nullptr) {
+        return std::nullopt;
+    }
+    const int scrapStartLine = th2ScrapStartLineContaining(snapshot->logicalCommands, lineNumber);
+    const QVector<Th2ScrapStationPoint> points = th2ScrapStationPoints(snapshot->logicalCommands, scrapStartLine);
+    if (points.isEmpty()) {
+        return std::nullopt;
+    }
+    QPointF sum;
+    for (const Th2ScrapStationPoint &point : points) {
+        sum += point.position;
+    }
+    return sum / points.size();
+}
+
 QPainterPath MapEditorTab::mapOutlineScenePath() const
 {
     const MapEditorSourceProjectionSnapshotPtr snapshot = sourceProjectionSnapshotForCurrentDocument();
