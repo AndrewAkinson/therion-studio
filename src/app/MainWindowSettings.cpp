@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "MainWindowSettingsDialog.h"
+#include "ProjectJoinsPanel.h"
 #include "../core/ISessionStore.h"
 #include "../platform/ApplicationLanguageOverride.h"
 
@@ -21,6 +22,7 @@ void MainWindow::showSettingsDialog()
     initialSettings.mapAppearance = sessionStore_->therionMapAppearance();
     initialSettings.automaticProjectValidationEnabled =
         sessionStore_->automaticProjectValidationEnabled();
+    initialSettings.joinOpensSeparateWindow = sessionStore_->joinOpensSeparateWindow();
     initialSettings.troubleshootingLogsEnabled =
         sessionStore_->troubleshootingLogsEnabledUntilUtc().isValid()
         && sessionStore_->troubleshootingLogsEnabledUntilUtc() > QDateTime::currentDateTimeUtc();
@@ -47,6 +49,10 @@ void MainWindow::showSettingsDialog()
     updateMapAppearance();
     updateMapAltitudeUnderlays();
     sessionStore_->setAutomaticProjectValidationEnabled(updatedSettings.automaticProjectValidationEnabled);
+    sessionStore_->setJoinOpensSeparateWindow(updatedSettings.joinOpensSeparateWindow);
+    if (projectJoinsPanel_ != nullptr) {
+        projectJoinsPanel_->setActivationOpensSeparateWindow(updatedSettings.joinOpensSeparateWindow);
+    }
     sessionStore_->setTroubleshootingLogsEnabledUntilUtc(updatedSettings.troubleshootingLogsEnabled
         ? QDateTime::currentDateTimeUtc().addSecs(24 * 60 * 60) : QDateTime());
     refreshTherionConfigDisplay();

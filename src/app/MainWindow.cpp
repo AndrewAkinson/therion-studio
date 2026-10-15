@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "ProjectJoinsPanel.h"
 
 #include <QAction>
 #include <QApplication>
@@ -673,6 +674,8 @@ void MainWindow::buildMenus()
     });
 
 #if !defined(Q_OS_MACOS)
+    QMenu *joinedDrawingsMenu = viewMenu->addMenu(tr("Linked Drawings"));
+    connect(joinedDrawingsMenu, &QMenu::aboutToShow, this, [this, joinedDrawingsMenu]() { populateMapJoinMenu(joinedDrawingsMenu); });
     viewMenu->addSeparator();
     fullScreenAction_ = viewMenu->addAction(QString());
     fullScreenAction_->setMenuRole(QAction::NoRole);
@@ -910,17 +913,7 @@ void MainWindow::createNewWindow()
 {
     auto sessionStore = std::make_unique<TherionStudio::InMemorySessionStore>();
     if (sessionStore_ != nullptr) {
-        sessionStore->setApplicationLanguage(sessionStore_->applicationLanguage());
-        sessionStore->setDefaultTextEditorMode(sessionStore_->defaultTextEditorMode());
-        sessionStore->setTherionExecutablePath(sessionStore_->therionExecutablePath());
-        sessionStore->setTherionRunTargetMode(sessionStore_->therionRunTargetMode());
-        sessionStore->setAutomaticProjectValidationEnabled(sessionStore_->automaticProjectValidationEnabled());
-        sessionStore->setTroubleshootingLogsEnabledUntilUtc(sessionStore_->troubleshootingLogsEnabledUntilUtc());
-        sessionStore->setTherionMapMagnifierEnabled(sessionStore_->therionMapMagnifierEnabled());
-        sessionStore->setTherionMapObjectsAutoCollapseExpandScrapsEnabled(
-            sessionStore_->therionMapObjectsAutoCollapseExpandScrapsEnabled());
-        sessionStore->setLastProjectParentDirectory(sessionStore_->lastProjectParentDirectory());
-        sessionStore->setRecentProjectPaths(sessionStore_->recentProjectPaths());
+        TherionStudio::copyApplicationSettings(*sessionStore_, *sessionStore);
     }
 
     auto *window = new MainWindow(std::move(sessionStore),

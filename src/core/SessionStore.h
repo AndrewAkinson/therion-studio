@@ -60,6 +60,8 @@ public:
 
     bool automaticProjectValidationEnabled() const override;
     void setAutomaticProjectValidationEnabled(bool enabled) override;
+    bool joinOpensSeparateWindow() const override;
+    void setJoinOpensSeparateWindow(bool enabled) override;
 
     QDateTime troubleshootingLogsEnabledUntilUtc() const override;
     void setTroubleshootingLogsEnabledUntilUtc(const QDateTime &enabledUntilUtc) override;
@@ -139,6 +141,8 @@ public:
 
     bool automaticProjectValidationEnabled() const override;
     void setAutomaticProjectValidationEnabled(bool enabled) override;
+    bool joinOpensSeparateWindow() const override;
+    void setJoinOpensSeparateWindow(bool enabled) override;
 
     QDateTime troubleshootingLogsEnabledUntilUtc() const override;
     void setTroubleshootingLogsEnabledUntilUtc(const QDateTime &enabledUntilUtc) override;
@@ -189,6 +193,7 @@ private:
     QString applicationLanguage_ = QStringLiteral("system");
     QString defaultTextEditorMode_ = QStringLiteral("raw");
     bool automaticProjectValidationEnabled_ = false;
+    bool joinOpensSeparateWindow_ = false;
     QDateTime troubleshootingLogsEnabledUntilUtc_;
     QString therionExecutablePath_;
     QString therionWorkingDirectory_;
@@ -202,4 +207,7 @@ private:
     QString therionMapRecentInsertTypeSubtypeHistory_;
     QString therionMapBackgroundLayers_;
 };
+
+// Copies the user's application settings (not window/session state) into another store, e.g. for a new window.
+void copyApplicationSettings(const ISessionStore &source, ISessionStore &target);
 }

@@ -27,6 +27,7 @@ public:
         bool automaticProjectValidationEnabled = false;
         bool mapAltitudeUnderlayEnabled = false;
         MapAppearanceSettings mapAppearance;
+        bool joinOpensSeparateWindow = false;
         bool troubleshootingLogsEnabled = false;
     };
 
@@ -53,6 +54,7 @@ private:
     QPushButton *xviCenterlineColorButton_ = nullptr;
     QDoubleSpinBox *xviCenterlineWidthSpin_ = nullptr;
     QColor xviCenterlineColor_;
+    QCheckBox *joinOpensSeparateWindowCheckBox_ = nullptr;
     QCheckBox *troubleshootingLogsCheckBox_ = nullptr;
     QPushButton *openLogFolderButton_ = nullptr;
     QPushButton *clearLogsButton_ = nullptr;

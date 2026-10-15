@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QPainterPath>
 #include <QColor>
 #include <QHash>
 #include <QGraphicsItem>
@@ -331,6 +332,7 @@ std::optional<qreal> sourceUnitsPerMeterFromScrapScale(const QStringList &tokens
 CoordinateTransform coordinateTransformFromScrapScale(const QStringList &tokens);
 QPointF mapGeometryPointToPreview(const QPointF &point, const QRectF &sourceBounds, const QRectF &targetBounds);
 QPointF mapGeometryPreviewToSource(const QPointF &point, const QRectF &sourceBounds, const QRectF &targetBounds);
+QPainterPath linePathForFeature(const MapGeometryFeature &feature, const QRectF &sourceBounds, const QRectF &previewBounds);
 QVector<MapGeometryFeature> collectGeometryFeatures(const QVector<TherionParsedLine> &parsedLines);
 QHash<int, QPainterPath> scrapClipPathsForFeatures(
     const QVector<MapGeometryFeature> &features, const QRectF &sourceBounds, const QRectF &previewBounds,

@@ -261,6 +261,9 @@ void MapEditorTab::buildUi()
     if (qApp == nullptr) {
         mapView_->installEventFilter(this);
     }
+    connect(mapView_->horizontalScrollBar(), &QScrollBar::valueChanged, this, &MapEditorTab::mapViewChanged);
+    connect(mapView_->verticalScrollBar(), &QScrollBar::valueChanged, this, &MapEditorTab::mapViewChanged);
+    connect(this, &MapEditorTab::zoomStatusChanged, this, &MapEditorTab::mapViewChanged);
     if (mapView_->viewport() != nullptr) {
         mapView_->viewport()->setFocusPolicy(Qt::StrongFocus);
         if (qApp == nullptr) {

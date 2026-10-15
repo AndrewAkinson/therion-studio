@@ -1,5 +1,7 @@
 #include "MainWindow.h"
 
+#include "ProjectStationPositionService.h"
+
 #include "MainWindowTherionConsoleBootstrapper.h"
 #include "MainWindowDocumentHelpers.h"
 #include "MainWindowTherionConsoleBuilder.h"
@@ -327,6 +329,9 @@ QString MainWindow::resolvedTherionTargetConfigPath() const
 
 void MainWindow::resetProjectTherionRunContext()
 {
+    if (stationPositionService_ != nullptr) {
+        stationPositionService_->clear();
+    }
     if (therionWorkingDirectoryEdit_ != nullptr) {
         const QSignalBlocker blocker(therionWorkingDirectoryEdit_);
         therionWorkingDirectoryEdit_->clear();
