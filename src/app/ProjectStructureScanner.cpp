@@ -1,6 +1,7 @@
 #include "ProjectStructureScanner.h"
 
 #include "ProjectScanCacheService.h"
+#include "ProjectSourceProjectionCache.h"
 #include "ProjectSourceSnapshot.h"
 #include "../platform/DiagnosticLogging.h"
 
@@ -26,7 +27,7 @@ void logProjectStructureScan(const ProjectStructureScanner::Result &result,
         << QStringLiteral("project-structure-scan sources=%1 collect_ms=%2 index_ms=%3 source_snapshot_cache_hit=%4 "
                           "index_snapshot_cache_hit=%5 logical_builds=%6 logical_hits=%7 prebuilt_logical_hits=%8 "
                           "structure_ms=%9 map_references_ms=%10 join_references_ms=%11 station_index_ms=%12 "
-                          "station_references_ms=%13 duplicate_ids_ms=%14")
+                          "station_references_ms=%13 duplicate_ids_ms=%14 retained_parses=%15 retained_reuses=%16")
                .arg(sourceCount)
                .arg(collectMs)
                .arg(indexMs)
@@ -40,13 +41,23 @@ void logProjectStructureScan(const ProjectStructureScanner::Result &result,
                .arg(stats.joinReferencesMs)
                .arg(stats.stationIndexMs)
                .arg(stats.stationReferencesMs)
-               .arg(stats.duplicateIdsMs);
+               .arg(stats.duplicateIdsMs)
+               .arg(result.projectionCacheStats.logicalDocumentBuilds)
+               .arg(result.projectionCacheStats.logicalDocumentHits);
 }
 
 ProjectStructureScanner::ScanFunction makeScanFunction(
     const std::shared_ptr<ProjectScanCacheService> &scanCacheService)
 {
-    return [scanCacheService](const QString &projectRootPath,
+    // Parsed documents kept between scans of one project, keyed by content like Validation's cache, so a rescan after
+    // a save parses only changed files. Scans run one at a time, so only one worker uses it at once.
+    struct RetainedProjections
+    {
+        QString projectRootPath;
+        ProjectSourceProjectionCache cache;
+    };
+    auto retained = std::make_shared<RetainedProjections>();
+    return [scanCacheService, retained](const QString &projectRootPath,
                               const QString &preferredConfigPath,
                               const QHash<QString, QString> &inMemoryProjectContentsByPath,
                               quint64 requestSerial) {
@@ -72,9 +83,16 @@ ProjectStructureScanner::ScanFunction makeScanFunction(
             result.errorMessage = cachedProjectIndex->errorMessage;
             result.projectIndex = cachedProjectIndex->snapshot;
         } else {
+            if (retained->projectRootPath != sourceSnapshot.requestKey.normalizedProjectRootPath) {
+                retained->cache.clear();
+                retained->projectRootPath = sourceSnapshot.requestKey.normalizedProjectRootPath;
+            } else {
+                retained->cache.resetStats();
+            }
             result.projectIndex = ProjectStructureIndex::scanProjectIndex(
-                projectStructureIndexSourceSet(sourceSnapshot),
+                projectStructureIndexSourceSetWithLogicalDocuments(sourceSnapshot, retained->cache),
                 &result.errorMessage);
+            result.projectionCacheStats = retained->cache.stats();
             scanCacheService->storeProjectIndexSnapshot(ProjectIndexSnapshotCacheEntry{
                 sourceRequestKey,
                 result.errorMessage,

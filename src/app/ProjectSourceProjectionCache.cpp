@@ -137,4 +137,19 @@ QString ProjectSourceProjectionCache::catalogLogicalKeyForDocument(const Project
         + catalogKeyPart(catalogKey)
         + QStringLiteral("\nlogical=catalog-v1");
 }
+
+ProjectStructureIndexSourceSet projectStructureIndexSourceSetWithLogicalDocuments(
+    const ProjectSourceSnapshot &snapshot,
+    ProjectSourceProjectionCache &projectionCache)
+{
+    // projectStructureIndexSourceSet() keeps one source per snapshot document, in order.
+    ProjectStructureIndexSourceSet sourceSet = projectStructureIndexSourceSet(snapshot);
+    for (qsizetype index = 0; index < sourceSet.sources.size() && index < snapshot.documents.size(); ++index) {
+        ProjectStructureIndexSource &source = sourceSet.sources[index];
+        if (source.textLoaded) {
+            source.logicalDocument = projectionCache.logicalDocumentHandle(snapshot.documents.at(index));
+        }
+    }
+    return sourceSet;
+}
 }

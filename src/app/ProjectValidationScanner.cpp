@@ -306,25 +306,6 @@ QSet<QString> indexedProjectSourceFiles(const ProjectIndexSnapshot &snapshot)
     return sourceFiles;
 }
 
-ProjectStructureIndexSourceSet projectStructureIndexSourceSetWithLogicalDocuments(
-    const ProjectSourceSnapshot &snapshot,
-    const QHash<QString, ProjectSourceDocument> &documentByPath,
-    ProjectSourceProjectionCache &projectionCache)
-{
-    ProjectStructureIndexSourceSet sourceSet = projectStructureIndexSourceSet(snapshot);
-    for (ProjectStructureIndexSource &source : sourceSet.sources) {
-        if (!source.textLoaded) {
-            continue;
-        }
-        const auto documentIt = documentByPath.constFind(source.normalizedPath);
-        if (documentIt == documentByPath.constEnd()) {
-            continue;
-        }
-        source.logicalDocument = projectionCache.logicalDocumentHandle(documentIt.value());
-    }
-    return sourceSet;
-}
-
 void appendUnindexedTh2StationNameFindings(ProjectValidationScanner::Result *result,
                                            const ProjectSourceDocument &document,
                                            const ProjectIndexSnapshot &,
@@ -693,9 +674,7 @@ ProjectValidationScanner::Result performProjectValidation(const QString &project
             projectIndexSnapshot = cachedProjectIndex->snapshot;
         } else {
             ProjectStructureIndexSourceSet sourceSet =
-                projectStructureIndexSourceSetWithLogicalDocuments(projectSourceSnapshot,
-                                                                   projectSourceDocumentByPath,
-                                                                   projectionCache);
+                projectStructureIndexSourceSetWithLogicalDocuments(projectSourceSnapshot, projectionCache);
             sourceSet.shouldCancel = isSuperseded;
             projectIndexSnapshot = ProjectStructureIndex::scanProjectIndex(sourceSet, &indexErrorMessage);
             result.projectIndexScanStats = projectIndexSnapshot.scanStats;

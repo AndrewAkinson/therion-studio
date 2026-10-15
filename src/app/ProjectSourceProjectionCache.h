@@ -53,4 +53,10 @@ private:
     std::shared_ptr<TherionSourceLogicalDocument> transientCatalogLogicalDocument_;
     ProjectSourceProjectionCacheStats stats_;
 };
+
+// The snapshot's index source set, with each loaded document's plain logical projection taken from `projectionCache`,
+// so a cache kept between scans spares the index from re-parsing unchanged files.
+[[nodiscard]] ProjectStructureIndexSourceSet projectStructureIndexSourceSetWithLogicalDocuments(
+    const ProjectSourceSnapshot &snapshot,
+    ProjectSourceProjectionCache &projectionCache);
 }

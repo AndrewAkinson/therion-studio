@@ -356,14 +356,25 @@ non-parsing phases fell from about 500 ms to under 70 ms. A scratch comparison t
 map/scrap reference, and station key for 33 project folders (local cave data and repository fixtures) with the old
 and new code: all outputs were identical.
 
-Slice 4E - Retained Parsed Documents Across Scans - Next
+Slice 4E - Retained Parsed Documents Across Scans - Done (2026-10-15)
 
-The remaining cold-scan cost is parsing (about 200 ms of 300 ms here). Structure scans pass no parsed documents
-(`projectStructureIndexSourceSet` supplies `nullptr`), and Validation parses through a per-run
-`ProjectSourceProjectionCache`, so every save re-parses every project file at least once. Retain parsed logical
-documents in `ProjectScanCacheService`, keyed by normalized path, content hash, and document type, bounded like the
-existing snapshot windows, and supply them to both scanners. Then a save re-parses only the changed file. Prefer this
-before Phase 7: it removes most of the remaining rebuild cost without splitting the index into fragments.
+The remaining cold-scan cost was parsing (about 200 ms of 300 ms). Validation already kept its content-keyed
+`ProjectSourceProjectionCache` between runs, but Structure scans passed no parsed documents
+(`projectStructureIndexSourceSet` supplies `nullptr`), so every save re-parsed every project file. The Structure
+scan function now owns a retained `ProjectSourceProjectionCache` too, cleared when the project root changes; scans
+run one at a time, so it needs no locking. Both scanners feed the index through the shared
+`projectStructureIndexSourceSetWithLogicalDocuments` helper (moved from Validation). The cache is keyed by path,
+document type, and content hash, so the per-save snapshot invalidation leaves it valid; unsaved editor text is a
+different key. `ProjectStructureScanner::Result::projectionCacheStats` and the `project-structure-scan` log line
+report parses and reuses. Measured on the same local project through the real scanner: cold scan 461 ms, rescan after
+a save with no change 133 ms, with one changed file 138 ms (1 parse, 177 reuses).
+
+Follow-ups, only if measurements call for them:
+
+- Structure and Validation each hold a copy of the plain parsed documents; sharing one store would halve that memory
+  but needs locking because the scanners run concurrently.
+- Both caches keep every content version until the project or catalog changes; bound them per path if long editing
+  sessions show memory growth.
 
 ## Phase 5 - Per-File Local Validation Cache
 

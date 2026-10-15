@@ -41,6 +41,7 @@ private slots:
     void scansFilesystemProject();
     void prefersInMemoryProjectContents();
     void reusesSharedProjectIndexCache();
+    void reparsesOnlyChangedFilesBetweenScans();
     void publishesOnlyLatestPendingRequest();
     void teardownDoesNotPublishCompletedWorker();
 };
@@ -181,6 +182,57 @@ void ProjectStructureScannerTest::reusesSharedProjectIndexCache()
     QVERIFY(secondResult.projectIndexSnapshotCacheHit);
     QVERIFY(secondResult.projectSourceSnapshotCacheHit);
     QCOMPARE(secondResult.entries.size(), firstResult.entries.size());
+}
+
+void ProjectStructureScannerTest::reparsesOnlyChangedFilesBetweenScans()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString rootFile = QDir(tempDir.path()).filePath(QStringLiteral("root.th"));
+    const QString childFile = QDir(tempDir.path()).filePath(QStringLiteral("child.th"));
+    QVERIFY(writeTextFile(rootFile, QStringLiteral("survey top\n  input child.th\nendsurvey top\n")));
+    QVERIFY(writeTextFile(childFile, QStringLiteral("survey first\nendsurvey first\n")));
+
+    const auto cacheService = std::make_shared<ProjectScanCacheService>();
+    ProjectStructureScanner scanner(cacheService);
+    scanner.setDebounceIntervalMs(0);
+    ProjectStructureScanner::Result latest;
+    int received = 0;
+    connect(&scanner, &ProjectStructureScanner::scanFinished, &scanner, [&](const ProjectStructureScanner::Result &result) {
+        latest = result;
+        ++received;
+    });
+    const auto surveyNames = [&]() {
+        QStringList names;
+        for (const ProjectStructureEntry &entry : std::as_const(latest.entries)) {
+            if (entry.kind == ProjectStructureEntryKind::Survey) {
+                names.append(entry.name);
+            }
+        }
+        return names;
+    };
+
+    scanner.requestScan(tempDir.path(), {});
+    QTRY_COMPARE_WITH_TIMEOUT(received, 1, 5000);
+    QCOMPARE(latest.projectionCacheStats.logicalDocumentBuilds, 2);
+    QVERIFY(surveyNames().contains(QStringLiteral("first")));
+
+    // A save changes one file; snapshot caches are invalidated, but the unchanged file keeps its parsed form.
+    QVERIFY(writeTextFile(childFile, QStringLiteral("survey second\nendsurvey second\n")));
+    cacheService->clearProjectSourceSnapshot();
+    cacheService->clearProjectIndexSnapshot();
+    scanner.requestScan(tempDir.path(), {});
+    QTRY_COMPARE_WITH_TIMEOUT(received, 2, 5000);
+    QVERIFY(!latest.projectIndexSnapshotCacheHit);
+    QCOMPARE(latest.projectionCacheStats.logicalDocumentBuilds, 1);
+    QCOMPARE(latest.projectionCacheStats.logicalDocumentHits, 1);
+    QVERIFY(surveyNames().contains(QStringLiteral("second")));
+    QVERIFY(!surveyNames().contains(QStringLiteral("first")));
+
+    // Unsaved editor text is a different version of the file and is parsed, not served from the saved text.
+    scanner.requestScan(tempDir.path(), {{canonicalOrAbsolutePath(childFile), QStringLiteral("survey third\nendsurvey third\n")}});
+    QTRY_COMPARE_WITH_TIMEOUT(received, 3, 5000);
+    QVERIFY(surveyNames().contains(QStringLiteral("third")));
 }
 
 void ProjectStructureScannerTest::publishesOnlyLatestPendingRequest()
