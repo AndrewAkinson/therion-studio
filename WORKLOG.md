@@ -303,6 +303,9 @@ Active planning only. Completed history belongs in archive files. Stable archite
 - Phase 2 stage C4 (awaiting review): joined drawings placed from Therion-computed station positions (background
   `export database -fmt sql` run outside the project, shared-frame fit per scrap; XVI fit stays as the fallback);
   join-only rows open aligned (SPECIFICATION 3.8.6, 8.1.5). Open joins are not re-placed when positions arrive.
+- Phase 2 stage C5 (fallback placement without Therion) dropped: Therion Studio already needs Therion for much of
+  its work; without positions the XVI fit remains. Extended elevations without an equate stay unlinked (no work
+  planned). Phase 2 is complete pending review and the PR.
 - Found during C1 (pre-existing, not from the join work): references such as `EntranceSP2@Entrance` to objects in a
   `-namespace off` survey resolve in Therion but not in the project index, so Validation reports false
   `unknown join reference` warnings and C2 would leave those joins uncoloured. Proposed as its own fix branch.

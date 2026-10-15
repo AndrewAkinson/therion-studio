@@ -232,12 +232,15 @@ Staged implementation:
   - Join-only rows open both drawings aligned when both fits exist, centred between the two scraps.
   - Slices: C4a core (positions, projection, fit, index station points), C4b service (export run, cache, load),
     C4c wiring (join open, join-only rows, status).
-- **C5 Fallback without computed positions** (Therion not configured or the run fails). For a point/line join, anchor
-  on the joined points (the closest pair when several are joined); for a scrap join, on the closest pair of wall-line
-  ends between the two scraps. The scale still comes from each drawing's own fit, so only the position is
-  approximate. A `nosurvey` row opens both drawings unlinked and says why.
+- **C5 Fallback without computed positions** — dropped (2026-10-15). Much of Therion Studio already needs Therion
+  installed, so a second, approximate placement for when it cannot run is not worth its maintenance. Without computed
+  positions, equate rows keep the XVI/`-scale` fit at the join station and join-only rows open unaligned with a
+  status-bar reason. (The idea was: anchor point/line joins on the closest joined points and scrap joins on the
+  closest wall-line ends.)
 - **Extended elevations** have no common frame: each survey's extended layout is independent. Equate rows keep the
   equate anchor; rows with no equate open both drawings unlinked and say why, until a way to line them up is found.
+  Note (2026-10-15): nothing to do at the moment; revisit only if a way to give extended elevations a shared frame
+  appears.
 
 ### Open questions for phase 2
 
