@@ -674,7 +674,8 @@ ProjectValidationScanner::Result performProjectValidation(const QString &project
             projectIndexSnapshot = cachedProjectIndex->snapshot;
         } else {
             ProjectStructureIndexSourceSet sourceSet =
-                projectStructureIndexSourceSetWithLogicalDocuments(projectSourceSnapshot, projectionCache);
+                projectStructureIndexSourceSetWithLogicalDocuments(
+                    projectSourceSnapshot, projectionCache, ProjectSourceParsing::AllDocuments);
             sourceSet.shouldCancel = isSuperseded;
             projectIndexSnapshot = ProjectStructureIndex::scanProjectIndex(sourceSet, &indexErrorMessage);
             result.projectIndexScanStats = projectIndexSnapshot.scanStats;

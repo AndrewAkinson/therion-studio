@@ -369,6 +369,14 @@ different key. `ProjectStructureScanner::Result::projectionCacheStats` and the `
 report parses and reuses. Measured on the same local project through the real scanner: cold scan 461 ms, rescan after
 a save with no change 133 ms, with one changed file 138 ms (1 parse, 177 reuses).
 
+Correction (same day): the first version parsed every loaded snapshot document before the scan. With a project
+folder that holds several caves (405 sources) but a target config that reads 137 of them, that made the index
+slower (about 1.6 s) than before. Index sources can now supply parsed documents on demand
+(`ProjectStructureIndexSourceSet::logicalDocumentForSource`), and `projectStructureIndexSourceSetWithLogicalDocuments`
+takes an explicit `ProjectSourceParsing`: Structure uses `OnDemand`, Validation keeps `AllDocuments` because it reads
+every document anyway. Measured on that folder at start-up: the first project index reached the sidebar about 0.88 s
+after window construction (index about 0.4 s, 137 parses) instead of about 1.45 s before this plan's 4D/4E work.
+
 Follow-ups, only if measurements call for them:
 
 - Structure and Validation each hold a copy of the plain parsed documents; sharing one store would halve that memory

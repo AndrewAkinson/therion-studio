@@ -60,6 +60,8 @@ struct ParsedFileCache
 {
     ProjectFilePathKeyCache filePathKeys;
     QHash<QString, std::shared_ptr<const TherionSourceLogicalDocument>> prebuiltLogicalDocuments;
+    // Parsed projection supplied on demand by the caller, keyed by the index's normalized path.
+    std::function<std::shared_ptr<const TherionSourceLogicalDocument>(const QString &normalizedPath)> logicalDocumentProvider;
     QHash<QString, TherionSourceLogicalDocument> logicalDocuments;
     TherionSourceSnapshotCache sourceSnapshotCache;
     int sourceRevisionCounter = 0;
@@ -1014,6 +1016,12 @@ const TherionSourceLogicalDocument &logicalDocumentForFile(const QString &filePa
         ++cache->stats.prebuiltLogicalDocumentHits;
         return *prebuiltIt.value();
     }
+    if (cache->logicalDocumentProvider) {
+        if (std::shared_ptr<const TherionSourceLogicalDocument> provided = cache->logicalDocumentProvider(normalizedPath)) {
+            ++cache->stats.prebuiltLogicalDocumentHits;
+            return **cache->prebuiltLogicalDocuments.insert(normalizedPath, std::move(provided));
+        }
+    }
 
     QString fileContents;
     if (inMemoryFileContentsByPath.contains(normalizedPath)) {
@@ -1513,7 +1521,9 @@ ProjectIndexSnapshot scanProjectIndexFromFilePaths(const QString &projectRootPat
                                                    const QHash<QString, std::shared_ptr<const TherionSourceLogicalDocument>> &prebuiltLogicalDocumentsByPath,
                                                    const QString &preferredConfigPath,
                                                    QString *errorMessage,
-                                                   const std::function<bool()> &shouldCancel = {})
+                                                   const std::function<bool()> &shouldCancel = {},
+                                                   std::function<std::shared_ptr<const TherionSourceLogicalDocument>(
+                                                       const QString &normalizedPath)> logicalDocumentProvider = {})
 {
     if (errorMessage != nullptr) {
         errorMessage->clear();
@@ -1549,6 +1559,7 @@ ProjectIndexSnapshot scanProjectIndexFromFilePaths(const QString &projectRootPat
         return cancelSnapshot();
     }
     cache.prebuiltLogicalDocuments = prebuiltLogicalDocumentsByPath;
+    cache.logicalDocumentProvider = std::move(logicalDocumentProvider);
     const RootConfigResolution configResolution = rootConfigFiles(sortedFilePaths, projectRootPath, preferredConfigPath);
     snapshot.rootConfigPath = configResolution.configPath;
     if (!configResolution.errorMessage.isEmpty()) {
@@ -2387,12 +2398,14 @@ ProjectIndexSnapshot ProjectStructureIndex::scanProjectIndex(const ProjectStruct
     filePaths.reserve(sourceSet.sources.size());
     QHash<QString, QString> sourceTextByPath;
     QHash<QString, std::shared_ptr<const TherionSourceLogicalDocument>> prebuiltLogicalDocumentsByPath;
+    QHash<QString, QString> sourcePathByNormalizedPath;
     for (const ProjectStructureIndexSource &source : sourceSet.sources) {
         const QString normalizedPath = normalizedFilePathKey(source.normalizedPath);
         if (normalizedPath.isEmpty()) {
             continue;
         }
         filePaths.append(normalizedPath);
+        sourcePathByNormalizedPath.insert(normalizedPath, source.normalizedPath);
         if (source.textLoaded) {
             sourceTextByPath.insert(normalizedPath, source.text);
         }
@@ -2400,13 +2413,22 @@ ProjectIndexSnapshot ProjectStructureIndex::scanProjectIndex(const ProjectStruct
             prebuiltLogicalDocumentsByPath.insert(normalizedPath, source.logicalDocument);
         }
     }
+    std::function<std::shared_ptr<const TherionSourceLogicalDocument>(const QString &)> provider;
+    if (sourceSet.logicalDocumentForSource) {
+        provider = [sourcePathByNormalizedPath, logicalDocumentForSource = sourceSet.logicalDocumentForSource](
+                       const QString &normalizedPath) -> std::shared_ptr<const TherionSourceLogicalDocument> {
+            const auto it = sourcePathByNormalizedPath.constFind(normalizedPath);
+            return it == sourcePathByNormalizedPath.cend() ? nullptr : logicalDocumentForSource(it.value());
+        };
+    }
     return scanProjectIndexFromFilePaths(sourceSet.projectRootPath,
                                          filePaths,
                                          sourceTextByPath,
                                          prebuiltLogicalDocumentsByPath,
                                          sourceSet.preferredConfigPath,
                                          errorMessage,
-                                         sourceSet.shouldCancel);
+                                         sourceSet.shouldCancel,
+                                         std::move(provider));
 }
 
 QVector<ProjectStructureEntry> ProjectStructureIndex::scanProject(const QString &projectRootPath, QString *errorMessage)

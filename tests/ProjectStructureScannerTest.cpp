@@ -192,6 +192,10 @@ void ProjectStructureScannerTest::reparsesOnlyChangedFilesBetweenScans()
     const QString childFile = QDir(tempDir.path()).filePath(QStringLiteral("child.th"));
     QVERIFY(writeTextFile(rootFile, QStringLiteral("survey top\n  input child.th\nendsurvey top\n")));
     QVERIFY(writeTextFile(childFile, QStringLiteral("survey first\nendsurvey first\n")));
+    // The config sources only root.th, so the index never reads unused.th and needs no parse of it.
+    QVERIFY(writeTextFile(QDir(tempDir.path()).filePath(QStringLiteral("thconfig")), QStringLiteral("source root.th\n")));
+    QVERIFY(writeTextFile(QDir(tempDir.path()).filePath(QStringLiteral("unused.th")),
+                          QStringLiteral("survey unused\nendsurvey unused\n")));
 
     const auto cacheService = std::make_shared<ProjectScanCacheService>();
     ProjectStructureScanner scanner(cacheService);
@@ -214,8 +218,10 @@ void ProjectStructureScannerTest::reparsesOnlyChangedFilesBetweenScans()
 
     scanner.requestScan(tempDir.path(), {});
     QTRY_COMPARE_WITH_TIMEOUT(received, 1, 5000);
-    QCOMPARE(latest.projectionCacheStats.logicalDocumentBuilds, 2);
+    // thconfig, root.th, and child.th: the config is read to find the sources; unused.th is never parsed.
+    QCOMPARE(latest.projectionCacheStats.logicalDocumentBuilds, 3);
     QVERIFY(surveyNames().contains(QStringLiteral("first")));
+    QVERIFY(!surveyNames().contains(QStringLiteral("unused")));
 
     // A save changes one file; snapshot caches are invalidated, but the unchanged file keeps its parsed form.
     QVERIFY(writeTextFile(childFile, QStringLiteral("survey second\nendsurvey second\n")));
@@ -225,7 +231,7 @@ void ProjectStructureScannerTest::reparsesOnlyChangedFilesBetweenScans()
     QTRY_COMPARE_WITH_TIMEOUT(received, 2, 5000);
     QVERIFY(!latest.projectIndexSnapshotCacheHit);
     QCOMPARE(latest.projectionCacheStats.logicalDocumentBuilds, 1);
-    QCOMPARE(latest.projectionCacheStats.logicalDocumentHits, 1);
+    QCOMPARE(latest.projectionCacheStats.logicalDocumentHits, 2);
     QVERIFY(surveyNames().contains(QStringLiteral("second")));
     QVERIFY(!surveyNames().contains(QStringLiteral("first")));
 

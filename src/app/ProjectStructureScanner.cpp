@@ -90,7 +90,8 @@ ProjectStructureScanner::ScanFunction makeScanFunction(
                 retained->cache.resetStats();
             }
             result.projectIndex = ProjectStructureIndex::scanProjectIndex(
-                projectStructureIndexSourceSetWithLogicalDocuments(sourceSnapshot, retained->cache),
+                projectStructureIndexSourceSetWithLogicalDocuments(
+                    sourceSnapshot, retained->cache, ProjectSourceParsing::OnDemand),
                 &result.errorMessage);
             result.projectionCacheStats = retained->cache.stats();
             scanCacheService->storeProjectIndexSnapshot(ProjectIndexSnapshotCacheEntry{
