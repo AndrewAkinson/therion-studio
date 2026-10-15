@@ -87,6 +87,13 @@ struct ProjectStructureIndexScanStats
     int logicalDocumentBuilds = 0;
     int logicalDocumentHits = 0;
     int prebuiltLogicalDocumentHits = 0;
+    // Wall-clock milliseconds per scan phase, for diagnostics only.
+    qint64 structureMs = 0;
+    qint64 mapReferencesMs = 0;
+    qint64 joinReferencesMs = 0;
+    qint64 stationIndexMs = 0;
+    qint64 stationReferencesMs = 0;
+    qint64 duplicateIdsMs = 0;
 };
 
 struct ProjectIndexSnapshot

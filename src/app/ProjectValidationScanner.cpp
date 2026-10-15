@@ -575,7 +575,7 @@ ProjectValidationScanner::Result performProjectValidation(const QString &project
         value.projectionCacheStats = projectionCache.stats();
         if (diagnosticProjectValidationLoggingEnabled()) {
             qInfo().noquote()
-                << QStringLiteral("project-validation-scan generation=%1 files=%2 searched=%3 findings=%4 limit_reached=%5 superseded=%6 collect_ms=%7 validate_ms=%8 project_index_ms=%9 total_ms=%10 projection_source_builds=%11 projection_source_hits=%12 projection_logical_builds=%13 projection_logical_hits=%14 projection_catalog_builds=%15 projection_catalog_hits=%16 document_validation_cache_hits=%17 document_validation_cache_misses=%18 project_index_logical_builds=%19 project_index_logical_hits=%20 project_index_prebuilt_logical_hits=%21 project_source_snapshot_cache_hit=%22 project_index_snapshot_cache_hit=%23 root=\"%24\" error=\"%25\"")
+                << QStringLiteral("project-validation-scan generation=%1 files=%2 searched=%3 findings=%4 limit_reached=%5 superseded=%6 collect_ms=%7 validate_ms=%8 project_index_ms=%9 total_ms=%10 projection_source_builds=%11 projection_source_hits=%12 projection_logical_builds=%13 projection_logical_hits=%14 projection_catalog_builds=%15 projection_catalog_hits=%16 document_validation_cache_hits=%17 document_validation_cache_misses=%18 project_index_logical_builds=%19 project_index_logical_hits=%20 project_index_prebuilt_logical_hits=%21 project_source_snapshot_cache_hit=%22 project_index_snapshot_cache_hit=%23 project_index_phase_ms=%24 root=\"%25\" error=\"%26\"")
                        .arg(value.generation)
                        .arg(projectSourceSnapshot.documents.size())
                        .arg(value.searchedFileCount)
@@ -599,6 +599,13 @@ ProjectValidationScanner::Result performProjectValidation(const QString &project
                        .arg(value.projectIndexScanStats.prebuiltLogicalDocumentHits)
                        .arg(value.projectSourceSnapshotCacheHit ? 1 : 0)
                        .arg(value.projectIndexSnapshotCacheHit ? 1 : 0)
+                       .arg(QStringLiteral("%1/%2/%3/%4/%5/%6")
+                                .arg(value.projectIndexScanStats.structureMs)
+                                .arg(value.projectIndexScanStats.mapReferencesMs)
+                                .arg(value.projectIndexScanStats.joinReferencesMs)
+                                .arg(value.projectIndexScanStats.stationIndexMs)
+                                .arg(value.projectIndexScanStats.stationReferencesMs)
+                                .arg(value.projectIndexScanStats.duplicateIdsMs))
                        .arg(value.projectRootPath)
                        .arg(value.errorMessage);
         }

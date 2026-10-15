@@ -260,10 +260,10 @@ Slice 2B - ProjectStructureScanner Snapshot Collection - Done
 - Updated `ProjectStructureScanner` to collect `ProjectSourceSnapshot` and pass `ProjectStructureIndexSourceSet` to the index path.
 - Preserved debounce and queued replacement behavior. `PROJECT_ASYNC_COORDINATION_PLAN.md` A1-A3 subsequently added
   request-acceptance serials, stale-result suppression, presentation guards, and deterministic supersession coverage.
-- Diagnostics timing remains pending:
-  - source collection ms
-  - projection/index ms
-  - source count
+- Diagnostics timing - Done (2026-10-15): with diagnostic logging enabled, every Structure scan logs a
+  `project-structure-scan` line with source count, collection ms, index ms, snapshot cache hits, logical-document
+  build/hit counts, and per-phase index timings. Validation's `project-validation-scan` line also carries the index
+  phase timings (`project_index_phase_ms`, structure/map/join/station-index/station-reference/duplicate-id ms).
 
 Slice 2C - Structure Regression Coverage - Done
 
@@ -336,6 +336,34 @@ Verification:
 
 - Existing scanner/controller tests.
 - Existing cache-hit tests proving consumers with identical inputs reuse project source/index snapshots.
+
+Slice 4D - Index Scan Hot Paths - Done (2026-10-15)
+
+Measured on a local 178-file cave project (137 parsed files, 4,471 index entries; RelWithDebInfo, Linux) with the new phase
+timings and stack sampling. A cold index scan took about 830 ms and a scan with every file already parsed about 620 ms:
+parsing all files once costs only about 140 ms, so most of the time was spent outside parsing. Stack samples showed
+about 60% of scan time in two places that do no index work:
+
+- compiling the same `\s+` regular expression on every call of the identity, namespace, and station-reference token
+  normalizers;
+- resolving file paths on disk (`QFileInfo::canonicalFilePath`, i.e. `realpath`) in `normalizedFilePathKey` once per
+  entry or per command in every phase, although a scan only touches a few hundred distinct paths.
+
+The scan now builds the pattern once and memoizes path keys for the duration of one scan in `ParsedFileCache`
+(identity file tokens likewise in the scan's identity generator). There is no global or cross-scan state; a scan still
+treats the filesystem as fixed while it runs. Results: cold scan about 300 ms, prebuilt scan about 97 ms; the
+non-parsing phases fell from about 500 ms to under 70 ms. A scratch comparison tool dumped every entry, diagnostic,
+map/scrap reference, and station key for 33 project folders (local cave data and repository fixtures) with the old
+and new code: all outputs were identical.
+
+Slice 4E - Retained Parsed Documents Across Scans - Next
+
+The remaining cold-scan cost is parsing (about 200 ms of 300 ms here). Structure scans pass no parsed documents
+(`projectStructureIndexSourceSet` supplies `nullptr`), and Validation parses through a per-run
+`ProjectSourceProjectionCache`, so every save re-parses every project file at least once. Retain parsed logical
+documents in `ProjectScanCacheService`, keyed by normalized path, content hash, and document type, bounded like the
+existing snapshot windows, and supply them to both scanners. Then a save re-parses only the changed file. Prefer this
+before Phase 7: it removes most of the remaining rebuild cost without splitting the index into fragments.
 
 ## Phase 5 - Per-File Local Validation Cache
 
@@ -467,7 +495,8 @@ Do not remove until:
 2. Slice 3C: add an explicit Structure/Validation compatibility test over equivalent source snapshot identity.
 3. Slice 6A: define stable validation finding identity for cheaper UI updates.
 4. Slice 6B: short-circuit no-change Validation UI publication.
-5. Slice 7A only after measurements show project-index rebuild is the next bottleneck.
+5. Slice 4E: retain parsed documents across scans (measured next bottleneck after Slice 4D).
+6. Slice 7A only after measurements show project-index rebuild is the next bottleneck.
 
 ## Acceptance Criteria
 

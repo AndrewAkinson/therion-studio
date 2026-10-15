@@ -2,7 +2,9 @@
 
 #include "ProjectScanCacheService.h"
 #include "ProjectSourceSnapshot.h"
+#include "../platform/DiagnosticLogging.h"
 
+#include <QElapsedTimer>
 #include <QFutureWatcher>
 #include <QTimer>
 #include <QtConcurrent>
@@ -14,6 +16,33 @@ namespace TherionStudio
 {
 namespace
 {
+void logProjectStructureScan(const ProjectStructureScanner::Result &result,
+                             qsizetype sourceCount,
+                             qint64 collectMs,
+                             qint64 indexMs)
+{
+    const ProjectStructureIndexScanStats &stats = result.projectIndex.scanStats;
+    qInfo().noquote()
+        << QStringLiteral("project-structure-scan sources=%1 collect_ms=%2 index_ms=%3 source_snapshot_cache_hit=%4 "
+                          "index_snapshot_cache_hit=%5 logical_builds=%6 logical_hits=%7 prebuilt_logical_hits=%8 "
+                          "structure_ms=%9 map_references_ms=%10 join_references_ms=%11 station_index_ms=%12 "
+                          "station_references_ms=%13 duplicate_ids_ms=%14")
+               .arg(sourceCount)
+               .arg(collectMs)
+               .arg(indexMs)
+               .arg(result.projectSourceSnapshotCacheHit ? 1 : 0)
+               .arg(result.projectIndexSnapshotCacheHit ? 1 : 0)
+               .arg(stats.logicalDocumentBuilds)
+               .arg(stats.logicalDocumentHits)
+               .arg(stats.prebuiltLogicalDocumentHits)
+               .arg(stats.structureMs)
+               .arg(stats.mapReferencesMs)
+               .arg(stats.joinReferencesMs)
+               .arg(stats.stationIndexMs)
+               .arg(stats.stationReferencesMs)
+               .arg(stats.duplicateIdsMs);
+}
+
 ProjectStructureScanner::ScanFunction makeScanFunction(
     const std::shared_ptr<ProjectScanCacheService> &scanCacheService)
 {
@@ -24,6 +53,8 @@ ProjectStructureScanner::ScanFunction makeScanFunction(
         ProjectStructureScanner::Result result;
         result.requestSerial = requestSerial;
         result.projectRootPath = projectRootPath;
+        QElapsedTimer timer;
+        timer.start();
         bool sourceSnapshotCacheHit = false;
         const ProjectSourceSnapshot sourceSnapshot =
             scanCacheService->projectSourceSnapshot(projectRootPath,
@@ -32,6 +63,7 @@ ProjectStructureScanner::ScanFunction makeScanFunction(
                                                     -1,
                                                     &sourceSnapshotCacheHit);
         result.projectSourceSnapshotCacheHit = sourceSnapshotCacheHit;
+        const qint64 collectMs = timer.restart();
         const QString sourceRequestKey = sourceSnapshot.requestKey.stableKey();
         const std::optional<ProjectIndexSnapshotCacheEntry> cachedProjectIndex =
             scanCacheService->projectIndexSnapshot(sourceRequestKey);
@@ -50,6 +82,9 @@ ProjectStructureScanner::ScanFunction makeScanFunction(
             });
         }
         result.entries = result.projectIndex.entries;
+        if (diagnosticLoggingEnabled()) {
+            logProjectStructureScan(result, sourceSnapshot.documents.size(), collectMs, timer.elapsed());
+        }
         return result;
     };
 }
