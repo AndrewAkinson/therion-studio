@@ -1,5 +1,7 @@
 #include "ProjectJoinList.h"
 
+#include "ProjectJoinRules.h"
+
 #include <QHash>
 #include <QPair>
 #include <QSet>
@@ -169,6 +171,7 @@ QVector<ProjectJoinGroup> projectJoinGroups(const ProjectIndexSnapshot &snapshot
                 ProjectJoinPair pair{joinSide(snapshot, first, projection), joinSide(snapshot, second, projection)};
                 pair.joins = joinsBySurveyPair.value(namespacePairKey(first.namespacePath, second.namespacePath));
                 pair.connection = combinedConnection(pair.joins);
+                pair.ruleViolations = projectJoinRuleViolationsFor(snapshot.joinRuleViolations, pair.joins);
                 group.pairs.append(pair);
             }
         }
@@ -189,6 +192,7 @@ QVector<ProjectJoinGroup> projectJoinGroups(const ProjectIndexSnapshot &snapshot
         ProjectJoinGroup group;
         group.joinOnly = join;
         group.joinOnlyConnection = connectionForJoin(join);
+        group.joinOnlyRuleViolations = projectJoinRuleViolationsFor(snapshot.joinRuleViolations, {join});
         QSet<QString> seenScraps;
         for (const ProjectJoinItem &item : join.items) {
             if (item.resolved && !seenScraps.contains(item.scrapObjectId)) {

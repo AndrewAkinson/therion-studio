@@ -141,6 +141,8 @@ set(THERION_CORE_SOURCES
     src/core/ProjectEquateLinkScanner.h
     src/core/ProjectJoinList.cpp
     src/core/ProjectJoinList.h
+    src/core/ProjectJoinRules.cpp
+    src/core/ProjectJoinRules.h
     src/core/ProjectStructureIndex.cpp
     src/core/ProjectStructureIndex.h
     src/core/TherionStationNameRules.cpp
@@ -187,6 +189,7 @@ set(THERION_CORE_QTEST_SUITES
     Th2GeometryProjectionTest
     Th2CentrelineAlignmentTest
     ProjectJoinListTest
+    ProjectJoinRulesTest
     TherionFileTypesTest
     TherionBackgroundMetadataTest
     TherionDocumentParserTest
@@ -1241,6 +1244,7 @@ therion_add_core_qtest_runner(TherionCoreQTests
     tests/core/TherionSourceValidatorProjectionTest.cpp
     tests/core/ProjectStructureIndexQTest.cpp
     tests/core/ProjectJoinListTest.cpp
+    tests/core/ProjectJoinRulesTest.cpp
     tests/core/TherionSourceTextTest.cpp
     tests/core/TherionTokenRulesTest.cpp)
 

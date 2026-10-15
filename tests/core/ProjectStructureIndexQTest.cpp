@@ -169,6 +169,22 @@ private slots:
         const ProjectJoinCommand &sameSurveyJoin = snapshot.joinCommands.at(2);
         QCOMPARE(sameSurveyJoin.mode, ProjectJoinMode::Scraps);
         QCOMPARE(sameSurveyJoin.items.at(0).namespacePath, sameSurveyJoin.items.at(1).namespacePath);
+
+        // sa and sb are joined both as scraps and by walls: one warning on each join line, at the `join` keyword.
+        QCOMPARE(snapshot.joinRuleViolations.size(), 1);
+        QVector<ProjectIndexDiagnostic> ruleDiagnostics;
+        for (const ProjectIndexDiagnostic &diagnostic : snapshot.diagnostics) {
+            if (diagnostic.kind == ProjectIndexDiagnosticKind::MixedJoinKinds) {
+                ruleDiagnostics.append(diagnostic);
+            }
+        }
+        QCOMPARE(ruleDiagnostics.size(), 2);
+        QCOMPARE(ruleDiagnostics.at(0).lineNumber, scrapJoin.lineNumber);
+        QCOMPARE(ruleDiagnostics.at(1).lineNumber, lineJoin.lineNumber);
+        QCOMPARE(ruleDiagnostics.at(0).columnNumber, 1);
+        QCOMPARE(ruleDiagnostics.at(0).columnLength, 4);
+        QCOMPARE(ruleDiagnostics.at(0).referencedName, QStringLiteral("sa ~ sb"));
+        QCOMPARE(ruleDiagnostics.at(0).candidateCount, 2);
     }
 
     void normalizesScrapProjectionNames()

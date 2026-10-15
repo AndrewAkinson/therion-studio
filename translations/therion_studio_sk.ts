@@ -2787,6 +2787,36 @@ Line-point options: %1</translation>
         <translation>ID objektu `%1` už v tomto namespace používa iný objekt.</translation>
     </message>
     <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="245"/>
+        <source>Mixed join kinds</source>
+        <translation>Zmiešané druhy join</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="246"/>
+        <source>Scraps `%1` are joined both as scraps and by points or lines; use one kind of join.</source>
+        <translation>Scrapy `%1` sú spojené ako scrapy aj bodmi alebo čiarami; použite jeden druh join.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="252"/>
+        <source>Repeated scrap join</source>
+        <translation>Opakované spojenie scrapov</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="253"/>
+        <source>Scraps `%1` are joined by %2 scrap joins; use one, with `-count` for more passages.</source>
+        <translation>Scrapy `%1` spája %2 spojení scrapov; použite jedno, pre viac chodieb s `-count`.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="260"/>
+        <source>Single point or line join</source>
+        <translation>Jediné spojenie bodov alebo čiar</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="261"/>
+        <source>Scraps `%1` are joined by only one point or line join; a passage usually needs both walls joined.</source>
+        <translation>Scrapy `%1` spája iba jedno spojenie bodov alebo čiar; chodba zvyčajne potrebuje spojiť obe steny.</translation>
+    </message>
+    <message>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="368"/>
         <source>Station reference `%1` cannot be resolved because this file is not included in the project source graph.</source>
         <translation>Odkaz na stanicu `%1` nemožno vyriešiť, pretože tento súbor nie je zahrnutý v zdrojovom grafe projektu.</translation>
@@ -6556,6 +6586,46 @@ subtype blocks</translation>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="212"/>
         <source>nosurvey leg, treated like an equate</source>
         <translation>úsek nosurvey, chápaný ako equate</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="199"/>
+        <source>Automatic Join</source>
+        <translation>Automatické spojenie</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="200"/>
+        <source>Join with -count</source>
+        <translation>Spojenie s -count</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="201"/>
+        <source>Detailed Joins</source>
+        <translation>Podrobné spojenia</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="202"/>
+        <source>No scrap Joins</source>
+        <translation>Bez spojení scrapov</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="203"/>
+        <source>Cannot be opened</source>
+        <translation>Nemožno otvoriť</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="207"/>
+        <source>Joins not valid</source>
+        <translation>Neplatné spojenia</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="209"/>
+        <source>Join with no centreline tie</source>
+        <translation>Spojenie bez väzby na polygón</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="226"/>
+        <source>A join here breaks a join rule; see the Validation panel.</source>
+        <translation>Join tu porušuje pravidlo spojenia; pozri panel Validácia.</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="301"/>

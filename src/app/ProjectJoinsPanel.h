@@ -64,7 +64,10 @@ private:
     QString linkDescription(const ProjectEquateLink &link) const;
     void openJoinOnlyScraps(const ProjectJoinGroup &group);
     void updateLegend();
-    QIcon mixedJoinIcon() const;
+    QIcon ruleWarningIcon() const;
+    void applyRuleWarning(QStandardItem *item,
+                          const QVector<ProjectJoinRuleViolation> &violations,
+                          QStringList *toolTip) const;
 
     ProjectIndexSnapshot snapshot_;
     QVector<ProjectJoinGroup> groups_;

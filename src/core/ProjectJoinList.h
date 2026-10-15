@@ -34,7 +34,8 @@ enum class ProjectJoinConnection
     CountedScrapJoin,
     // Joins of points and lines.
     PointLineJoin,
-    // More than one kind between the same surveys: an input error.
+    // More than one kind between the same surveys; an input error only between the same pair of scraps
+    // (see ProjectJoinRules).
     MixedJoins,
 };
 
@@ -45,6 +46,8 @@ struct ProjectJoinPair
     ProjectJoinSide second;
     ProjectJoinConnection connection = ProjectJoinConnection::None;
     QVector<ProjectJoinCommand> joins;
+    // Broken join rules among `joins`; the row shows a warning marker.
+    QVector<ProjectJoinRuleViolation> ruleViolations;
 
     [[nodiscard]] bool isAvailable() const
     {
@@ -60,6 +63,7 @@ struct ProjectJoinGroup
     std::optional<ProjectJoinCommand> joinOnly;
     ProjectJoinConnection joinOnlyConnection = ProjectJoinConnection::None;
     QVector<ProjectStructureEntry> joinOnlyScraps;
+    QVector<ProjectJoinRuleViolation> joinOnlyRuleViolations;
 };
 
 // Projections that draw at least one equated station: plan, extended, then elevations by angle, then others.

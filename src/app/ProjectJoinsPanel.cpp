@@ -48,7 +48,8 @@ QString joinItemReferences(const ProjectJoinCommand &join)
     for (const ProjectJoinItem &item : join.items) {
         references.append(item.reference);
     }
-    return references.join(QStringLiteral(" ~ "));
+    // Brackets make join-only rows stand apart from `A = B` equate rows.
+    return QStringLiteral("(%1)").arg(references.join(QStringLiteral(" ~ ")));
 }
 
 QString fileLocation(const QString &sourceFile, int lineNumber)
@@ -178,45 +179,52 @@ void ProjectJoinsPanel::updateLegend()
         delete child->widget();
         delete child;
     }
-    const auto addEntry = [this](QLabel *sample, const QString &meaning) {
+    // Each entry is styled like the rows it explains; the warning icon sits in its own column.
+    const auto addEntry = [this](const QString &text, const QColor &color, bool bold, QLabel *icon = nullptr) {
         const int row = legendGrid_->rowCount();
-        auto *text = new QLabel(meaning, legend_);
-        text->setWordWrap(true);
-        legendGrid_->addWidget(sample, row, 0, Qt::AlignLeft | Qt::AlignTop);
-        legendGrid_->addWidget(text, row, 1);
-    };
-    // A sample styled like the rows it explains.
-    const auto textSample = [this](const QString &text, const QColor &color, bool bold) {
-        auto *sample = new QLabel(text, legend_);
-        sample->setTextFormat(Qt::PlainText);
-        QPalette samplePalette = sample->palette();
-        samplePalette.setColor(QPalette::WindowText, color);
-        sample->setPalette(samplePalette);
-        QFont font = sample->font();
+        auto *label = new QLabel(text, legend_);
+        label->setTextFormat(Qt::PlainText);
+        label->setWordWrap(true);
+        QPalette labelPalette = label->palette();
+        labelPalette.setColor(QPalette::WindowText, color);
+        label->setPalette(labelPalette);
+        QFont font = label->font();
         font.setBold(bold);
-        sample->setFont(font);
-        return sample;
+        label->setFont(font);
+        if (icon != nullptr) {
+            legendGrid_->addWidget(icon, row, 0, Qt::AlignLeft | Qt::AlignVCenter);
+        }
+        legendGrid_->addWidget(label, row, 1);
     };
-    const QString swatch = QStringLiteral("\u25A0\u25A0\u25A0");
     const QColor text = palette().color(QPalette::Active, QPalette::Text);
-    addEntry(textSample(swatch, colors_.automaticScrapJoin, true), tr("Automatic scrap join, with an equate or nosurvey leg"));
-    addEntry(textSample(swatch, colors_.countedScrapJoin, false), tr("Scrap join with -count"));
-    addEntry(textSample(swatch, colors_.pointLineJoin, false), tr("Point or line join"));
-    addEntry(textSample(swatch, text, false), tr("No join between these surveys"));
-    addEntry(textSample(swatch, palette().color(QPalette::Disabled, QPalette::Text), false),
-             tr("Cannot be opened in this view; hover for the reason"));
+    addEntry(tr("Automatic Join"), colors_.automaticScrapJoin, true);
+    addEntry(tr("Join with -count"), colors_.countedScrapJoin, false);
+    addEntry(tr("Detailed Joins"), colors_.pointLineJoin, false);
+    addEntry(tr("No scrap Joins"), text, false);
+    addEntry(tr("Cannot be opened"), palette().color(QPalette::Disabled, QPalette::Text), false);
     auto *warning = new QLabel(legend_);
     const int iconSize = style()->pixelMetric(QStyle::PM_SmallIconSize, nullptr, this);
-    warning->setPixmap(mixedJoinIcon().pixmap(iconSize, iconSize));
-    addEntry(warning, tr("More than one kind of join between these surveys"));
-    addEntry(textSample(QStringLiteral("A ~ B"), text, false), tr("join with no equate or nosurvey leg"));
-    addEntry(textSample(QStringLiteral("(nosurvey)"), text, false), tr("nosurvey leg, treated like an equate"));
+    warning->setPixmap(ruleWarningIcon().pixmap(iconSize, iconSize));
+    addEntry(tr("Joins not valid"), text, false, warning);
+    // Join-only rows are written `(A ~ B)`; the entry shows that form.
+    addEntry(QStringLiteral("(A ~ B)  ") + tr("Join with no centreline tie"), text, false);
     legendBox_->setVisible(colors_.automaticScrapJoin.isValid());
 }
 
-QIcon ProjectJoinsPanel::mixedJoinIcon() const
+QIcon ProjectJoinsPanel::ruleWarningIcon() const
 {
     return style()->standardIcon(QStyle::SP_MessageBoxWarning, nullptr, this);
+}
+
+void ProjectJoinsPanel::applyRuleWarning(QStandardItem *item,
+                                         const QVector<ProjectJoinRuleViolation> &violations,
+                                         QStringList *toolTip) const
+{
+    if (violations.isEmpty()) {
+        return;
+    }
+    item->setIcon(ruleWarningIcon());
+    toolTip->append(tr("A join here breaks a join rule; see the Validation panel."));
 }
 
 void ProjectJoinsPanel::rebuildRows()
@@ -246,14 +254,18 @@ void ProjectJoinsPanel::rebuildRows()
         } else {
             groupItem = new QStandardItem(text);
             groupItem->setData(groupIndex, GroupIndexRole);
-            groupItem->setToolTip(linkDescription(group.link));
+            QStringList toolTip = {linkDescription(group.link)};
             for (int pairIndex = 0; pairIndex < group.pairs.size(); ++pairIndex) {
                 const ProjectJoinPair &pair = group.pairs.at(pairIndex);
+                if (!pair.ruleViolations.isEmpty() && groupItem->icon().isNull()) {
+                    applyRuleWarning(groupItem, pair.ruleViolations, &toolTip);
+                }
                 groupItem->appendRow(pairItem(pair,
                                               stationReferences({pair.first.station, pair.second.station}),
                                               groupIndex,
                                               pairIndex));
             }
+            groupItem->setToolTip(toolTip.join(QLatin1Char('\n')));
         }
         groupItem->setData(groupKey(group), RowKeyRole);
         model_->appendRow(groupItem);
@@ -284,9 +296,7 @@ QStandardItem *ProjectJoinsPanel::pairItem(const ProjectJoinPair &pair,
                            sideDescription(pair.second)};
     toolTip += connectionDescription(pair.connection, pair.joins);
     applyConnectionStyle(item, pair.connection, true);
-    if (pair.connection == ProjectJoinConnection::MixedJoins) {
-        item->setIcon(mixedJoinIcon());
-    }
+    applyRuleWarning(item, pair.ruleViolations, &toolTip);
     if (!pair.isAvailable()) {
         item->setForeground(palette().brush(QPalette::Disabled, QPalette::Text));
     }
@@ -301,6 +311,7 @@ QStandardItem *ProjectJoinsPanel::joinOnlyItem(const ProjectJoinGroup &group, in
     QStringList toolTip = connectionDescription(group.joinOnlyConnection, {*group.joinOnly});
     toolTip.append(tr("No equate or nosurvey leg links these surveys."));
     applyConnectionStyle(item, group.joinOnlyConnection, false);
+    applyRuleWarning(item, group.joinOnlyRuleViolations, &toolTip);
     item->setToolTip(toolTip.join(QLatin1Char('\n')));
     return item;
 }

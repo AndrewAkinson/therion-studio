@@ -2,6 +2,7 @@
 
 #include "DocumentFile.h"
 #include "ProjectEquateLinkScanner.h"
+#include "ProjectJoinRules.h"
 #include "TherionCommandLineModel.h"
 #include "TherionFileTypes.h"
 #include "TherionSourceLogicalDocument.h"
@@ -755,6 +756,48 @@ void appendProjectIndexDiagnostic(QVector<ProjectIndexDiagnostic> *diagnostics,
     diagnostic.referencedName = referencedName;
     diagnostic.candidateCount = candidateCount;
     diagnostics->append(diagnostic);
+}
+
+// One warning on each `join` line of a broken join rule. `referencedName` names the two scraps as `A ~ B` and
+// `candidateCount` is the number of join commands between them.
+QVector<ProjectIndexDiagnostic> joinRuleDiagnostics(const QVector<ProjectJoinRuleViolation> &violations,
+                                                    const QVector<ProjectStructureEntry> &entries)
+{
+    QHash<QString, QString> scrapNamesByObjectId;
+    for (const ProjectStructureEntry &entry : entries) {
+        if (entry.kind == ProjectStructureEntryKind::Scrap) {
+            scrapNamesByObjectId.insert(entry.objectId, entry.name);
+        }
+    }
+    QVector<ProjectIndexDiagnostic> diagnostics;
+    for (const ProjectJoinRuleViolation &violation : violations) {
+        ProjectIndexDiagnosticKind kind = ProjectIndexDiagnosticKind::MixedJoinKinds;
+        switch (violation.kind) {
+        case ProjectJoinRuleViolationKind::MixedJoinKinds:
+            kind = ProjectIndexDiagnosticKind::MixedJoinKinds;
+            break;
+        case ProjectJoinRuleViolationKind::RepeatedScrapJoin:
+            kind = ProjectIndexDiagnosticKind::RepeatedScrapJoin;
+            break;
+        case ProjectJoinRuleViolationKind::SinglePointLineJoin:
+            kind = ProjectIndexDiagnosticKind::SinglePointLineJoin;
+            break;
+        }
+        const QString scraps = QStringLiteral("%1 ~ %2").arg(scrapNamesByObjectId.value(violation.firstScrapObjectId),
+                                                             scrapNamesByObjectId.value(violation.secondScrapObjectId));
+        for (const ProjectJoinCommand &join : violation.joins) {
+            appendProjectIndexDiagnostic(&diagnostics,
+                                         kind,
+                                         join.ownerObjectId,
+                                         join.sourceFile,
+                                         join.lineNumber,
+                                         join.columnNumber,
+                                         join.columnLength,
+                                         scraps,
+                                         violation.joins.size());
+        }
+    }
+    return diagnostics;
 }
 
 TherionSourcePhysicalRange parsedLineTokenPhysicalRange(const TherionParsedLine &parsedLine, int tokenIndex)
@@ -1558,6 +1601,8 @@ ProjectIndexSnapshot scanProjectIndexFromFilePaths(const QString &projectRootPat
     if (projectIndexScanShouldCancel(shouldCancel)) {
         return cancelSnapshot();
     }
+    snapshot.joinRuleViolations = projectJoinRuleViolations(snapshot.joinCommands);
+    snapshot.diagnostics += joinRuleDiagnostics(snapshot.joinRuleViolations, snapshot.entries);
     QSet<QString> sourceFiles;
     for (const ProjectStructureEntry &entry : snapshot.entries) {
         if (!entry.sourceFile.trimmed().isEmpty()) {
@@ -1869,6 +1914,10 @@ QVector<ProjectIndexDiagnostic> scanJoinReferences(const QVector<ProjectStructur
             joinCommand.sourceFile = sourceFile;
             joinCommand.lineNumber = command.startLineNumber;
             joinCommand.count = commandOptionValue(command.parsed, QStringLiteral("count")).toInt();
+            const TherionSourcePhysicalRange keywordRange = parsedLineTokenPhysicalRange(command.parsed, 0);
+            joinCommand.columnNumber = keywordRange.columnNumber;
+            joinCommand.columnLength = keywordRange.columnLength;
+            joinCommand.ownerObjectId = ownerEntry.objectId;
             const auto recordJoinCommand = qScopeGuard([&joinCommand, joinCommands]() {
                 if (joinCommands == nullptr) {
                     return;

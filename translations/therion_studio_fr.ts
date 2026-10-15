@@ -2730,6 +2730,36 @@ Lignes de points : %1</translation>
         <translation>L&apos;identifiant d&apos;objet `%1` est déjà utilisé par un autre objet dans cet espace de noms.</translation>
     </message>
     <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="245"/>
+        <source>Mixed join kinds</source>
+        <translation>Types de join mélangés</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="246"/>
+        <source>Scraps `%1` are joined both as scraps and by points or lines; use one kind of join.</source>
+        <translation>Les scraps `%1` sont joints à la fois comme scraps et par des points ou des lignes ; utilisez un seul type de join.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="252"/>
+        <source>Repeated scrap join</source>
+        <translation>Jonction de scraps répétée</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="253"/>
+        <source>Scraps `%1` are joined by %2 scrap joins; use one, with `-count` for more passages.</source>
+        <translation>Les scraps `%1` sont joints par %2 jonctions de scraps ; utilisez-en une, avec `-count` pour plusieurs galeries.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="260"/>
+        <source>Single point or line join</source>
+        <translation>Jonction unique de points ou de lignes</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="261"/>
+        <source>Scraps `%1` are joined by only one point or line join; a passage usually needs both walls joined.</source>
+        <translation>Les scraps `%1` ne sont joints que par une seule jonction de points ou de lignes ; une galerie nécessite généralement de joindre les deux parois.</translation>
+    </message>
+    <message>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="368"/>
         <source>Station reference `%1` cannot be resolved because this file is not included in the project source graph.</source>
         <translation>La référence de station `%1` ne peut pas être résolue car ce fichier n&apos;est pas inclus dans le graphe source du projet.</translation>
@@ -6391,6 +6421,46 @@ Supprimer le sommet malgré tout ?</translation>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="212"/>
         <source>nosurvey leg, treated like an equate</source>
         <translation>tronçon nosurvey, traité comme un equate</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="199"/>
+        <source>Automatic Join</source>
+        <translation>Jonction automatique</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="200"/>
+        <source>Join with -count</source>
+        <translation>Jonction avec -count</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="201"/>
+        <source>Detailed Joins</source>
+        <translation>Jonctions détaillées</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="202"/>
+        <source>No scrap Joins</source>
+        <translation>Aucune jonction de scraps</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="203"/>
+        <source>Cannot be opened</source>
+        <translation>Ne peut pas être ouvert</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="207"/>
+        <source>Joins not valid</source>
+        <translation>Jonctions non valides</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="209"/>
+        <source>Join with no centreline tie</source>
+        <translation>Jonction sans lien par la centerline</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="226"/>
+        <source>A join here breaks a join rule; see the Validation panel.</source>
+        <translation>Un join ici enfreint une règle de jonction ; voir le panneau Validation.</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="301"/>

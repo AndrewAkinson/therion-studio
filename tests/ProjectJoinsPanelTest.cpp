@@ -1,4 +1,5 @@
 #include "../src/app/ProjectJoinsPanel.h"
+#include "../src/core/ProjectJoinRules.h"
 
 #include <QApplication>
 #include <QComboBox>
@@ -146,6 +147,7 @@ private slots:
             ProjectJoinCommand{QStringLiteral("maps.th"), 21, ProjectJoinMode::PointsAndLines, 0,
                                {scrapItem(QStringLiteral("su"), QStringLiteral("upper"), ProjectStructureEntryKind::Line),
                                 scrapItem(QStringLiteral("sf"), QStringLiteral("far"), ProjectStructureEntryKind::Line)}}};
+        snapshot.joinRuleViolations = projectJoinRuleViolations(snapshot.joinCommands);
 
         ProjectJoinsPanel panel;
         auto *legend = panel.findChild<QWidget *>(QStringLiteral("joinsLegend"));
@@ -154,8 +156,8 @@ private slots:
         const ProjectJoinsPanel::ConnectionColors colors{QColor(Qt::darkGreen), QColor(Qt::darkCyan), QColor(Qt::darkYellow)};
         panel.setConnectionColors(colors);
         QVERIFY(legend->isVisibleTo(&panel));
-        // Eight entries, each a sample and its meaning; the Key button folds them away.
-        QCOMPARE(legend->findChildren<QLabel *>().size(), 16);
+        // Seven entries styled like the rows, plus the warning icon; the Key button folds them away.
+        QCOMPARE(legend->findChildren<QLabel *>().size(), 8);
         auto *legendToggle = panel.findChild<QToolButton *>(QStringLiteral("joinsLegendToggle"));
         legendToggle->click();
         QVERIFY(!legend->isVisibleTo(&panel));
@@ -172,10 +174,14 @@ private slots:
 
         // upper ~ far has only a wall join and no equate: listed as its own row.
         const QModelIndex joinOnly = model->index(model->rowCount() - 1, 0);
-        QCOMPARE(joinOnly.data().toString(), QStringLiteral("su@upper ~ sf@far"));
+        QCOMPARE(joinOnly.data().toString(), QStringLiteral("(su@upper ~ sf@far)"));
         QCOMPARE(joinOnly.data(Qt::ForegroundRole).value<QBrush>().color(), colors.pointLineJoin);
         // Bold is reserved for an automatic scrap join backed by an equate or nosurvey leg.
         QVERIFY(!joinOnly.data(Qt::FontRole).value<QFont>().bold());
+        // A single wall join breaks a join rule: the row carries the warning marker; the scrap join row does not.
+        QVERIFY(!joinOnly.data(Qt::DecorationRole).value<QIcon>().isNull());
+        QVERIFY(joinOnly.data(Qt::ToolTipRole).toString().contains(QStringLiteral("Validation")));
+        QVERIFY(joined.data(Qt::DecorationRole).value<QIcon>().isNull());
 
         QSignalSpy openSpy(&panel, &ProjectJoinsPanel::sourceLocationRequested);
         QSignalSpy statusSpy(&panel, &ProjectJoinsPanel::statusMessageRequested);

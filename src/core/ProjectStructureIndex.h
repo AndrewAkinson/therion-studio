@@ -40,6 +40,10 @@ enum class ProjectIndexDiagnosticKind
     UnknownStationReference,
     AmbiguousStationReference,
     DuplicateObjectId,
+    // Join rules between one pair of scraps (see ProjectJoinRules).
+    MixedJoinKinds,
+    RepeatedScrapJoin,
+    SinglePointLineJoin,
 };
 
 enum class ProjectStationReferenceResolutionState
@@ -135,6 +139,28 @@ struct ProjectJoinCommand
     // `-count N` for scrap joins; 0 when absent (Therion's automatic join).
     int count = 0;
     QVector<ProjectJoinItem> items;
+    // The `join` keyword, and the namespace object that owns the command.
+    int columnNumber = 1;
+    int columnLength = 0;
+    QString ownerObjectId;
+};
+
+enum class ProjectJoinRuleViolationKind
+{
+    // A scrap join and a point/line join between the same scraps.
+    MixedJoinKinds,
+    // More than one scrap join between the same scraps.
+    RepeatedScrapJoin,
+    // Only one point/line join between two scraps.
+    SinglePointLineJoin,
+};
+
+struct ProjectJoinRuleViolation
+{
+    ProjectJoinRuleViolationKind kind = ProjectJoinRuleViolationKind::MixedJoinKinds;
+    QString firstScrapObjectId;
+    QString secondScrapObjectId;
+    QVector<ProjectJoinCommand> joins;
 };
 
 // A `point ... station -name` in a `.th2` scrap that draws an equated station.
@@ -169,6 +195,7 @@ struct ProjectIndexSnapshot
     QVector<ProjectEquateLink> equateLinks;
     QHash<QString, QVector<ProjectStationDrawingPoint>> stationDrawingPointsByStationKey;
     QVector<ProjectJoinCommand> joinCommands;
+    QVector<ProjectJoinRuleViolation> joinRuleViolations;
     // Normalized `-projection` of every scrap, by scrap object ID.
     QHash<QString, QString> scrapProjectionByObjectId;
     QVector<ProjectIndexDiagnostic> diagnostics;
