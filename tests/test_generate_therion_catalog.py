@@ -592,6 +592,15 @@ class TherionOptionTablesCatalogTest(unittest.TestCase):
         self.assertGreater(len(statistics), 1)
         self.assertTrue(all(option["value_arity"] == "N" for option in statistics))
 
+    def test_layout_block_commands_take_therion_value_counts(self) -> None:
+        # Therion reads layout block lines against the layout option table (thlayout get_default_cod).
+        for name, count in (("page-setup", 7), ("statistics", 2), ("scale", 2)):
+            arguments = self.commands_by_name[name]["arguments"]
+            self.assertEqual(len([a for a in arguments if not a["signature"].startswith("[")]), count, name)
+        # units is shared with centreline blocks, so it is only relaxed to the layout's one value.
+        units = [a for a in self.commands_by_name["units"]["arguments"] if not a["signature"].startswith("[")]
+        self.assertEqual(len(units), 1)
+
     def test_aliases_are_in_the_signature(self) -> None:
         projection = next(option for option in self.commands_by_name["scrap"]["options"]
                           if option.get("option_key") == "-projection")

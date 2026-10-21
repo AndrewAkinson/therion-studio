@@ -120,7 +120,9 @@ Done in two parts (decided 2026-10-21): V2a for the object commands whose option
 `get_cmd_option_desc` (`point`, `line`, `area`, `scrap`, `survey`, `centreline`, `map`, `surface`, `join`, `import`,
 `scan`, `grade`, `lookup`), with the options all Therion objects share listed on every one and `map -colour` removed
 (the book lists it, Therion rejects it); V2b for `export` and `layout`, whose value counts are written case by case
-in each exporter's and the layout's parsing code (this fixes the `-proj` warnings).
+in each exporter's and the layout's parsing code (this fixes the `-proj` warnings). V2b also gives the commands
+inside a `layout` block Therion's value counts (`page-setup` 7, `statistics` 2, `units` 1), as Therion reads those
+lines against the same layout option table.
 
 Found while doing V2a: the lock named Therion v6.3.4, but the catalog had been generated from the v6.4.0 book; the
 generator's source step looked for `thpoint.h` at the top level and silently did nothing since Therion moved its code

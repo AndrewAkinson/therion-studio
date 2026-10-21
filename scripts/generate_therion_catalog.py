@@ -1160,7 +1160,40 @@ def apply_therion_option_tables(catalog: dict[str, Any], source_root: Path) -> l
     for command_name, class_name in sorted(THERION_OPTION_CLASSES.items()):
         merge(command_name, source.command_line_options(class_name))
     merge("export", source.export_options(), keep_family=source.export_layout_option_family())
+    apply_layout_block_counts(commands_by_name, source, report)
     return list(dict.fromkeys(report))
+
+
+def apply_layout_block_counts(
+    commands_by_name: dict[str, dict[str, Any]],
+    source: TherionOptionSource,
+    report: list[str],
+) -> None:
+    """Inside a layout block Therion reads each line against the same option table, so a layout block command takes
+    as many values as its layout option. A command name shared with another block (units in a centreline) is only
+    relaxed, never tightened."""
+    for tokens, value_count, defining_class in source.command_line_options("thlayout"):
+        if defining_class != "thlayout":
+            continue
+        command = next((commands_by_name[token] for token in tokens
+                        if token in commands_by_name and "layout" in (commands_by_name[token].get("contexts") or [])),
+                       None)
+        if command is None:
+            continue
+        arguments = command.get("arguments", [])
+        required = [argument for argument in arguments if not str(argument.get("signature", "")).startswith("[")]
+        takes_list = any(str(argument.get("value_arity")) == "N" for argument in arguments)
+        if len(required) == value_count and (len(arguments) == value_count or takes_list):
+            continue
+        if command.get("contexts") == ["layout"]:
+            report.append(f"layout: {command['name']} takes {value_count} value(s) in Therion; "
+                          f"the book's heading gives {len(arguments)}")
+            command["arguments"] = build_argument_entries_from_signature(
+                " ".join([command["name"]] + ["<value>"] * value_count))
+        elif len(required) > value_count:
+            for argument in required[value_count:]:
+                argument["signature"] = f"[{argument['signature']}]"
+                argument["name"] = argument["signature"]
 
 
 def apply_source_derived_option_applicability(catalog: dict[str, Any], source_root: Path) -> None:
