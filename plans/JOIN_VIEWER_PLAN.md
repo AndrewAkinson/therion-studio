@@ -243,6 +243,42 @@ Staged implementation:
   Note (2026-10-15): nothing to do at the moment; revisit only if a way to give extended elevations a shared frame
   appears.
 
+### D. Fixes found in use (2026-10-21)
+
+Reported while testing on a real project. Status: planned, no slice started. D1 comes first because it may
+explain D3, and its result may change D2-D4.
+
+- **D1 Alignment is wrong even with a shared point.** Equate rows, where both drawings draw the shared station, do not
+  line up correctly. Investigate before changing anything else. Measure where the shared station point lands in each
+  pane in the common frame and how far apart it is. Then find which placement was used (computed fit or the XVI
+  anchor, see D3) and check each step. That means station keys matched to the SQL `FULL_NAME`, plan and elevation
+  projection and its sign, the per-scrap similarity fit against a drawing with several scraps, and the
+  partner-to-this transform (partner fit, then the inverse of this fit). Record the cause here with its numbers before
+  the fix is agreed.
+- **D2 Station not drawn in the view.** Some rows of the form `<station>@<survey> = <station>@<other survey>` are
+  dimmed with "not drawn in plan view", although the survey has a drawing in that view. Only the join station's point
+  is missing. This happens in both plan and elevation views. The point is needed only for the XVI anchor. With
+  computed positions, open the survey's drawing in that view whose scrap lies nearest the station's computed position,
+  place both drawings by their fits and centre both views on the station's computed position. Without computed
+  positions keep the dimmed row but word the reason exactly, e.g. "<station>@<survey> has no station point in
+  <survey>'s plan drawing". Rows where the survey reads no drawing at all stay as they are.
+- **D3 Join-only rows open unaligned.** Probable cause, still to be confirmed in the app because the test harness has
+  no such timing:
+  - the positions count as out of date when any source is newer, `.th2` drawings included, so every drawing save
+    starts a new Therion run;
+  - while a run is going the placement ignores the previous positions, so a join-only row opens unaligned. The same
+    happens when a join is opened within about a second of the Joins page appearing.
+
+  Fix: only `.th` files and the config make positions stale; keep using the previous positions while a run is going;
+  when fresh positions arrive, re-place joins that opened without them (only those).
+- **D4 Centre on where the drawings meet.** Join-only rows are centred between the middles of the two scraps, which can
+  be well away from where they meet. Instead find the closest pair of station points, one in each scrap, using their
+  computed positions, and centre both views halfway between them (the user's suggestion). Placement itself stays on
+  the fit to all station points, which also gets rotation and scale right.
+
+Each slice is a separate commit on `JoinViewer` with tests, doc and translation updates, measured on the test project
+before and after, and checked in the app.
+
 ### Open questions for phase 2
 
 Answered (2026-10-14):
