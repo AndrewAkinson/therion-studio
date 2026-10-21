@@ -129,7 +129,7 @@ QString documentValidationCacheKey(const ProjectSourceDocument &document,
     QStringList parts;
     parts.reserve(7);
     parts.append(QStringLiteral("path=%1").arg(document.normalizedPath));
-    parts.append(QStringLiteral("type=%1").arg(static_cast<int>(therionSourceDocumentTypeForFilePath(document.normalizedPath))));
+    parts.append(QStringLiteral("type=%1").arg(static_cast<int>(projectSourceDocumentType(document))));
     parts.append(QStringLiteral("loaded=%1").arg(document.textLoaded ? 1 : 0));
     parts.append(QStringLiteral("origin=%1").arg(static_cast<int>(document.origin)));
     parts.append(QStringLiteral("hash=%1").arg(QString::fromLatin1(projectSourceContentHash(document.text).toHex())));
@@ -305,7 +305,7 @@ void appendUnreadDrawingFinding(ProjectValidationScanner::Result *result, const 
 {
     if (result == nullptr
         || result->limitReached
-        || therionSourceDocumentTypeForFilePath(document.normalizedPath) != TherionSourceDocumentType::TherionMap) {
+        || projectSourceDocumentType(document) != TherionSourceDocumentType::TherionMap) {
         return;
     }
 
@@ -429,7 +429,8 @@ void appendFindingsForDocument(ProjectValidationScanner::Result *result,
     ProjectValidationScanner::DocumentValidationCacheEntry builtEntry;
     const TherionSourceValidationResult validation =
         TherionSourceValidator::validate(sourceDocument, logicalDocument, validationCatalog);
-    const bool suppressUnknownCommandWarnings = isTherionConfigFilePath(document.normalizedPath);
+    const bool suppressUnknownCommandWarnings =
+        projectSourceDocumentType(document) == TherionSourceDocumentType::TherionConfig;
     for (const TherionSourceDiagnostic &diagnostic : validation.diagnostics) {
         if (suppressUnknownCommandWarnings && diagnostic.code == QStringLiteral("unknown-command")) {
             continue;
@@ -580,6 +581,9 @@ ProjectValidationScanner::Result performProjectValidation(const QString &project
     for (const ProjectSourceDocument &document : std::as_const(projectSourceSnapshot.documents)) {
         knownProjectFilePaths.insert(document.normalizedPath);
         projectSourceDocumentByPath.insert(document.normalizedPath, document);
+        if (document.readAsType != TherionSourceDocumentType::Unknown) {
+            result.readAsTypes.insert(document.normalizedPath, document.readAsType);
+        }
     }
     const QString knownProjectFilesSignature = knownProjectFilePathsSignature(knownProjectFilePaths);
 

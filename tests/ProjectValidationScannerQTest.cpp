@@ -193,6 +193,60 @@ private slots:
         QCOMPARE(unreadNotes(), 1);
     }
 
+    // A .th file a config inputs is config text to Therion, so its layout is not in the wrong document type (V4b).
+    void checksFilesAsTheTypeTherionReadsThemAs()
+    {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+        const QDir projectDir(tempDir.path());
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("thconfig")),
+                              QStringLiteral("source cave.th\ninput common.th\n")));
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("common.th")),
+                              QStringLiteral("layout common\n  scale 1 500\nendlayout\n")));
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("cave.th")),
+                              QStringLiteral("survey cave\nendsurvey\nlayout wrong\nendlayout\n")));
+
+        TherionSourceValidationCatalog catalog = validationCatalog();
+        for (const QString &command : {QStringLiteral("input"), QStringLiteral("layout"), QStringLiteral("endlayout"),
+                                       QStringLiteral("scale")}) {
+            catalog.commandNames.insert(command);
+        }
+        catalog.commandContexts.insert(QStringLiteral("input"), {QStringLiteral("all")});
+        catalog.commandContexts.insert(QStringLiteral("layout"), {QStringLiteral("none")});
+        catalog.commandContexts.insert(QStringLiteral("endlayout"), {QStringLiteral("layout")});
+        catalog.commandContexts.insert(QStringLiteral("scale"), {QStringLiteral("layout")});
+        for (const QString &command : {QStringLiteral("layout"), QStringLiteral("endlayout"), QStringLiteral("scale")}) {
+            catalog.commandDocumentTypes.insert(command, {QStringLiteral("thconfig")});
+        }
+
+        ProjectValidationScanner scanner;
+        scanner.setDebounceIntervalMs(0);
+        ProjectValidationScanner::Result result;
+        bool received = false;
+        QObject::connect(&scanner,
+                         &ProjectValidationScanner::validationFinished,
+                         &scanner,
+                         [&](const ProjectValidationScanner::Result &validationResult) {
+                             result = validationResult;
+                             received = true;
+                         });
+        scanner.requestScan(projectDir.path(), catalog, {});
+        QTRY_VERIFY_WITH_TIMEOUT(received, 5000);
+        QVERIFY2(result.errorMessage.isEmpty(), qPrintable(result.errorMessage));
+
+        QStringList documentTypeFindings;
+        for (const ProjectValidationScanner::Finding &finding : result.findings) {
+            if (finding.diagnostic.code == QStringLiteral("invalid-document-type")) {
+                documentTypeFindings.append(QFileInfo(finding.filePath).fileName());
+            }
+        }
+        // common.th is read as config; cave.th is survey source, where layout does not belong.
+        QVERIFY2(!documentTypeFindings.contains(QStringLiteral("common.th")), qPrintable(documentTypeFindings.join(u' ')));
+        QVERIFY(documentTypeFindings.contains(QStringLiteral("cave.th")));
+        QCOMPARE(result.readAsTypes.size(), 1);
+        QCOMPARE(QFileInfo(result.readAsTypes.keys().constFirst()).fileName(), QStringLiteral("common.th"));
+    }
+
     // A drawing the config does not read gets one note instead of an error per station (validation plan V4).
     void notesUnreadDrawingOnceAndChecksReadDrawings()
     {

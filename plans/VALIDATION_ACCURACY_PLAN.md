@@ -2,7 +2,7 @@
 
 Date: 2026-10-15
 
-Status: V1a, V1b, V2a, V2b, V3, and V4 done. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
+Status: V1a, V1b, V2a, V2b, V3, V4, and V4b done. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
 values, Therion's line splitting (`thsplit_args`) first in two parts (V1a, V1b), code blocks as a potential slice,
 and slices renumbered.
 
@@ -210,6 +210,11 @@ panel in blue, not counted as a problem by the rail indicator, shown by default.
 ## V4b - Document Type From How Therion Reads A File
 
 Goal: a file's commands are checked against the file type Therion reads it as, not its extension.
+
+Done (2026-10-21). The project snapshot follows `input` from every config (and inputs of inputs) and records those
+files as read as config (`ProjectSourceDocument::readAsType`); project validation uses that type, and each scan passes
+it to open editor tabs so their own checks agree. Measured: the 50 `invalid-document-type` warnings in a shared layout
+file are gone. Not changed: completion in such a tab still offers commands for the type its name gives.
 
 Studio decides a file's type from its name (`.th`, `.th2`, `thconfig`). Therion goes by how the file is read: a file a
 config reads with `input` is read as config text, whatever it is called. A shared layout file such as

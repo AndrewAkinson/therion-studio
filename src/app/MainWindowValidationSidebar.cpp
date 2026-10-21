@@ -810,13 +810,16 @@ void MainWindow::updateOpenEditorProjectValidationDiagnostics()
         }
     }
 
-    auto applyToDocumentWidget = [&diagnosticsByPath](QWidget *widget) {
+    auto applyToDocumentWidget = [this, &diagnosticsByPath](QWidget *widget) {
         if (widget == nullptr) {
             return;
         }
 
         if (auto *textTab = qobject_cast<TherionStudio::TextEditorTab *>(widget)) {
-            textTab->setProjectValidationDiagnostics(diagnosticsByPath.value(normalizedValidationPath(textTab->filePath())));
+            const QString path = normalizedValidationPath(textTab->filePath());
+            textTab->setReadAsSourceType(
+                validationReadAsTypes_.value(path, TherionStudio::TherionSourceDocumentType::Unknown));
+            textTab->setProjectValidationDiagnostics(diagnosticsByPath.value(path));
             return;
         }
 
@@ -858,6 +861,10 @@ void MainWindow::handleProjectValidationFinished(TherionStudio::ProjectValidatio
     }
     if (validationResultsModel_ == nullptr) {
         return;
+    }
+    validationReadAsTypes_.clear();
+    for (auto it = result.readAsTypes.cbegin(); it != result.readAsTypes.cend(); ++it) {
+        validationReadAsTypes_.insert(normalizedValidationPath(it.key()), it.value());
     }
     auto logFinish = [&]() {
         if (!diagnosticProjectValidationLoggingEnabled()) {
