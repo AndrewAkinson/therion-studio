@@ -2,7 +2,7 @@
 
 Date: 2026-10-15
 
-Status: V1a, V1b, V2a, V2b, and V3 done. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
+Status: V1a, V1b, V2a, V2b, V3, and V4 done. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
 values, Therion's line splitting (`thsplit_args`) first in two parts (V1a, V1b), code blocks as a potential slice,
 and slices renumbered.
 
@@ -202,6 +202,28 @@ when the block has no `endcode` of its own and no code follows that point.
 
 Goal: no per-station errors for drawings the selected target config does not read.
 
+Done (2026-10-21). Studio gained a third severity, `Information` (decided with the user): listed in the Validation
+panel in blue, not counted as a problem by the rail indicator, shown by default. Each unread `.th2` drawing gets one
+`drawing-not-read` information finding. Measured: with a whole multi-cave folder open and one cave's config as target,
+1931 per-station errors in unread drawings (the result was cut at 2000) become one note per drawing.
+
+## V4b - Document Type From How Therion Reads A File
+
+Goal: a file's commands are checked against the file type Therion reads it as, not its extension.
+
+Studio decides a file's type from its name (`.th`, `.th2`, `thconfig`). Therion goes by how the file is read: a file a
+config reads with `input` is read as config text, whatever it is called. A shared layout file such as
+`common_layout.th`, read by a `thconfig` through `input`, holds `layout` and other config commands, so Studio reports
+each of them as "not listed for document type `th`" (50 warnings on the measured project).
+
+- In the project source graph, record the document type each file is read as (config through `source`/`input` from a
+  config, survey source through `source` or `input` from a `.th` file, drawings through `input` of `.th2`).
+- Validate a file against the type it is read as; for a file read in more than one way, accept commands valid for any
+  of them. Files nobody reads keep the extension-based type.
+- Tests: a `thconfig` that inputs `common_layout.th` holding a layout; no document-type findings for it; a `.th` read
+  as survey source keeps today's checks.
+- Documentation: `SPECIFICATION.md` and `docs/THERION_COMPATIBILITY.md` (file roles); user manuals if visible.
+
 - Do not validate station references in drawings outside the selected config's source graph.
 - Instead report the drawing once, as an informational finding, for example "not read by the selected Target Config",
   so users who expect it to be read can see why it is not.
@@ -262,7 +284,8 @@ WORKLOG backlog item "Compiler-confirmed project-index comparison". Revisit afte
 | V2a | Object command options, aliases, and arity from Therion's `thstok` tables; help linked to the book | #50, #49 |
 | V2b | The same for `export` and `layout` (the `-proj` warnings) | |
 | V3 | Line continuation inside quoted values | |
-| V4 | Drawings outside the target config's source graph | |
+| V4 | Drawings outside the target config's source graph (Information severity) | |
+| V4b | Document type from how Therion reads a file | |
 | V5 | Severity policy | |
 | V6 (p) | Code blocks split by their own rules (TeX and MetaPost) | |
 | V7 (p) | Validate each drawing against the config that reads it | |
@@ -277,4 +300,4 @@ Already done elsewhere: the `-namespace off` join references are fixed on the `N
 
 - Answered (2026-10-21): the generator reads the tables from the same pinned checkout as the book, Therion v6.4.0
   (`docs/therion-source.lock`), which is also the version the line splitting rules cite.
-- Should informational findings (V4) be visible by default, or behind a filter?
+- Answered (2026-10-21): information findings (V4) are shown by default and are not counted as problems.

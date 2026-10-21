@@ -42,6 +42,7 @@ private:
     QTextCharFormat identifierFormat_;
     QTextCharFormat validationWarningFormat_;
     QTextCharFormat validationErrorFormat_;
+    QTextCharFormat validationInformationFormat_;
     QTextCharFormat stringFormat_;
     QTextCharFormat numberFormat_;
     QTextCharFormat commentFormat_;

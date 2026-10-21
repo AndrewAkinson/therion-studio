@@ -2675,6 +2675,16 @@ Lignes de points : %1</translation>
         <translation>L&apos;identifiant d&apos;objet `%1` est déjà utilisé par un autre objet dans cet espace de noms.</translation>
     </message>
     <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="318"/>
+        <source>Drawing not read by the config</source>
+        <translation>Dessin non lu par la configuration</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="319"/>
+        <source>This drawing is not read through the project&apos;s Therion config, so Therion does not compile it and its station references are not checked.</source>
+        <translation>Ce dessin n’est pas lu par la configuration Therion du projet : Therion ne le compile pas et ses références aux stations ne sont pas vérifiées.</translation>
+    </message>
+    <message>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="368"/>
         <source>Station reference `%1` cannot be resolved because this file is not included in the project source graph.</source>
         <translation>La référence de station `%1` ne peut pas être résolue car ce fichier n&apos;est pas inclus dans le graphe source du projet.</translation>
@@ -3566,6 +3576,11 @@ Lignes de points : %1</translation>
         <location filename="../src/app/MainWindowValidationSidebar.cpp" line="238"/>
         <source>Warning</source>
         <translation>Avertissement</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowValidationSidebar.cpp" line="250"/>
+        <source>Information</source>
+        <translation>Information</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowValidationSidebar.cpp" line="249"/>
@@ -6287,6 +6302,11 @@ Supprimer le sommet malgré tout ?</translation>
         <translation>Erreur</translation>
     </message>
     <message>
+        <location filename="../src/app/text_editor/TextEditorContextHelpController.cpp" line="435"/>
+        <source>Information</source>
+        <translation>Information</translation>
+    </message>
+    <message>
         <location filename="../src/app/text_editor/TextEditorContextHelpController.cpp" line="433"/>
         <location filename="../src/app/text_editor/TextEditorContextHelpController.cpp" line="457"/>
         <source>Warning</source>
@@ -7928,6 +7948,12 @@ Supprimer le sommet malgré tout ?</translation>
         <location filename="../src/app/ValidationResultsMarkdownExporter.cpp" line="18"/>
         <source>Error</source>
         <translation>Erreur</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ValidationResultsMarkdownExporter.cpp" line="20"/>
+        <location filename="../src/app/ValidationResultsMarkdownExporter.cpp" line="171"/>
+        <source>Information</source>
+        <translation>Information</translation>
     </message>
     <message>
         <location filename="../src/app/ValidationResultsMarkdownExporter.cpp" line="26"/>

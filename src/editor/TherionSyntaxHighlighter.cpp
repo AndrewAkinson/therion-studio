@@ -236,6 +236,8 @@ void TherionSyntaxHighlighter::loadPalette()
         makeValidationFormat(TherionSourceDiagnosticSeverity::Warning, QGuiApplication::palette());
     validationErrorFormat_ =
         makeValidationFormat(TherionSourceDiagnosticSeverity::Error, QGuiApplication::palette());
+    validationInformationFormat_ =
+        makeValidationFormat(TherionSourceDiagnosticSeverity::Information, QGuiApplication::palette());
     stringFormat_ = makeFormat(darkPalette ? QColor(QStringLiteral("#CE9178")) : QColor(QStringLiteral("#0a3069")));
     numberFormat_ = makeFormat(darkPalette ? QColor(QStringLiteral("#B5CEA8")) : QColor(QStringLiteral("#116329")));
     commentFormat_ = makeFormat(darkPalette ? QColor(QStringLiteral("#6A9955")) : QColor(QStringLiteral("#6e7781")), false, true);
@@ -669,6 +671,8 @@ const QTextCharFormat &TherionSyntaxHighlighter::validationFormatForSeverity(
         return validationErrorFormat_;
     case TherionSourceDiagnosticSeverity::Warning:
         return validationWarningFormat_;
+    case TherionSourceDiagnosticSeverity::Information:
+        return validationInformationFormat_;
     }
     return validationWarningFormat_;
 }

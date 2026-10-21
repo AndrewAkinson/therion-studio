@@ -2732,6 +2732,16 @@ Line-point options: %1</translation>
         <translation>ID objektu `%1` už v tomto namespace používa iný objekt.</translation>
     </message>
     <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="318"/>
+        <source>Drawing not read by the config</source>
+        <translation>Kresba nie je načítaná konfiguráciou</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="319"/>
+        <source>This drawing is not read through the project&apos;s Therion config, so Therion does not compile it and its station references are not checked.</source>
+        <translation>Táto kresba nie je načítaná konfiguráciou Therionu v projekte, takže ju Therion neprekladá a jej odkazy na body sa nekontrolujú.</translation>
+    </message>
+    <message>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="368"/>
         <source>Station reference `%1` cannot be resolved because this file is not included in the project source graph.</source>
         <translation>Odkaz na stanicu `%1` nemožno vyriešiť, pretože tento súbor nie je zahrnutý v zdrojovom grafe projektu.</translation>
@@ -3630,6 +3640,11 @@ Line-point options: %1</translation>
         <location filename="../src/app/MainWindowValidationSidebar.cpp" line="238"/>
         <source>Warning</source>
         <translation>Varovanie</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowValidationSidebar.cpp" line="250"/>
+        <source>Information</source>
+        <translation>Informácia</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowValidationSidebar.cpp" line="249"/>
@@ -6452,6 +6467,11 @@ subtype blocks</translation>
         <translation>Chyba</translation>
     </message>
     <message>
+        <location filename="../src/app/text_editor/TextEditorContextHelpController.cpp" line="435"/>
+        <source>Information</source>
+        <translation>Informácia</translation>
+    </message>
+    <message>
         <location filename="../src/app/text_editor/TextEditorContextHelpController.cpp" line="433"/>
         <location filename="../src/app/text_editor/TextEditorContextHelpController.cpp" line="457"/>
         <source>Warning</source>
@@ -8201,6 +8221,12 @@ subtype blocks</translation>
         <location filename="../src/app/ValidationResultsMarkdownExporter.cpp" line="18"/>
         <source>Error</source>
         <translation>Chyba</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ValidationResultsMarkdownExporter.cpp" line="20"/>
+        <location filename="../src/app/ValidationResultsMarkdownExporter.cpp" line="171"/>
+        <source>Information</source>
+        <translation>Informácia</translation>
     </message>
     <message>
         <location filename="../src/app/ValidationResultsMarkdownExporter.cpp" line="26"/>

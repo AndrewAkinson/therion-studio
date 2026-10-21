@@ -3,7 +3,10 @@
 #include "../src/core/TherionCommandSyntax.h"
 
 #include <QDir>
+
+#include <algorithm>
 #include <QFile>
+#include <QFileInfo>
 #include <QSet>
 #include <QTemporaryDir>
 
@@ -75,7 +78,8 @@ class ProjectValidationScannerQTest final : public QObject
     Q_OBJECT
 
 private slots:
-    void suppressesUnindexedQualifiedStationNamesAfterScrapTransform()
+    // A drawing no config reads is noted once and its station names are not checked (validation plan V4).
+    void notesUnreadDrawingWithStationNamesOnce()
     {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -122,6 +126,14 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(received, 5000);
         QVERIFY2(result.errorMessage.isEmpty(), qPrintable(result.errorMessage));
 
+        const auto unreadNotes = [&result]() {
+            return std::count_if(result.findings.cbegin(), result.findings.cend(), [](const auto &finding) {
+                return finding.diagnostic.code == QStringLiteral("drawing-not-read")
+                    && finding.diagnostic.severity == TherionSourceDiagnosticSeverity::Information;
+            });
+        };
+        QCOMPARE(unreadNotes(), 1);
+
         QSet<QString> stationReferenceFindings;
         for (const ProjectValidationScanner::Finding &finding : result.findings) {
             if (finding.diagnostic.code != QStringLiteral("unknown-station-reference")
@@ -136,8 +148,7 @@ private slots:
             stationReferenceFindings.insert(finding.diagnostic.currentText);
         }
 
-        const QSet<QString> expectedStationReferenceFindings = {
-            QStringLiteral("point 3 3 station -name missing")};
+        const QSet<QString> expectedStationReferenceFindings;
         QCOMPARE(stationReferenceFindings, expectedStationReferenceFindings);
 
         const QString hpcMapContents =
@@ -164,6 +175,7 @@ private slots:
             }
         }
         QCOMPARE(hpcStationReferenceFindings, expectedStationReferenceFindings);
+        QCOMPARE(unreadNotes(), 1);
 
         inMemoryContents.insert(looseMapFile, mapContents);
         received = false;
@@ -178,6 +190,71 @@ private slots:
             }
         }
         QCOMPARE(restoredStationReferenceFindings, expectedStationReferenceFindings);
+        QCOMPARE(unreadNotes(), 1);
+    }
+
+    // A drawing the config does not read gets one note instead of an error per station (validation plan V4).
+    void notesUnreadDrawingOnceAndChecksReadDrawings()
+    {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+        const QDir projectDir(tempDir.path());
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("thconfig")), QStringLiteral("source root.th\n")));
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("root.th")),
+                              QStringLiteral("survey cave\n"
+                                             "  centerline\n"
+                                             "    data normal from to length compass clino\n"
+                                             "    0 1 1 0 0\n"
+                                             "  endcenterline\n"
+                                             "  input read.th2\n"
+                                             "endsurvey\n")));
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("read.th2")),
+                              QStringLiteral("scrap read\n"
+                                             "point 0 0 station -name 0\n"
+                                             "point 1 1 station -name missing\n"
+                                             "endscrap\n")));
+        const QString unreadFile = projectDir.filePath(QStringLiteral("unread.th2"));
+        QVERIFY(writeTextFile(unreadFile,
+                              QStringLiteral("scrap unread\n"
+                                             "point 0 0 station -name 0\n"
+                                             "point 1 1 station -name 7\n"
+                                             "point 2 2 station -name 8\n"
+                                             "endscrap\n")));
+
+        TherionSourceValidationCatalog catalog = validationCatalog();
+        catalog.commandNames.insert(QStringLiteral("input"));
+        catalog.commandContexts.insert(QStringLiteral("input"), {QStringLiteral("all")});
+        ProjectValidationScanner scanner;
+        scanner.setDebounceIntervalMs(0);
+        ProjectValidationScanner::Result result;
+        bool received = false;
+        QObject::connect(&scanner,
+                         &ProjectValidationScanner::validationFinished,
+                         &scanner,
+                         [&](const ProjectValidationScanner::Result &validationResult) {
+                             result = validationResult;
+                             received = true;
+                         });
+        scanner.requestScan(projectDir.path(), catalog, {});
+        QTRY_VERIFY_WITH_TIMEOUT(received, 5000);
+        QVERIFY2(result.errorMessage.isEmpty(), qPrintable(result.errorMessage));
+
+        int unreadNotes = 0;
+        QStringList stationFindings;
+        for (const ProjectValidationScanner::Finding &finding : result.findings) {
+            const bool unread = QFileInfo(finding.filePath).fileName() == QStringLiteral("unread.th2");
+            if (finding.diagnostic.code == QStringLiteral("drawing-not-read")) {
+                QVERIFY(unread);
+                QCOMPARE(finding.diagnostic.severity, TherionSourceDiagnosticSeverity::Information);
+                ++unreadNotes;
+            } else if (finding.diagnostic.code == QStringLiteral("unknown-station-reference")) {
+                QVERIFY2(!unread, qPrintable(finding.diagnostic.message));
+                stationFindings.append(finding.diagnostic.currentText.trimmed());
+            }
+        }
+        QCOMPARE(unreadNotes, 1);
+        // The drawing the config reads keeps its station checks.
+        QCOMPARE(stationFindings, QStringList({QStringLiteral("point 1 1 station -name missing")}));
     }
 };
 

@@ -40,6 +40,8 @@
 #include <QVBoxLayout>
 #include <QScrollBar>
 
+#include <algorithm>
+
 namespace
 {
 enum ValidationResultRole
@@ -99,6 +101,8 @@ int severityRank(TherionStudio::TherionSourceDiagnosticSeverity severity)
         return 2;
     case TherionStudio::TherionSourceDiagnosticSeverity::Warning:
         return 1;
+    case TherionStudio::TherionSourceDiagnosticSeverity::Information:
+        return 0;
     }
     return 1;
 }
@@ -188,6 +192,14 @@ QString projectValidationResultSignature(const QString &projectRootPath,
     return QString::fromLatin1(hash.result().toHex());
 }
 
+// Information findings are notes, not problems, so the rail indicator leaves them out.
+int validationProblemCount(const QVector<TherionStudio::TherionSourceDiagnostic> &diagnostics)
+{
+    return static_cast<int>(std::count_if(diagnostics.cbegin(), diagnostics.cend(), [](const auto &diagnostic) {
+        return diagnostic.severity != TherionStudio::TherionSourceDiagnosticSeverity::Information;
+    }));
+}
+
 TherionStudio::TherionSourceDiagnosticSeverity highestDiagnosticSeverity(
     const QVector<TherionStudio::TherionSourceDiagnostic> &diagnostics)
 {
@@ -234,6 +246,8 @@ QString severityLabel(TherionStudio::TherionSourceDiagnosticSeverity severity)
         return QCoreApplication::translate("TherionStudio::MainWindow", "Error");
     case TherionStudio::TherionSourceDiagnosticSeverity::Warning:
         return QCoreApplication::translate("TherionStudio::MainWindow", "Warning");
+    case TherionStudio::TherionSourceDiagnosticSeverity::Information:
+        return QCoreApplication::translate("TherionStudio::MainWindow", "Information");
     }
     return QCoreApplication::translate("TherionStudio::MainWindow", "Warning");
 }
@@ -517,7 +531,7 @@ void MainWindow::triggerValidateDocumentForActiveDocument()
         return;
     }
 
-    validationProblemCount_ = validation.diagnostics.size();
+    validationProblemCount_ = validationProblemCount(validation.diagnostics);
     validationHighestSeverity_ = highestDiagnosticSeverity(validation.diagnostics);
     updateValidationRailIndicator();
 
@@ -975,11 +989,13 @@ void MainWindow::handleProjectValidationFinished(TherionStudio::ProjectValidatio
         return;
     }
 
-    validationProblemCount_ = result.findings.size();
-    validationHighestSeverity_ = TherionStudio::TherionSourceDiagnosticSeverity::Warning;
+    QVector<TherionStudio::TherionSourceDiagnostic> findingDiagnostics;
+    findingDiagnostics.reserve(result.findings.size());
     for (const TherionStudio::ProjectValidationScanner::Finding &finding : result.findings) {
-        validationHighestSeverity_ = higherSeverity(validationHighestSeverity_, finding.diagnostic.severity);
+        findingDiagnostics.append(finding.diagnostic);
     }
+    validationProblemCount_ = validationProblemCount(findingDiagnostics);
+    validationHighestSeverity_ = highestDiagnosticSeverity(findingDiagnostics);
     updateValidationRailIndicator();
 
     QHash<QString, QStandardItem *> fileItemsByPath;
