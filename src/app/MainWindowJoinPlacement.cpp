@@ -91,7 +91,7 @@ void MainWindow::openProjectJoin(const TherionStudio::ProjectJoinPair &pair, boo
                             joinPlacement(pair.first.drawing->scrapObjectId,
                                           pair.second.drawing->scrapObjectId,
                                           pair.first.drawing->projection),
-                            tr("Cannot align the joined drawings: a scrap has no XVI centreline stations or -scale."));
+                            tr("Cannot align the joined drawings: a scrap has neither computed station positions nor matching XVI centreline stations."));
 }
 
 void MainWindow::openProjectJoinOnly(const TherionStudio::ProjectJoinGroup &group, bool separateWindow)

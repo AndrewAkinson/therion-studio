@@ -34,10 +34,10 @@ struct MapEditorJoinPlacement
 // Aligns two open drawings, shows each as an outline in the other, links the two views, and zooms both onto the
 // join. `firstJoinLine` and `secondJoinLine` are the join-station points, or for a join with no shared station
 // any line inside each joined scrap. With computed positions for both scraps (`placement`), both are placed in
-// Therion's frame and the view is centred between the scraps when there is no join station; otherwise each
-// scrap's centreline fit is linked at the join station. With `separateSecondMap`, the second drawing's map is
-// shown in its separate map window. Replaces any existing join between the same two editors. Returns false,
-// changing nothing, when either drawing cannot be placed.
+// Therion's frame and the view is centred between the scraps when there is no join station; otherwise the two
+// drawings are linked at the join station, each placed by its computed fit or else its centreline fit. With
+// `separateSecondMap`, the second drawing's map is shown in its separate map window. Replaces any existing join
+// between the same two editors. Returns false, changing nothing, when either drawing cannot be placed.
 bool openMapEditorJoinPair(MapEditorTab *first,
                            int firstJoinLine,
                            MapEditorTab *second,

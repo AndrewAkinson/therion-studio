@@ -136,9 +136,20 @@ private slots:
         QCOMPARE(fit.stationCount, 2);
         QVERIFY(nearlyEqual(fit.drawingToMetres.scale(), 1.0 / 78.74));
 
-        const Th2CentrelineFit scaleOnly = fitTh2ScrapContainingLine(th2.commands(), 5, {});
-        QCOMPARE(scaleOnly.source, Th2CentrelineFitSource::ScrapScale);
+        // Therion refits a scrap with two or more stations to them, so its -scale does not place it (D1).
+        QVERIFY(!fitTh2ScrapContainingLine(th2.commands(), 5, {}).isValid());
         QVERIFY(!fitTh2ScrapContainingLine(th2.commands(), 8, {}).isValid());
+    }
+
+    void usesScrapScaleOnlyBelowTwoStations()
+    {
+        const TherionSourceLogicalDocument th2 = TherionSourceLogicalDocument::fromText(QStringLiteral(
+            "scrap one -scale [2 cm]\n"
+            "point 10 20 station -name 1\n"
+            "endscrap\n"));
+        const Th2CentrelineFit fit = fitTh2ScrapContainingLine(th2.commands(), 2, {});
+        QCOMPARE(fit.source, Th2CentrelineFitSource::ScrapScale);
+        QVERIFY(nearlyEqual(fit.drawingToMetres.scale(), 0.02));
     }
 
     void usesXviGridScaleForSingleStation()

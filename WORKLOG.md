@@ -308,8 +308,8 @@ Active planning only. Completed history belongs in archive files. Stable archite
 - Phase 2 stage C5 (fallback placement without Therion) dropped: Therion Studio already needs Therion for much of
   its work; without positions the XVI fit remains. Extended elevations without an equate stay unlinked (no work
   planned). Phase 2 is complete pending review and the PR.
-- Phase 2 section D (planned, 2026-10-21): fixes found in use. D1 investigate wrong alignment even with a shared
-  station (first, may explain D3); D2 open rows whose station is not drawn in the view; D3 join-only rows opening
+- Phase 2 section D (planned, 2026-10-21): fixes found in use. D1 done (wrong `-scale` fallback; `-scale` now only for scraps
+  with fewer than two stations, computed and XVI fits mixed at the join station); D2 open rows whose station is not drawn in the view; D3 join-only rows opening
   unaligned while positions are stale or a run is going; D4 centre on the closest station pair.
 - Found during C1 (pre-existing, not from the join work): references such as `EntranceSP2@Entrance` to objects in a
   `-namespace off` survey resolve in Therion but not in the project index, so Validation reports false

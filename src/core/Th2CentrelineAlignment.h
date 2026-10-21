@@ -106,7 +106,8 @@ struct Th2CentrelineFit
     const QVector<TherionSourceLogicalCommand> &commands,
     int lineNumber);
 
-// Fits the scrap containing `lineNumber`, using whichever XVI matches most of its station points.
+// Fits the scrap containing `lineNumber`, using whichever XVI matches most of its station points. Like Therion,
+// `-scale` is used only for a scrap with fewer than two station points; Therion refits the others to their stations.
 [[nodiscard]] Th2CentrelineFit fitTh2ScrapContainingLine(const QVector<TherionSourceLogicalCommand> &commands,
                                                          int lineNumber,
                                                          const QVector<TherionXviDocument> &xviDocuments);

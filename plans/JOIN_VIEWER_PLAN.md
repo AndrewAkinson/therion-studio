@@ -245,7 +245,7 @@ Staged implementation:
 
 ### D. Fixes found in use (2026-10-21)
 
-Reported while testing on a real project. Status: planned, no slice started. D1 comes first because it may
+Reported while testing on a real project. Status: D1 fixed (below); D2-D4 not started. D1 comes first because it may
 explain D3, and its result may change D2-D4.
 
 - **D1 Alignment is wrong even with a shared point.** Equate rows, where both drawings draw the shared station, do not
@@ -255,6 +255,37 @@ explain D3, and its result may change D2-D4.
   projection and its sign, the per-scrap similarity fit against a drawing with several scraps, and the
   partner-to-this transform (partner fit, then the inverse of this fit). Record the cause here with its numbers before
   the fix is agreed.
+
+  Result (2026-10-21, measured on the test project with a scratch tool that calls the branch's own core functions;
+  every available equate row in plan, extended, elevation 0, 90 and 315):
+  - Placement with computed positions is correct. Both copies of the shared station land within 0.23 m of each other
+    (most under 0.1 m); fit residuals are 0.00-0.76 m RMS. The one row 2 m apart has its two stations 2 m apart in
+    Therion's own positions. Station keys, the plan and elevation projection and its sign, the per-scrap fit and the
+    partner-to-this transform all check out. The outline and the view link apply the same transform.
+  - The fallback, used when computed positions are missing, still being computed or failed, and always in extended,
+    is correct where both scraps match their XVI centreline stations. At 10 m from the join it is out by 0.6 m at
+    most (rotation within 1.9 degrees, scale within 4 percent).
+  - The fault is the `-scale` fallback. A scrap whose XVI is missing, or does not contain its stations, is placed by
+    its `-scale` option. 9 rows in plan and elevations use it. In 5 of them (1 plan, 1 elevation 0, 3 elevation 90)
+    the scale is 2 to 5 times wrong, so the partner is 5 to 42 m out at 10 m from the join, while the shared station
+    still coincides. In the other 4 the `-scale` happens to be right. 5 extended rows also use `-scale`; they cannot
+    be checked because extended has no computed frame.
+  - Therion does the same steps differently. It applies `-scale` first, but a scrap with two or more station points
+    is then refitted to the stations (`thdb2d::pp_adjust_points`), so `-scale` only decides scale and rotation for
+    a scrap with fewer than two stations. Studio uses `-scale` even for scraps with many stations.
+
+  Fix (agreed and done): with computed positions, fit each scrap to them on its own, and link the two
+  drawings at the join station when only one of them can be fitted that way (computed metres and XVI metres should
+  both be north-up metres in plan and the same elevation; to be checked). Use `-scale` only for a scrap with fewer
+  than two station points, as Therion does. Otherwise refuse the placement and say why, instead of opening the
+  drawings misaligned. D3 then matters less, because rows only fall back while positions are being computed.
+
+  After the fix, measured the same way: no row is placed by a wrong `-scale`. Without computed positions the XVI
+  placement is out by 0.54 m at most at 10 m from the join. The computed and XVI frames of the same scrap differ by
+  2.2 degrees and 4 percent at most, so linking one of each at the join station is sound. Rows that can no longer be
+  placed without computed positions: 3 plan, 1 elevation 0 and 4 elevation 90 (placed once positions are ready), and
+  5 extended (extended has no computed frame, so these now open without outlines and say why, instead of opening
+  misaligned).
 - **D2 Station not drawn in the view.** Some rows of the form `<station>@<survey> = <station>@<other survey>` are
   dimmed with "not drawn in plan view", although the survey has a drawing in that view. Only the join station's point
   is missing. This happens in both plan and elevation views. The point is needed only for the XVI anchor. With
@@ -275,6 +306,9 @@ explain D3, and its result may change D2-D4.
   be well away from where they meet. Instead find the closest pair of station points, one in each scrap, using their
   computed positions, and centre both views halfway between them (the user's suggestion). Placement itself stays on
   the fit to all station points, which also gets rotation and scale right.
+  Rows whose two stations are linked by a `nosurvey` leg have stations apart, as Therion places them (for example
+  2 m). They open centred on the first drawing's station, so they can look misaligned at first. Centre them halfway
+  between the two stations too.
 
 Each slice is a separate commit on `JoinViewer` with tests, doc and translation updates, measured on the test project
 before and after, and checked in the app.

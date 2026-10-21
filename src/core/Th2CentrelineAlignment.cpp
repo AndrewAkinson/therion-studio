@@ -318,7 +318,10 @@ Th2CentrelineFit fitTh2ScrapContainingLine(const QVector<TherionSourceLogicalCom
             bestMetresPerUnit = xviMetresPerDrawingUnit(xvi);
         }
     }
-    return fitTh2ScrapToCentreline(bestPairs, bestMetresPerUnit, th2ScrapScaleTransform(commands, scrapStartLine));
+    const std::optional<Th2SimilarityTransform> scrapScale = points.size() < 2
+        ? th2ScrapScaleTransform(commands, scrapStartLine)
+        : std::nullopt;
+    return fitTh2ScrapToCentreline(bestPairs, bestMetresPerUnit, scrapScale);
 }
 
 Th2SimilarityTransform joinPartnerToThisTransform(const Th2CentrelineFit &thisFit,
