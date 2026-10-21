@@ -1957,6 +1957,15 @@ Pokud je soubor otevřený, nejprve se zavře.</translation>
         <source>Showing the first %1 problem(s).</source>
         <translation>Zobrazuje se prvních %1 problémů.</translation>
     </message>
+    <message numerus="yes">
+        <location filename="../src/app/MainWindowValidationSidebar.cpp" line="1120"/>
+        <source>Showing the first %n findings.</source>
+        <translation>
+            <numerusform>Zobrazuje se první %n nález.</numerusform>
+            <numerusform>Zobrazují se první %n nálezy.</numerusform>
+            <numerusform>Zobrazuje se prvních %n nálezů.</numerusform>
+        </translation>
+    </message>
     <message>
         <location filename="../src/app/MainWindowValidationSidebar.cpp" line="1175"/>
         <source>Line %1: %2</source>
@@ -8327,6 +8336,75 @@ subtype blocks</translation>
         <location filename="../src/app/ValidationResultsMarkdownExporter.cpp" line="202"/>
         <source>Automatic fix preview</source>
         <translation>Náhled automatické opravy</translation>
+    </message>
+</context>
+<context>
+    <name>TherionStudio::ValidationSummaryText</name>
+    <message>
+        <location filename="../src/app/ValidationSummaryText.cpp" line="36"/>
+        <source>No problems</source>
+        <translation>Žádné problémy</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ValidationSummaryText.cpp" line="40"/>
+        <source>1 error</source>
+        <translation>1 chyba</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/app/ValidationSummaryText.cpp" line="40"/>
+        <source>%n errors</source>
+        <translation>
+            <numerusform>%n chyba</numerusform>
+            <numerusform>%n chyby</numerusform>
+            <numerusform>%n chyb</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/app/ValidationSummaryText.cpp" line="44"/>
+        <source>1 warning</source>
+        <translation>1 varování</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/app/ValidationSummaryText.cpp" line="44"/>
+        <source>%n warnings</source>
+        <translation>
+            <numerusform>%n varování</numerusform>
+            <numerusform>%n varování</numerusform>
+            <numerusform>%n varování</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/app/ValidationSummaryText.cpp" line="48"/>
+        <source>1 note</source>
+        <translation>1 poznámka</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/app/ValidationSummaryText.cpp" line="48"/>
+        <source>%n notes</source>
+        <translation>
+            <numerusform>%n poznámka</numerusform>
+            <numerusform>%n poznámky</numerusform>
+            <numerusform>%n poznámek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/app/ValidationSummaryText.cpp" line="57"/>
+        <source>1 file searched</source>
+        <translation>1 prohledaný soubor</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/app/ValidationSummaryText.cpp" line="57"/>
+        <source>%n files searched</source>
+        <translation>
+            <numerusform>%n prohledaný soubor</numerusform>
+            <numerusform>%n prohledané soubory</numerusform>
+            <numerusform>%n prohledaných souborů</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/app/ValidationSummaryText.cpp" line="62"/>
+        <source>in %1</source>
+        <translation>v %1</translation>
     </message>
 </context>
 <context>

@@ -216,6 +216,7 @@ set(THERION_MAIN_WINDOW_QTEST_SUITES
     ProjectFileWatchDeltaTest
     ProjectOutputsScannerTest
     ProjectValidationScannerQTest
+    ValidationSummaryTextTest
     ProjectStructureScannerTest
     MainWindowSessionDocumentServiceTest
     MainWindowSessionProjectServiceTest
@@ -403,6 +404,8 @@ set(THERION_APP_SOURCES
     src/app/ProjectValidationScanner.h
     src/app/ValidationResultsMarkdownExporter.cpp
     src/app/ValidationResultsMarkdownExporter.h
+    src/app/ValidationSummaryText.cpp
+    src/app/ValidationSummaryText.h
     src/app/ProjectStructureScanner.cpp
     src/app/ProjectStructureScanner.h
     src/app/TherionExecutableSelectionController.cpp
@@ -1509,6 +1512,7 @@ qt_add_executable(MainWindowServiceQTests
     tests/ProjectFileWatchDeltaTest.cpp
     tests/ProjectOutputsScannerTest.cpp
     tests/ProjectValidationScannerQTest.cpp
+    tests/ValidationSummaryTextTest.cpp
     tests/ProjectStructureScannerTest.cpp
     tests/MainWindowSessionDocumentServiceTest.cpp
     tests/MainWindowSessionProjectServiceTest.cpp

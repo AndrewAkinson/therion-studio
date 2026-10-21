@@ -4,6 +4,7 @@
 #include "MainWindowValidationFixApplyService.h"
 #include "ValidationResultsMarkdownExporter.h"
 #include "../editor/ValidationSeverityStyle.h"
+#include "ValidationSummaryText.h"
 #include "text_editor/TextEditorValidationCatalog.h"
 #include "text_editor/TextEditorTab.h"
 #include "text_editor/map_editor/MapEditorTab.h"
@@ -415,6 +416,8 @@ void MainWindow::buildValidationSidebar()
 
     validationStatusLabel_ = new QLabel(validationPage);
     validationStatusLabel_->setWordWrap(true);
+    // Plain messages stay plain; the result summary is rich text (coloured counts).
+    validationStatusLabel_->setTextFormat(Qt::AutoText);
     validationLayout->addWidget(validationStatusLabel_);
     updateProjectValidationStatusMessage();
 
@@ -524,7 +527,7 @@ void MainWindow::triggerValidateDocumentForActiveDocument()
         clearValidationRailIndicator();
         pendingValidationFixNavigation_ = false;
         if (validationStatusLabel_ != nullptr) {
-            validationStatusLabel_->setText(tr("No validation problems found in %1.").arg(documentLabel));
+            validationStatusLabel_->setText(TherionStudio::ValidationSummaryText::html({}, TherionStudio::ValidationSummaryText::documentScope(documentLabel), qApp->palette()));
         }
         handleValidationSelectionChanged({}, {});
         showSidebarPane(SidebarPane::Validation);
@@ -576,9 +579,10 @@ void MainWindow::triggerValidateDocumentForActiveDocument()
     validationResultsModel_->appendRow(fileItem);
 
     if (validationStatusLabel_ != nullptr) {
-        validationStatusLabel_->setText(tr("%1 validation problem(s) found in %2.")
-                                            .arg(validation.diagnostics.size())
-                                            .arg(documentLabel));
+        validationStatusLabel_->setText(
+            TherionStudio::ValidationSummaryText::html(validation.diagnostics,
+                                                       TherionStudio::ValidationSummaryText::documentScope(documentLabel),
+                                                       qApp->palette()));
     }
     if (validationResultsTree_ != nullptr) {
         validationResultsTree_->expandAll();
@@ -988,8 +992,9 @@ void MainWindow::handleProjectValidationFinished(TherionStudio::ProjectValidatio
         updateOpenEditorProjectValidationDiagnostics();
         diagnosticsApplyMs = diagnosticsTimer.elapsed();
         if (validationStatusLabel_ != nullptr) {
-            validationStatusLabel_->setText(tr("No validation problems found in %1 searched file(s).")
-                                                .arg(result.searchedFileCount));
+            validationStatusLabel_->setText(
+                TherionStudio::ValidationSummaryText::html(
+                    {}, TherionStudio::ValidationSummaryText::projectScope(result.searchedFileCount), qApp->palette()));
         }
         handleValidationSelectionChanged({}, {});
         logFinish();
@@ -1108,12 +1113,12 @@ void MainWindow::handleProjectValidationFinished(TherionStudio::ProjectValidatio
     diagnosticsApplyMs = diagnosticsTimer.elapsed();
 
     if (validationStatusLabel_ != nullptr) {
-        QString status = tr("%1 validation problem(s) found in %2 searched file(s).")
-                             .arg(result.findings.size())
-                             .arg(result.searchedFileCount);
+        QString status = TherionStudio::ValidationSummaryText::html(
+            findingDiagnostics, TherionStudio::ValidationSummaryText::projectScope(result.searchedFileCount), qApp->palette());
         if (result.limitReached) {
-            status += QLatin1Char(' ');
-            status += tr("Showing the first %1 problem(s).").arg(result.findings.size());
+            status += QStringLiteral("<span>. %1</span>")
+                          .arg(tr("Showing the first %n findings.", nullptr, static_cast<int>(result.findings.size()))
+                                   .toHtmlEscaped());
         }
         validationStatusLabel_->setText(status);
     }
