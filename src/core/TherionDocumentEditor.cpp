@@ -1073,7 +1073,16 @@ bool upsertSingleValueOption(QString *lineText, const QString &optionName, const
         : QStringLiteral("-%1").arg(optionName.trimmed());
     TherionParsedLine parsedLine = parseMutableLineText(*lineText);
     const int existingOptionIndex = optionTokenIndex(parsedLine, normalizedOption);
-    const QString serializedValue = serializedInlineToken(value);
+    QString serializedValue = serializedInlineToken(value);
+    // Keep a bracketed value bracketed, as the user wrote it.
+    if (!serializedValue.isEmpty()
+        && existingOptionIndex >= 0
+        && parsedLine.tokens.value(existingOptionIndex + 1).startsWith(QLatin1Char('['))) {
+        const QString bracketed = bracketedTherionValue(value);
+        if (!bracketed.isEmpty()) {
+            serializedValue = bracketed;
+        }
+    }
     if (serializedValue.isEmpty()) {
         if (existingOptionIndex < 0) {
             return true;
@@ -1186,19 +1195,8 @@ QPair<int, int> optionRangeWithBracketedValue(const TherionParsedLine &parsedLin
     int valueEndTokenIndex = -1;
     if (optionIndex + 1 < parsedLine.tokens.size()) {
         valueEndTokenIndex = optionIndex + 1;
-        const QString firstValueToken = parsedLine.tokens.at(valueEndTokenIndex);
-        if (firstValueToken.contains(QLatin1Char('[')) && !firstValueToken.contains(QLatin1Char(']'))) {
-            for (int index = valueEndTokenIndex + 1; index < parsedLine.tokens.size(); ++index) {
-                const QString token = parsedLine.tokens.at(index);
-                if (TherionTokenRules::tokenStartsOption(token)) {
-                    break;
-                }
-                valueEndTokenIndex = index;
-                if (token.contains(QLatin1Char(']'))) {
-                    break;
-                }
-            }
-        } else if (!firstValueToken.contains(QLatin1Char('['))) {
+        // A bracketed value is one token; otherwise the value runs to the next option.
+        if (!parsedLine.tokens.at(valueEndTokenIndex).startsWith(QLatin1Char('['))) {
             for (int index = valueEndTokenIndex + 1; index < parsedLine.tokens.size(); ++index) {
                 const QString token = parsedLine.tokens.at(index);
                 if (TherionTokenRules::tokenStartsOption(token)) {

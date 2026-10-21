@@ -386,6 +386,12 @@ void TherionSyntaxHighlighter::highlightBlock(const QString &text)
                 setFormat(tokenSpan.start, tokenSpan.length, optionFormat_);
             } else if (keywordTokens_.contains(normalizedToken)) {
                 setFormat(tokenSpan.start, tokenSpan.length, keywordFormat_);
+            } else if (tokenSpan.text.startsWith(QLatin1Char('['))) {
+                for (const TherionParsedToken &part : TherionDocumentParser::bracketedValueSpans(tokenSpan)) {
+                    if (TherionTokenRules::isNumericToken(part.text)) {
+                        setFormat(part.start, part.length, numberFormat_);
+                    }
+                }
             } else if (TherionTokenRules::isNumericToken(tokenSpan.text,
                                                          TherionTokenRules::NumericTokenContext::SyntaxToken)) {
                 setFormat(tokenSpan.start, tokenSpan.length, numberFormat_);

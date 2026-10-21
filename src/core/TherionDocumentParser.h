@@ -69,5 +69,9 @@ public:
     [[nodiscard]] static TherionParsedSourceDocument parseSourceDocument(const QString &text);
     [[nodiscard]] static TherionParsedSourceDocument parseSourceDocument(const TherionSourceText &sourceText);
     [[nodiscard]] static QStringList tokenizeLine(const QString &line);
+    // Words inside a bracketed token such as "[0 0 1 m]", split on whitespace as Therion's thsplit_words does,
+    // with spans in the token's coordinates; any other token is returned unchanged.
+    [[nodiscard]] static QVector<TherionParsedToken> bracketedValueSpans(const TherionParsedToken &token);
+    [[nodiscard]] static QStringList bracketedValueParts(const QString &token);
 };
 }

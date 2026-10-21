@@ -158,9 +158,7 @@ void TherionDocumentParserTest::parsesLinePointRowsAndReviseStations()
     QCOMPARE(revise.tokens, QStringList({QStringLiteral("revise"),
                                          QStringLiteral("dd.s@dur.dur_dom"),
                                          QStringLiteral("-stations"),
-                                         QStringLiteral("[4@monum.dur_dom"),
-                                         QStringLiteral("5@monum.dur_dom"),
-                                         QStringLiteral("6@monum.dur_dom]")}));
+                                         QStringLiteral("[4@monum.dur_dom 5@monum.dur_dom 6@monum.dur_dom]")}));
 }
 
 int runTherionDocumentParserTest(int argc, char **argv)

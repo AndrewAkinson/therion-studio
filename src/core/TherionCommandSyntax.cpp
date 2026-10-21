@@ -282,6 +282,25 @@ bool isBracketedTherionValueGroup(const QString &value)
         && trimmed.endsWith(QLatin1Char(']'));
 }
 
+QString therionValueText(const QString &value)
+{
+    const QString trimmed = value.trimmed();
+    return isBracketedTherionValueGroup(trimmed) ? trimmed.mid(1, trimmed.size() - 2) : value;
+}
+
+QString bracketedTherionValue(const QString &text)
+{
+    int depth = 0;
+    for (const QChar character : text) {
+        if (character == QLatin1Char('[')) {
+            ++depth;
+        } else if (character == QLatin1Char(']') && --depth < 0) {
+            return QString();
+        }
+    }
+    return depth == 0 ? QStringLiteral("[%1]").arg(text.trimmed()) : QString();
+}
+
 QString serializeTherionArgumentToken(const QString &value)
 {
     if (isBracketedTherionValueGroup(value)) {

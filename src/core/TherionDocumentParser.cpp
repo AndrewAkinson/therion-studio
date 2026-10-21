@@ -51,6 +51,23 @@ QVector<TherionParsedLine> TherionParsedSourceDocument::tokenLines() const
     return parsedLines;
 }
 
+namespace
+{
+// Index of a trailing line-continuation backslash, or -1.
+int continuationMarkerIndex(const QString &line)
+{
+    int end = line.size();
+    while (end > 0 && line.at(end - 1).isSpace()) {
+        --end;
+    }
+    int backslashes = 0;
+    while (backslashes < end && line.at(end - 1 - backslashes) == QLatin1Char('\\')) {
+        ++backslashes;
+    }
+    return backslashes % 2 == 1 ? end - 1 : -1;
+}
+}
+
 TherionParsedLine TherionDocumentParser::parseLine(const QString &line, int lineNumber)
 {
     TherionParsedLine parsedLine;
@@ -64,6 +81,10 @@ TherionParsedLine TherionDocumentParser::parseLine(const QString &line, int line
     bool inSingleQuotes = false;
     bool inDoubleQuotes = false;
     bool escaped = false;
+    // A bracketed value is one token that keeps its brackets, as Therion's thsplit_args reads it.
+    int bracketTokenStart = -1;
+    int bracketDepth = 0;
+    const int continuationIndex = continuationMarkerIndex(line);
 
     auto flushToken = [&parsedLine, &currentToken, &currentTokenStart]() {
         if (currentToken.isEmpty()) {
@@ -97,8 +118,41 @@ TherionParsedLine TherionDocumentParser::parseLine(const QString &line, int line
         quotedTokenStart = -1;
     };
 
+    auto flushBracketToken = [&parsedLine, &line, &bracketTokenStart, &bracketDepth](int endIndex) {
+        if (bracketTokenStart < 0) {
+            return;
+        }
+
+        // An unclosed value runs to the end of the line, without trailing spaces.
+        int end = endIndex;
+        while (end > bracketTokenStart && line.at(end - 1).isSpace()) {
+            --end;
+        }
+        const QString text = line.mid(bracketTokenStart, end - bracketTokenStart);
+        parsedLine.tokens.append(text);
+        TherionParsedToken tokenSpan;
+        tokenSpan.start = bracketTokenStart;
+        tokenSpan.length = text.length();
+        tokenSpan.text = text;
+        parsedLine.tokenSpans.append(tokenSpan);
+        bracketTokenStart = -1;
+        bracketDepth = 0;
+    };
+
     for (int index = 0; index < line.length(); ++index) {
         const QChar character = line.at(index);
+
+        if (bracketTokenStart >= 0) {
+            if (index != continuationIndex) {
+                if (character == QLatin1Char('[')) {
+                    ++bracketDepth;
+                } else if (character == QLatin1Char(']') && --bracketDepth == 0) {
+                    flushBracketToken(index + 1);
+                }
+                continue;
+            }
+            flushBracketToken(index);
+        }
 
         if (escaped) {
             if (inSingleQuotes || inDoubleQuotes) {
@@ -169,6 +223,12 @@ TherionParsedLine TherionDocumentParser::parseLine(const QString &line, int line
             continue;
         }
 
+        if (character == QLatin1Char('[') && currentTokenStart < 0 && index != continuationIndex) {
+            bracketTokenStart = index;
+            bracketDepth = 1;
+            continue;
+        }
+
         if (currentTokenStart < 0) {
             currentTokenStart = index;
         }
@@ -186,6 +246,7 @@ TherionParsedLine TherionDocumentParser::parseLine(const QString &line, int line
         }
     }
 
+    flushBracketToken(line.length());
     flushQuotedToken(line.length());
     flushToken();
 
@@ -275,5 +336,41 @@ TherionParsedSourceDocument TherionDocumentParser::parseSourceDocument(const The
 QStringList TherionDocumentParser::tokenizeLine(const QString &line)
 {
     return parseLine(line).tokens;
+}
+
+QVector<TherionParsedToken> TherionDocumentParser::bracketedValueSpans(const TherionParsedToken &token)
+{
+    if (!token.text.startsWith(QLatin1Char('['))) {
+        return {token};
+    }
+
+    const int contentEnd = token.text.endsWith(QLatin1Char(']')) ? token.text.size() - 1 : token.text.size();
+    QVector<TherionParsedToken> spans;
+    int wordStart = -1;
+    for (int index = 1; index <= contentEnd; ++index) {
+        const bool wordCharacter = index < contentEnd && !token.text.at(index).isSpace();
+        if (wordCharacter && wordStart < 0) {
+            wordStart = index;
+        } else if (!wordCharacter && wordStart >= 0) {
+            TherionParsedToken span;
+            span.start = token.start + wordStart;
+            span.length = index - wordStart;
+            span.text = token.text.mid(wordStart, span.length);
+            spans.append(span);
+            wordStart = -1;
+        }
+    }
+    return spans;
+}
+
+QStringList TherionDocumentParser::bracketedValueParts(const QString &token)
+{
+    TherionParsedToken span;
+    span.text = token.trimmed();
+    QStringList parts;
+    for (const TherionParsedToken &part : bracketedValueSpans(span)) {
+        parts.append(part.text);
+    }
+    return parts;
 }
 }

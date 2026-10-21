@@ -182,6 +182,7 @@ set(THERION_CORE_QTEST_SUITES
     TherionFileTypesTest
     TherionBackgroundMetadataTest
     TherionDocumentParserTest
+    TherionLineSplittingTest
     TherionXviParserTest
     TherionXviPassageTest
     TherionXviAreaAdjustTest
@@ -1205,6 +1206,7 @@ therion_add_core_qtest_runner(TherionCoreQTests
     tests/core/TherionFileTypesTest.cpp
     tests/core/TherionBackgroundMetadataTest.cpp
     tests/core/TherionDocumentParserTest.cpp
+    tests/core/TherionLineSplittingTest.cpp
     tests/core/TherionXviParserTest.cpp
     tests/core/TherionXviPassageTest.cpp
     tests/core/TherionXviAreaAdjustTest.cpp

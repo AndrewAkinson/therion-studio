@@ -2,8 +2,9 @@
 
 Date: 2026-10-15
 
-Status: planned; no slice started. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
-values, Therion's line splitting (`thsplit_args`) first, and slices renumbered; (p) marks potential slices.
+Status: V1a in progress. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
+values, Therion's line splitting (`thsplit_args`) first in two parts (V1a, V1b), code blocks as a potential slice,
+and slices renumbered.
 
 Scope: remove false project-validation findings so that the Validation panel can be trusted, starting with the
 classes measured on a real multi-survey cave project, with tests that stop the same classes from returning.
@@ -55,32 +56,60 @@ any keyword lookup. Its rules:
 - `[...]` is one value with the brackets removed; brackets nest, so `[a [b] c]` stays one value;
 - a quote or bracket inside a plain word does not start a quoted value;
 - an unclosed quoted or bracketed value runs to the end of the line;
-- single quotes are ordinary characters.
+- single quotes, `%`, and a `\` that does not end the line are ordinary characters (a `\` at the end of a line joins
+  it to the next, in `thinput.cxx`).
 
 Studio does not call or link `thsplit_args`; it returns values without their source positions and with brackets and
 quotes removed, works on byte strings, and would bring in Therion's core. Studio's own tokenizer follows the same
 rules, written from Therion's source; the Therion version they were taken from is recorded in
 `docs/THERION_COMPATIBILITY.md`, and the table-driven test below keeps them in step. A later change in Therion is not
-caught automatically (V7 would catch it).
+caught automatically (V8 would catch it).
 
-Today the shared tokenizer (`TherionDocumentParser::tokenizeLine`) handles quotes but not brackets, so
-`[Main<br>Chamber]` becomes separate tokens. Several callers rejoin them, each in its own way
-(`TherionCommandLineModel`, `TherionDocumentEditor`, `TherionTokenRules`, and others); the map inspector shows only
-`[Main` and editing can fail. It also treats single quotes as quoting, which Therion does not; `-text Dan's` may be
-read wrongly (not yet confirmed).
+The tokenizer (`TherionDocumentParser::parseLine`) is shared by every line of `.th`, `.th2`, and `thconfig` files and
+by values typed into fields (Blocks and `Edit All Object Settings` split typed option values with it in
+`TherionCommandSyntax`; the map editor splits lines it builds from inspector input). It also runs on lines inside
+`code ... endcode` blocks (TeX and MetaPost in `layout`), which Therion passes on without splitting; those lines are
+marked as raw content afterwards and not validated, so for them the splitting affects only highlighting.
 
-- Make the tokenizer follow `thsplit_args`, returning each value as one token with its source span, then remove the
-  separate rejoining code so every projection uses the one rule. Check the uses where brackets carry several numbers
-  (for example scrap `-scale [...]` and `-sketch` style values) keep their numbers available.
+V1 is done in two commits, each with its tests and documentation.
+
+### V1a - Bracketed Values
+
+- First, characterisation tests with no behaviour change: what the tokenizer returns today for brackets, quotes,
+  `%`, `#`, and `\`, in command lines, in code block lines, and in typed field values, so each later change shows
+  exactly what it alters.
+- Make the tokenizer return a bracketed value as one token that keeps its brackets in its text and span, so edits
+  keep them and highlighting and underlines still line up. Uses that need the words inside (scrap `-scale [...]`)
+  split the content on whitespace, as Therion's `thsplit_words` does (`TherionDocumentParser::bracketedValueSpans`).
+  Label text is shown without the outer brackets (`therionValueText`), as quoted text is shown without quotes.
+- Move the places that rejoin bracketed values today onto the shared rule and remove their own code:
+  `TherionCommandLineModel` (option boundaries and values), `TherionDocumentEditor` (option ranges),
+  `MapEditorInspectorData` (label text and scrap scale), `MapEditorSceneItems` (scrap scale), and
+  `ProjectStructureIndex` (map offsets). The book-syntax readers that treat `[...]` as "optional" are not source text
+  and stay as they are.
 - Editing keeps the user's form: a bracketed label stays bracketed when edited, and is not turned into quotes.
-- Tests: one table-driven test with a case for each rule above (input line, expected values); round-trip of old files
-  with bracketed labels (text unchanged); a bracketed multi-word label with `<br>` shows in full in the inspector and
-  edits without error; existing parser and highlighting tests unchanged unless a rule above shows them wrong (then
-  with the evidence and approval, as `AGENTS.md` asks).
-- First, because V2's tests and checks read option values through this splitting.
-- Documentation: `SPECIFICATION.md` (line splitting follows Therion; bracketed values keep their form when edited);
-  `docs/THERION_COMPATIBILITY.md` (the rules above, citing `thsplit_args`). Check the user manuals' label editing text
-  and update it in all four languages if it describes quoting.
+- Check what grouping brackets does to highlighting of TeX and MetaPost lines in code blocks.
+- Tests: table-driven cases for the bracket rules; round-trip of old files with bracketed labels (text unchanged); a
+  bracketed multi-word label with `<br>` shows in full in the inspector and edits without error; scrap scale and map
+  offsets read the same numbers as before.
+- Documentation: `SPECIFICATION.md` (bracketed values are one value and keep their form when edited);
+  `docs/THERION_COMPATIBILITY.md` (the bracket rules, citing `thsplit_args` and the Therion version). Check the user
+  manuals' label editing text and update it in all four languages if it describes quoting.
+
+### V1b - Quotes, Comments, And Backslashes
+
+- Single quotes become ordinary characters (`-text Dan's`), `%` is no longer a comment, `#` starts a comment only at
+  the start of a word, a `\` that does not end the line is an ordinary character, and `""` inside a quoted value is a
+  literal quote.
+- In command lines this follows Therion: a line Therion would reject may now get a finding it did not get before
+  (for example text after a `%` that Studio used to ignore).
+- In code blocks the only effect is highlighting: TeX and MetaPost `%` comments are no longer coloured as comments,
+  and TeX macro arguments such as `#1` are no longer shown as comments, until V6.
+- Tests: table-driven cases for each rule; the characterisation tests from V1a show every change, and an existing
+  test that expects the old behaviour is changed only with the evidence and approval (`AGENTS.md`).
+- Documentation: `SPECIFICATION.md` and `docs/THERION_COMPATIBILITY.md` (the rules above).
+
+V1 comes first because V2's tests and checks read option values through this splitting.
 
 ## V2 - Catalog Options From Therion's Option Tables
 
@@ -159,7 +188,7 @@ Goal: errors mean "Therion would fail".
 
 `SPECIFICATION.md` lists what validation checks but has no rule for which findings are errors, warnings, or
 informational. This slice is useful on its own: it gives one rule for every check, and applying it removes false
-errors that remain after V1-V4. The referee test (V7) would only automate checking that the rule is kept.
+errors that remain after V1-V4. The referee test (V8) would only automate checking that the rule is kept.
 
 - Write the policy (the first principle above) into `SPECIFICATION.md` next to the project validation requirements.
 - Review every diagnostic code against it and adjust severities; list each change and its reason in the commit.
@@ -168,14 +197,23 @@ errors that remain after V1-V4. The referee test (V7) would only automate checki
 - Documentation: user manuals (all four languages) say what error, warning, and informational mean;
   `docs/THERION_COMPATIBILITY.md` where it names severities.
 
-## V6 (p) - Validate Each Drawing Against The Config That Reads It
+## V6 (potential) - Code Blocks Split By Their Own Rules
+
+Potential, not scheduled. Studio already understands blocks: `TherionSourceDocument` builds the block stack (`survey`,
+`scrap`, `line`, `area`, `map`, `centreline`, `layout`, `code`, ...) and validation uses it for command context. But
+the tokenizer splits each line on its own, before the block is known, so splitting cannot depend on the block. Make
+lines inside `code ... endcode` use the rules of their language instead of Therion's (TeX and MetaPost `%` comments,
+no Therion quoting or brackets), for example by splitting raw code lines again once the block stack is known.
+Restores comment colouring in code blocks after V1b. Revisit after V1.
+
+## V7 (potential) - Validate Each Drawing Against The Config That Reads It
 
 Potential, not scheduled. When another config in the project folder reads a drawing (for example a per-survey
 `thconfig`), validate the drawing against that config instead of skipping it. This needs a project index per root
 config (or a multi-root index), the rules for choosing the config when several read a file, and a performance check,
 because each extra root multiplies index work. Revisit after V4, once the remaining false findings are known.
 
-## V7 (p) - Therion Referee Test
+## V8 (potential) - Therion Referee Test
 
 Potential, not scheduled. A corpus test that runs Therion on small fixture projects and fails if Therion Studio
 reports an error for a project Therion compiles without error. It would be a separate CTest executable (process and
@@ -186,13 +224,15 @@ WORKLOG backlog item "Compiler-confirmed project-index comparison". Revisit afte
 
 | Slice | What | Issues |
 | --- | --- | --- |
-| V1 | Line splitting matches Therion's `thsplit_args` (brackets, quotes, comments) | #49 |
+| V1a | Line splitting matches Therion's `thsplit_args`: bracketed values | #49 |
+| V1b | Line splitting matches Therion's `thsplit_args`: quotes, comments, and backslashes | |
 | V2 | Catalog options, aliases, and arity from Therion's `thstok` tables; help linked to the book | #50, #49 |
 | V3 | Line continuation inside quoted values | |
 | V4 | Drawings outside the target config's source graph | |
 | V5 | Severity policy | |
-| V6 (p) | Validate each drawing against the config that reads it | |
-| V7 (p) | Therion referee test | |
+| V6 (p) | Code blocks split by their own rules (TeX and MetaPost) | |
+| V7 (p) | Validate each drawing against the config that reads it | |
+| V8 (p) | Therion referee test | |
 
 Work in number order; (p) marks potential slices that are not scheduled. Each slice carries its own tests and
 documentation, so the branch is complete after every slice.
