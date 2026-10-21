@@ -70,4 +70,4 @@ working scrap stands out, and keeps clicks on the working scrap where scraps ove
 
 ## Follow-up
 
-- `Move to Scrap` in the same menu, as the next commit on the same branch.
+- `Move to Scrap` in the same menu, as the next commit on the same branch (`plans/MAP_MOVE_TO_SCRAP_PLAN.md`).

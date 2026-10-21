@@ -4258,6 +4258,11 @@ Supprimer le sommet malgré tout ?</translation>
         <translation>Objet sélectionné supprimé de la source.</translation>
     </message>
     <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorInspectorObjectController.cpp" line="666"/>
+        <source>Move to Scrap</source>
+        <translation>Déplacer vers le scrap</translation>
+    </message>
+    <message>
         <location filename="../src/app/text_editor/map_editor/MapEditorInspectorObjectController.cpp" line="638"/>
         <source>Object move failed.</source>
         <translation>Échec du déplacement de l&apos;objet.</translation>
@@ -4488,6 +4493,42 @@ Supprimer le sommet malgré tout ?</translation>
         <location filename="../src/app/text_editor/map_editor/MapEditorMagnifierOverlay.cpp" line="165"/>
         <source>Cursor</source>
         <translation>Curseur</translation>
+    </message>
+</context>
+<context>
+    <name>TherionStudio::MapEditorMoveToScrapMenu</name>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorMoveToScrapMenu.cpp" line="18"/>
+        <source>Move to Scrap</source>
+        <translation>Déplacer vers le scrap</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorMoveToScrapMenu.cpp" line="22"/>
+        <source>Scrap at line %1</source>
+        <translation>Scrap à la ligne %1</translation>
+    </message>
+</context>
+<context>
+    <name>TherionStudio::MapEditorMoveToScrapPlanner</name>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorMoveToScrapPlanner.cpp" line="45"/>
+        <source>Only points, lines and areas inside a scrap can be moved to another scrap.</source>
+        <translation>Seuls les points, lignes et aires situés dans un scrap peuvent être déplacés vers un autre scrap.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorMoveToScrapPlanner.cpp" line="51"/>
+        <source>Choose a different scrap in this drawing.</source>
+        <translation>Choisissez un autre scrap de ce dessin.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorMoveToScrapPlanner.cpp" line="62"/>
+        <source>This line is one of several borders of an area. Move the area instead.</source>
+        <translation>Cette ligne est l'une des délimitations d'une aire. Déplacez plutôt l'aire.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorMoveToScrapPlanner.cpp" line="81"/>
+        <source>A border line of this area is also used by another area.</source>
+        <translation>Une ligne de délimitation de cette aire est aussi utilisée par une autre aire.</translation>
     </message>
 </context>
 <context>
@@ -5080,6 +5121,11 @@ Supprimer le sommet malgré tout ?</translation>
         <location filename="../src/app/text_editor/map_editor/MapEditorObjectMovePlanner.cpp" line="166"/>
         <source>The target object block is incomplete or malformed.</source>
         <translation>Le bloc de l&apos;objet cible est incomplet ou mal formé.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorObjectMovePlanner.cpp" line="262"/>
+        <source>The object is already in the target scrap.</source>
+        <translation>L'objet se trouve déjà dans le scrap cible.</translation>
     </message>
     <message>
         <location filename="../src/app/text_editor/map_editor/MapEditorObjectMovePlanner.cpp" line="228"/>

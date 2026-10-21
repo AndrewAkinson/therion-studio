@@ -320,6 +320,8 @@ Celé scrapy změníte najednou pravým kliknutím na řádek objektu v `Objekty
 
 Aktuální volba je zaškrtnutá. Vše znovu zobrazíte pravým kliknutím do prázdného plátna a volbou `Zobrazit všechny scrapy`.
 
+Bod, čáru nebo plochu přesunete do jiného scrapu pravým kliknutím na objekt v mapě nebo v `Objekty`, volbou `Přesunout do scrapu` a výběrem scrapu. Objekt se přesune na konec daného scrapu, zachová si souřadnice, zůstane vybraný a `Zpět` přesun vrátí. Plocha se přesune spolu se svými hraničními čarami a čára, která je jedinou hranicí plochy, se přesune spolu s touto plochou. Scrap je v seznamu zašedlý a důvod ukáže tooltip, pokud by přesun porušil hranici plochy (čára, která je jednou z několika hranic plochy, nebo hraniční čára, kterou používá i jiná plocha).
+
 V `Inspektor -> Pozadí` lze:
 
 - přidat, odebrat a řadit rastrové, SVG, `.xvi` nebo PocketTopo `.txt` vrstvy pozadí,

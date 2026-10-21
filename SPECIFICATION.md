@@ -456,6 +456,7 @@ The rules below define the expected day-to-day interaction model. If a later req
 - Dragging the handle on a map object row shall start a move or reorder operation.
 - Dropping onto another object shall insert the dragged object before or after the target depending on the drop placement.
 - Dropping onto a scrap target shall move the object into that scrap when the object type supports it.
+- The Objects list and map canvas context menus for a point, line, or area inside a scrap shall offer a `Move to Scrap` submenu listing the other scraps of the drawing by ID. Choosing one shall move the object to the end of that scrap as one undoable source transaction and keep it selected. An `area` shall move together with its border `line` objects from the same scrap, and a `line` that is the only border of an area shall move together with that area. A target shall be disabled, with the reason as its tooltip, when the move would leave an area border reference split across scraps (a line that is one of several borders of an area, or a border line also used by another area). Object coordinates shall not change, and the submenu shall not be offered on scrap rows.
 - The list shall show a visual drop indicator for the current drag target.
 - All map mutations shall support undo and redo.
 - The map command surface shall expose zoom in, zoom out, fit geometry, fit background plus geometry, undo, redo, selection mode, draft completion, scrap insertion, point insertion, line insertion, freehand line drawing, and area insertion.
@@ -1177,6 +1178,7 @@ The criteria below are intended for implementation verification and QA.
 - The visibility icon cycles shown, faded, hidden; faded objects are drawn faint and cannot be picked on the canvas; `This Scrap`, `Other Scraps`, and `Show All Scraps` in the Objects list and canvas context menus change whole scraps.
 - Object-tree delete icon actions remove the corresponding source-backed object span after confirmation and can be reverted through undo/redo.
 - Dragging and dropping map objects reorders or moves them according to the drop target.
+- `Move to Scrap` moves a point, line, or area (with its border lines, or a sole border line with its area) to the end of another scrap in one undo step, and is disabled with a reason when it would split an area border reference.
 - Undo and redo work for map mutations.
 - The map command surface exposes drawing, fitting, zoom, undo/redo, and draft-completion actions in the top toolbar (main and detached map windows).
 - Freehand line drawing serializes simplified bezier line geometry.

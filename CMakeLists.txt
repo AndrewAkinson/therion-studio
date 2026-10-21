@@ -241,6 +241,7 @@ set(THERION_MAP_EDITOR_QTEST_SUITES
     MapEditorFreehandSimplificationTest
     MapEditorInputPolicyTest
     MapEditorObjectDeletePlannerTest
+    MapEditorMoveToScrapPlannerTest
     MapEditorObjectMovePlannerTest
     MapEditorPointSymbolGeometryTest
     MapEditorBackgroundTransformTest
@@ -733,6 +734,10 @@ set(THERION_MAP_EDITOR_SOURCES
     src/app/text_editor/map_editor/MapEditorLineExtensionPlanner.h
     src/app/text_editor/map_editor/MapEditorLineSplitPlanner.cpp
     src/app/text_editor/map_editor/MapEditorLineSplitPlanner.h
+    src/app/text_editor/map_editor/MapEditorMoveToScrapMenu.cpp
+    src/app/text_editor/map_editor/MapEditorMoveToScrapMenu.h
+    src/app/text_editor/map_editor/MapEditorMoveToScrapPlanner.cpp
+    src/app/text_editor/map_editor/MapEditorMoveToScrapPlanner.h
     src/app/text_editor/map_editor/MapEditorObjectMovePlanner.cpp
     src/app/text_editor/map_editor/MapEditorObjectMovePlanner.h
     src/app/text_editor/map_editor/MapEditorObjectStyleCatalog.cpp
@@ -1307,6 +1312,7 @@ qt_add_executable(MapEditorLogicQTests
     tests/MapEditorFreehandSimplificationTest.cpp
     tests/MapEditorInputPolicyTest.cpp
     tests/MapEditorObjectDeletePlannerTest.cpp
+    tests/MapEditorMoveToScrapPlannerTest.cpp
     tests/MapEditorObjectMovePlannerTest.cpp
     tests/MapEditorPointSymbolGeometryTest.cpp
     tests/MapEditorBackgroundTransformTest.cpp
@@ -1330,6 +1336,8 @@ qt_add_executable(MapEditorLogicQTests
     src/app/text_editor/map_editor/MapEditorXviStationSnapLogic.h
     src/app/text_editor/map_editor/MapEditorObjectDeletePlanner.cpp
     src/app/text_editor/map_editor/MapEditorObjectDeletePlanner.h
+    src/app/text_editor/map_editor/MapEditorMoveToScrapPlanner.cpp
+    src/app/text_editor/map_editor/MapEditorMoveToScrapPlanner.h
     src/app/text_editor/map_editor/MapEditorObjectMovePlanner.cpp
     src/app/text_editor/map_editor/MapEditorObjectMovePlanner.h
     src/app/text_editor/map_editor/MapEditorPointSymbolGeometry.h

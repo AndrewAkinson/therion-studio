@@ -358,6 +358,8 @@ Pour modifier des scraps entiers en une fois, cliquez avec le bouton droit sur l
 
 Le choix actuel est coché. Pour tout réafficher, cliquez avec le bouton droit dans une zone vide du canevas et choisissez `Afficher tous les scraps`.
 
+Pour déplacer un point, une ligne ou une aire dans un autre scrap, cliquez dessus avec le bouton droit sur la carte ou dans `Objets`, choisissez `Déplacer vers le scrap`, puis le scrap. L’objet est placé à la fin de ce scrap, conserve ses coordonnées et reste sélectionné, et `Annuler` inverse le déplacement. Une aire est déplacée avec ses lignes de bordure, et une ligne qui constitue la seule bordure d’une aire entraîne cette aire avec elle. Un scrap apparaît grisé dans la liste, avec la raison en info-bulle, lorsque le déplacement casserait la bordure d’une aire (une ligne qui n’est que l’une des bordures d’une aire, ou une ligne de bordure utilisée aussi par une autre aire).
+
 Dans `Inspector -> Arrière-plans`, vous pouvez :
 
 - ajouter, retirer et réordonner des calques d’arrière-plan matriciels, SVG, `.xvi` ou PocketTopo `.txt` ;

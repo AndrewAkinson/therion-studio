@@ -791,6 +791,7 @@ void MapEditorTab::showMapSelectionContextMenu(const QPoint &globalPosition)
     }
 
     addMapScrapVisibilityMenus(menu, objectSelectionState_.selectedObjectLineNumber_);
+    addMapMoveToScrapMenu(menu, objectSelectionState_.selectedObjectLineNumber_);
     menu->popup(globalPosition);
 }
 

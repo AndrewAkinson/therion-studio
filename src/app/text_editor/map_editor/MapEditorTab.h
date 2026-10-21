@@ -712,6 +712,8 @@ private:
     std::optional<bool> handleInspectorObjectViewportEvent(QEvent *event);
     void applyInspectorObjectVisibility();
     void addMapScrapVisibilityMenus(QMenu *menu, int lineNumber);
+    void addMapMoveToScrapMenu(QMenu *menu, int lineNumber);
+    void moveMapObjectToScrap(int lineNumber, int targetScrapLineNumber);
     void showEmptyMapCanvasContextMenu(const QPoint &globalPosition);
     void showInspectorObjectContextMenu(const QPoint &position);
     void setMapScrapVisibility(int lineNumber, MapEditorScrapVisibilityTarget target, MapEditorObjectVisibility visibility);

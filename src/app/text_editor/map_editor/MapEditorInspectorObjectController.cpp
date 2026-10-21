@@ -4,6 +4,7 @@
 #include "MapEditorAreaReferenceResolver.h"
 #include "MapEditorInspectorData.h"
 #include "MapEditorObjectDeletePlanner.h"
+#include "MapEditorMoveToScrapPlanner.h"
 #include "MapEditorObjectMovePlanner.h"
 #include "MapEditorSceneSupport.h"
 #include "MapEditorScrapVisibility.h"
@@ -650,6 +651,33 @@ bool MapEditorInspectorObjectController::moveInspectorObject(const QModelIndex &
                                                                                       : (afterTarget
                                                                                              ? MapEditorObjectMovePosition::AfterTarget
                                                                                              : MapEditorObjectMovePosition::BeforeTarget));
+    return applyObjectMovePlan(movePlan, beforeText, tr("Move Map Object"));
+}
+
+bool MapEditorInspectorObjectController::moveObjectToScrap(int lineNumber, int targetScrapLineNumber)
+{
+    if (context_.textEditor == nullptr) {
+        return false;
+    }
+
+    const QString beforeText = context_.textEditor->text();
+    return applyObjectMovePlan(planMapEditorMoveToScrap(beforeText, lineNumber, targetScrapLineNumber),
+                               beforeText,
+                               tr("Move to Scrap"));
+}
+
+QVector<MapEditorMoveToScrapTarget> MapEditorInspectorObjectController::moveToScrapTargets(int lineNumber) const
+{
+    if (context_.textEditor == nullptr) {
+        return {};
+    }
+    return mapEditorMoveToScrapTargets(context_.textEditor->text(), lineNumber);
+}
+
+bool MapEditorInspectorObjectController::applyObjectMovePlan(const MapEditorObjectMovePlan &movePlan,
+                                                             const QString &beforeText,
+                                                             const QString &undoLabel)
+{
     if (!movePlan.resolved) {
         if (context_.toolbarStatusNote != nullptr) {
             *context_.toolbarStatusNote = movePlan.errorMessage.isEmpty()
@@ -686,7 +714,7 @@ bool MapEditorInspectorObjectController::moveInspectorObject(const QModelIndex &
 
     const TextEditorSourceTransactionResult transactionResult =
         applySourceTransaction(context_,
-                               tr("Move Map Object"),
+                               undoLabel,
                                beforeText,
                                movePlan.movedText,
                                movePlan.insertBeforeLineAfterRemoval,

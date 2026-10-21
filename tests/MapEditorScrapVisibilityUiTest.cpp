@@ -1,6 +1,7 @@
 // Fading and hiding scraps in a loaded map: scene item opacity, visibility and
-// picking, and the Objects view eye icon cycle. The pure rules are covered by
-// MapEditorScrapVisibilityTest.
+// picking, the Objects view eye icon cycle, and moving an object to another
+// scrap from the same menus. The pure rules are covered by
+// MapEditorScrapVisibilityTest and MapEditorMoveToScrapPlannerTest.
 
 #include "../src/app/text_editor/map_editor/MapEditorScrapVisibility.h"
 #include "../src/app/text_editor/map_editor/MapEditorSceneSupport.h"
@@ -99,6 +100,7 @@ private slots:
     void eyeIconCyclesShownFadedHidden();
     void emptyCanvasMenuShowsAllScrapsOnlyWhenNeeded();
     void objectsViewMenuOffersScrapSubmenus();
+    void movesObjectToScrapWithUndo();
 
 private:
     QTemporaryDir *temporaryDirectory_ = nullptr;
@@ -303,6 +305,44 @@ void MapEditorScrapVisibilityUiTest::objectsViewMenuOffersScrapSubmenus()
     for (QGraphicsItem *item : objectItems(scene_, kScrapAPointLine)) {
         QCOMPARE(item->opacity(), 1.0);
     }
+}
+
+void MapEditorScrapVisibilityUiTest::movesObjectToScrapWithUndo()
+{
+    const QString before = mapTab_->text();
+    auto *tree = mapTab_->findChild<QTreeView *>(QStringLiteral("mapObjectsTree"));
+    QVERIFY(tree != nullptr);
+    auto *model = qobject_cast<QStandardItemModel *>(tree->model());
+    QVERIFY(model != nullptr);
+    const QModelIndex pointIndex = visibilityIndexForLine(model, kScrapAPointLine).siblingAtColumn(0);
+    QVERIFY(pointIndex.isValid());
+    const QPoint position = tree->visualRect(pointIndex).center();
+
+    QContextMenuEvent event(QContextMenuEvent::Mouse, position, tree->viewport()->mapToGlobal(position));
+    QCoreApplication::sendEvent(tree->viewport(), &event);
+    QMenu *menu = openPopupMenu();
+    QVERIFY(menu != nullptr);
+    QAction *moveTo = actionWithText(menu, QStringLiteral("Move to Scrap"));
+    QVERIFY(moveTo != nullptr && moveTo->menu() != nullptr);
+    QAction *target = actionWithText(moveTo->menu(), QStringLiteral("b"));
+    QVERIFY(target != nullptr && target->isEnabled());
+    target->trigger();
+    menu->close();
+    pumpEvents();
+
+    QCOMPARE(mapTab_->text(),
+             QStringLiteral("encoding utf-8\n"
+                            "scrap a -projection plan\n"
+                            "endscrap\n"
+                            "\n"
+                            "scrap b -projection plan\n"
+                            "point 20 20 station -name B1\n"
+                            "point 0 0 station -name A1\n"
+                            "endscrap\n"));
+
+    mapTab_->triggerUndo();
+    pumpEvents();
+    QCOMPARE(mapTab_->text(), before);
 }
 
 int runMapEditorScrapVisibilityUiTest(int argc, char **argv)

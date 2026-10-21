@@ -200,7 +200,9 @@ Active planning only. Completed history belongs in archive files. Stable archite
 - `feature/map-scrap-fade-and-move-to` (`plans/MAP_SCRAP_FADE_PLAN.md`): objects and whole scraps can be shown, faded or hidden
   from the Objects eye icon and from `This Scrap` / `Other Scraps` right-click submenus on the canvas and the Objects
   list; empty canvas offers `Show All Scraps` while anything is faded or hidden. Needs a manual pass in the running app.
-  Follow-up: `Move to Scrap` as the next commit on the same branch.
+- Same branch, next commit (`plans/MAP_MOVE_TO_SCRAP_PLAN.md`): `Move to Scrap` submenu moves a point, line or area
+  (with its border lines, or a sole border line with its area) to another scrap in one undo step, refusing moves that
+  split an area border. Needs a manual pass in the running app.
 
 ### Map Input And Partial Refresh
 

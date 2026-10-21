@@ -358,6 +358,8 @@ To change whole scraps at once, right-click an object row in `Objects`, or an ob
 
 The current choice is ticked. To bring everything back, right-click empty map canvas and choose `Show All Scraps`.
 
+To move a point, line or area into another scrap, right-click it on the map or in `Objects` and choose `Move to Scrap`, then the scrap. The object goes to the end of that scrap, keeps its coordinates and stays selected, and `Undo` reverses the move. An area takes its border lines with it, and a line that is the only border of an area takes that area with it. A scrap is greyed out in the list, with the reason as a tooltip, when the move would break an area border (a line that is one of several borders of an area, or a border line that another area also uses).
+
 In `Inspector -> Backgrounds`, you can:
 
 - add, remove, and reorder raster, SVG, `.xvi`, or PocketTopo `.txt` background layers

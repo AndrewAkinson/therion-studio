@@ -1,6 +1,7 @@
 #include "MapEditorTab.h"
 
 #include "MapEditorInspectorObjectController.h"
+#include "MapEditorMoveToScrapMenu.h"
 #include "MapEditorScrapVisibilityMenu.h"
 
 #include <QMenu>
@@ -23,6 +24,20 @@ void MapEditorTab::addMapScrapVisibilityMenus(QMenu *menu, int lineNumber)
                                                         MapEditorObjectVisibility visibility) {
                                          setMapScrapVisibility(lineNumber, target, visibility);
                                      });
+}
+
+void MapEditorTab::addMapMoveToScrapMenu(QMenu *menu, int lineNumber)
+{
+    const QVector<MapEditorMoveToScrapTarget> targets =
+        MapEditorInspectorObjectController(inspectorObjectContext()).moveToScrapTargets(lineNumber);
+    addMapEditorMoveToScrapMenu(menu, targets, [this, lineNumber](int targetScrapLineNumber) {
+        moveMapObjectToScrap(lineNumber, targetScrapLineNumber);
+    });
+}
+
+void MapEditorTab::moveMapObjectToScrap(int lineNumber, int targetScrapLineNumber)
+{
+    MapEditorInspectorObjectController(inspectorObjectContext()).moveObjectToScrap(lineNumber, targetScrapLineNumber);
 }
 
 void MapEditorTab::showEmptyMapCanvasContextMenu(const QPoint &globalPosition)
@@ -50,6 +65,7 @@ void MapEditorTab::showInspectorObjectContextMenu(const QPoint &position)
     auto *menu = new QMenu(this);
     connect(menu, &QMenu::aboutToHide, menu, &QObject::deleteLater);
     addMapScrapVisibilityMenus(menu, lineNumber);
+    addMapMoveToScrapMenu(menu, lineNumber);
     if (menu->isEmpty()) {
         menu->deleteLater();
         return;
