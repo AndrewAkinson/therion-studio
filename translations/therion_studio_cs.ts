@@ -7349,6 +7349,11 @@ subtype blocks</translation>
         <translation>Tento příkaz obsahuje token vypadající jako volba nebo duplicitní dvojici volba/hodnota, kterou může Therion odmítnout.</translation>
     </message>
     <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="939"/>
+        <source>This command repeats an option with the same value; Therion accepts it, and the repeat can be removed.</source>
+        <translation>Tento příkaz opakuje volbu se stejnou hodnotou; Therion to přijme a opakování lze odstranit.</translation>
+    </message>
+    <message>
         <location filename="../src/core/TherionSourceValidator.cpp" line="928"/>
         <source>Rewrite line %1</source>
         <translation>Přepsat řádek %1</translation>
@@ -7471,6 +7476,16 @@ subtype blocks</translation>
         <translation>Neodpovídající uzavření bloku</translation>
     </message>
     <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="1263"/>
+        <source>`endcode` has no open `code` block; Therion ignores it.</source>
+        <translation>`endcode` nemá otevřený blok `code`; Therion jej ignoruje.</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="1271"/>
+        <source>Remove line %1</source>
+        <translation>Odstranit řádek %1</translation>
+    </message>
+    <message>
         <location filename="../src/core/TherionSourceValidator.cpp" line="1240"/>
         <source>Closing directive `%1` does not match the currently open block.</source>
         <translation>Uzavírací direktiva `%1` neodpovídá aktuálně otevřenému bloku.</translation>
@@ -7480,6 +7495,16 @@ subtype blocks</translation>
         <location filename="../src/core/TherionSourceValidator.cpp" line="1298"/>
         <source>Unclosed block</source>
         <translation>Neuzavřený blok</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="1351"/>
+        <source>Code line joins endcode</source>
+        <translation>Řádek kódu spojí endcode</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="1352"/>
+        <source>This line ends in `\`, so Therion joins the `endcode` on line %1 to it and passes `endcode` to TeX or MetaPost as text.</source>
+        <translation>Tento řádek končí `\`, takže k němu Therion připojí `endcode` z řádku %1 a předá `endcode` TeXu nebo MetaPostu jako text.</translation>
     </message>
     <message>
         <location filename="../src/core/TherionSourceValidator.cpp" line="1332"/>

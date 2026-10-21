@@ -7166,6 +7166,11 @@ Supprimer le sommet malgré tout ?</translation>
         <translation>Cette commande contient un token ressemblant à une option ou une paire option/valeur en double que Therion risque de rejeter.</translation>
     </message>
     <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="939"/>
+        <source>This command repeats an option with the same value; Therion accepts it, and the repeat can be removed.</source>
+        <translation>Cette commande répète une option avec la même valeur ; Therion l’accepte, et la répétition peut être supprimée.</translation>
+    </message>
+    <message>
         <location filename="../src/core/TherionSourceValidator.cpp" line="928"/>
         <source>Rewrite line %1</source>
         <translation>Réécrire la ligne %1</translation>
@@ -7291,6 +7296,16 @@ Supprimer le sommet malgré tout ?</translation>
         <translation>Fermeture de bloc non appariée</translation>
     </message>
     <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="1263"/>
+        <source>`endcode` has no open `code` block; Therion ignores it.</source>
+        <translation>`endcode` n’a pas de bloc `code` ouvert ; Therion l’ignore.</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="1271"/>
+        <source>Remove line %1</source>
+        <translation>Supprimer la ligne %1</translation>
+    </message>
+    <message>
         <location filename="../src/core/TherionSourceValidator.cpp" line="1240"/>
         <source>Closing directive `%1` does not match the currently open block.</source>
         <translation>La directive de fermeture `%1` ne correspond pas au bloc actuellement ouvert.</translation>
@@ -7300,6 +7315,16 @@ Supprimer le sommet malgré tout ?</translation>
         <location filename="../src/core/TherionSourceValidator.cpp" line="1298"/>
         <source>Unclosed block</source>
         <translation>Bloc non fermé</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="1351"/>
+        <source>Code line joins endcode</source>
+        <translation>La ligne de code absorbe endcode</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="1352"/>
+        <source>This line ends in `\`, so Therion joins the `endcode` on line %1 to it and passes `endcode` to TeX or MetaPost as text.</source>
+        <translation>Cette ligne se termine par `\` : Therion y joint le `endcode` de la ligne %1 et transmet `endcode` à TeX ou MetaPost comme du texte.</translation>
     </message>
     <message>
         <location filename="../src/core/TherionSourceValidator.cpp" line="1332"/>

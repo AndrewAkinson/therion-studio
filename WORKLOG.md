@@ -135,7 +135,7 @@ Active planning only. Completed history belongs in archive files. Stable archite
   labels) are planned there as V1 (line splitting matches Therion) and V2 (catalog from Therion's option tables).
 - V1 and V2 done on `ValidationAccuracy`: line splitting follows Therion's `thsplit_args`, and command options
   (object commands, `layout`, `export`) follow Therion v6.4.0's option tables; book differences in
-  `docs/THERION_BOOK_DIFFERENCES.md`. V3 done: continuation lines never open or close blocks; a layout's code block ends like Therion ends it, with one warning. V4 done: unread drawings get one `Information` note; Information is a new severity. V4b done: files a config inputs are checked as config. V5 next.
+  `docs/THERION_BOOK_DIFFERENCES.md`. V3 done: continuation lines never open or close blocks; a layout's code block ends like Therion ends it, with one warning. V4 done: unread drawings get one `Information` note; Information is a new severity. V4b done: files a config inputs are checked as config. V5 done: severity policy written and every error class checked against Therion. Remaining slices are potential (V6-V8).
 
 - Treat full-project validation as an explicit/manual workflow by default; use the Settings toggle only when projects are
   small enough or the user wants live full-project diagnostics.

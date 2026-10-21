@@ -2,7 +2,7 @@
 
 Date: 2026-10-15
 
-Status: V1a, V1b, V2a, V2b, V3, V4, and V4b done. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
+Status: V1a, V1b, V2a, V2b, V3, V4, V4b, and V5 done. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
 values, Therion's line splitting (`thsplit_args`) first in two parts (V1a, V1b), code blocks as a potential slice,
 and slices renumbered.
 
@@ -241,6 +241,26 @@ each of them as "not listed for document type `th`" (50 warnings on the measured
 ## V5 - Severity Policy
 
 Goal: errors mean "Therion would fail".
+
+Done (2026-10-21). Every error class was checked against Therion 6.4.0 on small projects:
+
+| Finding | Therion | Result |
+| --- | --- | --- |
+| `unknown-station-reference` (`point station -name` not in the centreline) | `station does not exist` | error |
+| `duplicate-object-id` | `duplicate object name` | error |
+| `unknown-area-line-reference` | `object does not exist` | error |
+| `unmatched-block-close` (`endscrap`, `endsurvey`, `endlayout`) | `missing scrap before endscrap` and similar | error |
+| `unmatched-block-close` (`endcode` in a layout with no code block) | accepted, ignored | now a warning, with a fix that removes the line |
+| `unclosed-block` at the end of a file (scrap, survey, layout) | `incomplete survey - endsurvey pair` and similar | error |
+| `missing-argument`, `missing-option-value`, `wrong-option-value-count` | `not enough command/option arguments` | error |
+| `malformed-option-token`: quoted option-like token, or `-subtype` with one | `unknown option`, `invalid line subtype` | error |
+| `malformed-option-token`: the same option and value repeated | accepted | now a warning |
+| unknown and ambiguous map, scrap, and join references | `object does not exist` | error |
+| `unknown-join-line-point-mark` | `marked station not found` | error |
+| `missing-source-reference` | `can't open file for input` | error |
+
+Warnings stay warnings where Therion would fail but Studio's knowledge may be incomplete (unknown commands and
+options, unknown values). Added: `code-line-joins-endcode`, a warning for a code line ending in `\` before `endcode`.
 
 `SPECIFICATION.md` lists what validation checks but has no rule for which findings are errors, warnings, or
 informational. This slice is useful on its own: it gives one rule for every check, and applying it removes false
