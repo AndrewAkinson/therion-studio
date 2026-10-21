@@ -48,6 +48,14 @@ Therion Studio follows the tables; each line is a candidate fix for the book.
 - join: -id is accepted by Therion but the book does not list it for this command
 - join: -station-names is accepted by Therion but the book does not list it for this command
 - join: -title is accepted by Therion but the book does not list it for this command
+- layout: -language takes 1 value(s) in Therion; the book's heading gives N
+- layout: -statistics takes 2 value(s) in Therion; the book's heading gives 1
+- layout: -attr is accepted by Therion but the book does not list it for this command
+- layout: -author is accepted by Therion but the book does not list it for this command
+- layout: -copyright is accepted by Therion but the book does not list it for this command
+- layout: -id is accepted by Therion but the book does not list it for this command
+- layout: -station-names is accepted by Therion but the book does not list it for this command
+- layout: -title is accepted by Therion but the book does not list it for this command
 - line: -r-size is accepted by Therion but the book does not list it for this command
 - line: -scale takes 1 value(s) in Therion; the book's heading gives 0
 - line: the book does not list -visible for -visibility
@@ -71,7 +79,7 @@ Therion Studio follows the tables; each line is a candidate fix for the book.
 - map: -cs is accepted by Therion but the book does not list it for this command
 - map: -id is accepted by Therion but the book does not list it for this command
 - map: -station-names is accepted by Therion but the book does not list it for this command
-- map: -colour is in the book but Therion rejects it; removed
+- map: -colour is not an option of this command in Therion; removed
 - point: -align takes 1 value(s) in Therion; the book's heading gives 0
 - point: the book does not list -station for -name
 - point: -size is accepted by Therion but the book does not list it for this command
@@ -109,3 +117,25 @@ Therion Studio follows the tables; each line is a candidate fix for the book.
 - survey: -cs is accepted by Therion but the book does not list it for this command
 - survey: -id is accepted by Therion but the book does not list it for this command
 - survey: -station-names is accepted by Therion but the book does not list it for this command
+- export: -cs is accepted by Therion but the book does not list it for this command
+- export: -disable takes 1 value(s) in Therion; the book's heading gives N
+- export: -enable takes 1 value(s) in Therion; the book's heading gives N
+- export: the book does not list -proj for -projection
+- export: the book does not list -attr for -attributes
+- export: -d is not an option of this command in Therion; removed
+- export: -h is not an option of this command in Therion; removed
+- export: -l is not an option of this command in Therion; removed
+- export: -p is not an option of this command in Therion; removed
+- export: -q is not an option of this command in Therion; removed
+- export: -print-encodings is not an option of this command in Therion; removed
+- export: -print-tex-encodings is not an option of this command in Therion; removed
+- export: -print-init-file is not an option of this command in Therion; removed
+- export: -print-environment is not an option of this command in Therion; removed
+- export: -print-symbols is not an option of this command in Therion; removed
+- export: -reproducible-output is not an option of this command in Therion; removed
+- export: -generate-output-crc is not an option of this command in Therion; removed
+- export: -verify-output-crc is not an option of this command in Therion; removed
+- export: -s is not an option of this command in Therion; removed
+- export: -use-extern-libs is not an option of this command in Therion; removed
+- export: -v is not an option of this command in Therion; removed
+- export: -x is not an option of this command in Therion; removed

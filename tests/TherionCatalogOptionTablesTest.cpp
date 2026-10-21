@@ -44,6 +44,25 @@ private slots:
                                                 && diagnostic.currentText.contains(QStringLiteral("-colour")));
         }
         QVERIFY(colourReported);
+
+        TherionSourceDocumentMetadata configMetadata;
+        configMetadata.sourceType = TherionSourceDocumentType::TherionConfig;
+        const TherionSourceValidationResult config = TherionSourceValidator::validate(
+            QStringLiteral("source cave.th\n"
+                           "export map -proj plan -layout local -layout-language en -o \"cave.pdf\"\n"
+                           "export model -enable walls -wall-source maps -o cave.lox\n"
+                           "export map -print-symbols\n"),
+            catalog,
+            configMetadata);
+        QStringList unknownOptions;
+        for (const TherionSourceDiagnostic &diagnostic : config.diagnostics) {
+            if (diagnostic.code == QStringLiteral("unknown-option")) {
+                unknownOptions.append(diagnostic.currentText);
+            }
+        }
+        // Only the Therion command-line switch is not an export option.
+        QCOMPARE(unknownOptions.size(), 1);
+        QVERIFY(unknownOptions.first().contains(QStringLiteral("-print-symbols")));
     }
 };
 
