@@ -2,7 +2,7 @@
 
 Date: 2026-10-15
 
-Status: V1a and V1b done. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
+Status: V1a, V1b, and V2a done. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
 values, Therion's line splitting (`thsplit_args`) first in two parts (V1a, V1b), code blocks as a potential slice,
 and slices renumbered.
 
@@ -115,6 +115,16 @@ V1 is done in two commits, each with its tests and documentation.
 V1 comes first because V2's tests and checks read option values through this splitting.
 
 ## V2 - Catalog Options From Therion's Option Tables
+
+Done in two parts (decided 2026-10-21): V2a for the object commands whose options Therion reads through
+`get_cmd_option_desc` (`point`, `line`, `area`, `scrap`, `survey`, `centreline`, `map`, `surface`, `join`, `import`,
+`scan`, `grade`, `lookup`), with the options all Therion objects share listed on every one and `map -colour` removed
+(the book lists it, Therion rejects it); V2b for `export` and `layout`, whose value counts are written case by case
+in each exporter's and the layout's parsing code (this fixes the `-proj` warnings).
+
+Found while doing V2a: the lock named Therion v6.3.4, but the catalog had been generated from the v6.4.0 book; the
+generator's source step looked for `thpoint.h` at the top level and silently did nothing since Therion moved its code
+to `src/therion-core`. Both are fixed; the snapshot now includes `src/therion-core`.
 
 Goal: option names, aliases, whether an option takes a value, and allowed values match what Therion accepts. GitHub
 issue #50 (`-scale` rejected for labels).
@@ -233,7 +243,8 @@ WORKLOG backlog item "Compiler-confirmed project-index comparison". Revisit afte
 | --- | --- | --- |
 | V1a | Line splitting matches Therion's `thsplit_args`: bracketed values | #49 |
 | V1b | Line splitting matches Therion's `thsplit_args`: quotes, comments, and backslashes | |
-| V2 | Catalog options, aliases, and arity from Therion's `thstok` tables; help linked to the book | #50, #49 |
+| V2a | Object command options, aliases, and arity from Therion's `thstok` tables; help linked to the book | #50, #49 |
+| V2b | The same for `export` and `layout` (the `-proj` warnings) | |
 | V3 | Line continuation inside quoted values | |
 | V4 | Drawings outside the target config's source graph | |
 | V5 | Severity policy | |
@@ -248,7 +259,6 @@ Already done elsewhere: the `-namespace off` join references are fixed on the `N
 
 ## Open Questions
 
-- Which Therion version should the generator read the tables from (the version already used for the book snapshot,
-  or the installed Therion)? Prefer the same pinned checkout as the book (`docs/therion-source.lock`) so catalog and
-  book stay consistent. V1's splitting rules should cite the same version.
+- Answered (2026-10-21): the generator reads the tables from the same pinned checkout as the book, Therion v6.4.0
+  (`docs/therion-source.lock`), which is also the version the line splitting rules cite.
 - Should informational findings (V4) be visible by default, or behind a filter?

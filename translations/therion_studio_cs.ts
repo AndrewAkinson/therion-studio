@@ -6765,6 +6765,11 @@ subtype blocks</translation>
         <source>Validation fixes skipped: document changed.</source>
         <translation>Validační opravy přeskočeny: dokument se změnil.</translation>
     </message>
+    <message>
+        <location filename="../src/app/text_editor/raw_editor/RawEditorCommandMetadataLoader.cpp" line="280"/>
+        <source>Not described in the Therion book.</source>
+        <translation>V knize o Therionu není popsáno.</translation>
+    </message>
 </context>
 <context>
     <name>TherionStudio::TherionDocumentEditor</name>

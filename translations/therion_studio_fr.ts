@@ -6572,6 +6572,11 @@ Supprimer le sommet malgré tout ?</translation>
         <source>Formatting skipped: document changed.</source>
         <translation>Mise en forme ignorée : le document a changé.</translation>
     </message>
+    <message>
+        <location filename="../src/app/text_editor/raw_editor/RawEditorCommandMetadataLoader.cpp" line="280"/>
+        <source>Not described in the Therion book.</source>
+        <translation>Non décrit dans le livre de Therion.</translation>
+    </message>
 </context>
 <context>
     <name>TherionStudio::TherionDocumentEditor</name>
