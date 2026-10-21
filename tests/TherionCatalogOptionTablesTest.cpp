@@ -77,6 +77,20 @@ private slots:
         for (const TherionSourceDiagnostic &diagnostic : layout.diagnostics) {
             QFAIL(qPrintable(QStringLiteral("line %1: %2").arg(diagnostic.lineNumber).arg(diagnostic.message)));
         }
+
+        // A continued value whose lines start with command words stays part of map-comment (V3).
+        const TherionSourceValidationResult continued = TherionSourceValidator::validate(
+            QStringLiteral("layout plan\n"
+                           "  map-comment \"Line one<br>\\\n"
+                           "Survey by A. Person,<br>\\\n"
+                           "Map by B. Person\"\n"
+                           "  map-header-bg on\n"
+                           "endlayout\n"),
+            catalog,
+            configMetadata);
+        for (const TherionSourceDiagnostic &diagnostic : continued.diagnostics) {
+            QFAIL(qPrintable(QStringLiteral("line %1: %2").arg(diagnostic.lineNumber).arg(diagnostic.message)));
+        }
     }
 };
 

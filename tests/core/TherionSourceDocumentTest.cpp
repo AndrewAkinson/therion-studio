@@ -1,5 +1,6 @@
 #include "../../src/core/TherionFileTypes.h"
 #include "../../src/core/TherionSourceDocument.h"
+#include "../../src/core/TherionSourceLogicalDocument.h"
 
 #include <QString>
 #include <QtTest/QtTest>
@@ -14,6 +15,7 @@ class TherionSourceDocumentTest : public QObject
 
 private slots:
     void classifiesCommandAndBlockContentLines();
+    void treatsContinuedLinesAsPartOfTheirCommand();
     void preservesCommentsBlankRowsAndMixedLineEndings();
     void exposesLosslessSourceTextSnapshot();
     void looksUpLinesByLineNumberAndOffset();
@@ -259,6 +261,44 @@ void TherionSourceDocumentTest::normalizesCentrelineAliases()
     QVERIFY(lineAt(document, 2)->role == TherionSourceLineRole::BlockContent);
     QVERIFY(!lineAt(document, 3)->hasUnmatchedClose());
 }
+}
+
+// A continued map-comment value whose next lines start with command words (plans/VALIDATION_ACCURACY_PLAN.md, V3).
+void TherionSourceDocumentTest::treatsContinuedLinesAsPartOfTheirCommand()
+{
+    const QString text = QStringLiteral(
+        "layout plan\n"
+        "  map-comment \"Line one<br>\\\n"
+        "Survey by A. Person,<br>\\\n"
+        "Map by B. Person\"\n"
+        "  map-header-bg on\n"
+        "  code tex-map\n"
+        "    \\def\\x{A}\n"
+        "  endcode\n"
+        "endlayout\n");
+    const TherionSourceDocument document = TherionSourceDocument::fromText(text);
+
+    QCOMPARE(document.sourceText().toText(), text);
+    QVERIFY(document.openBlocksAtEnd().isEmpty());
+    QCOMPARE(document.blockRanges().size(), 2);
+    QCOMPARE(document.blockRanges().at(0).directive, QStringLiteral("layout"));
+    QCOMPARE(document.blockRanges().at(0).closeLineNumber, 9);
+    QCOMPARE(document.blockRanges().at(1).directive, QStringLiteral("code"));
+    QCOMPARE(document.blockRanges().at(1).closeLineNumber, 8);
+
+    const TherionSourceDocumentLine *surveyWords = document.lineAtLineNumber(3);
+    QVERIFY(surveyWords != nullptr);
+    QVERIFY(surveyWords->continuesPreviousLine);
+    QVERIFY(!surveyWords->opensBlock);
+    QVERIFY(!document.lineAtLineNumber(2)->continuesPreviousLine);
+    QVERIFY(!document.lineAtLineNumber(5)->continuesPreviousLine);
+    QCOMPARE(document.lineAtLineNumber(5)->currentBlockDirective, QStringLiteral("layout"));
+
+    const TherionSourceLogicalDocument logical = TherionSourceLogicalDocument::fromSourceDocument(document);
+    const TherionSourceLogicalCommand &comment = logical.commands().at(1);
+    QCOMPARE(comment.normalizedDirective, QStringLiteral("map-comment"));
+    QCOMPARE(comment.physicalLineNumbers, QVector<int>({2, 3, 4}));
+    QCOMPARE(comment.parsed.tokens.size(), 2);
 }
 
 int runTherionSourceDocumentTest(int argc, char **argv)

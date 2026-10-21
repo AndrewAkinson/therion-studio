@@ -2,7 +2,7 @@
 
 Date: 2026-10-15
 
-Status: V1a, V1b, V2a, and V2b done. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
+Status: V1a, V1b, V2a, V2b, and V3 done. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
 values, Therion's line splitting (`thsplit_args`) first in two parts (V1a, V1b), code blocks as a potential slice,
 and slices renumbered.
 
@@ -175,6 +175,13 @@ issue #50 (`-scale` rejected for labels).
 ## V3 - Line Continuation Inside Quoted Values
 
 Goal: a quoted value continued with a trailing `\` stays one value in every projection.
+
+Done (2026-10-21). The cause was not quoting: the logical document already joined the lines, but the block structure
+was built line by line and read a continuation line starting with a command word (`Survey by ...`) as a `survey`
+command. Continuation lines are now part of their command in the block structure too (`continuesPreviousLine`).
+Inside `code ... endcode` the physical `endcode` still closes the block; the V5 warning covers a TeX line ending in
+`\\` before it. Not changed: Studio joins continued lines with one space, while Therion joins them with no space and
+keeps the next line's leading spaces; this only affects the joined value text.
 
 - Find where the shared source model (`TherionSourceText` / `TherionSourceLogicalDocument`) joins continued physical
   lines and why a quoted value spanning lines is split. Fix it there, not in validation, using V1's splitting rules.

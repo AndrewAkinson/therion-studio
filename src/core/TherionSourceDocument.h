@@ -65,6 +65,8 @@ struct TherionSourceDocumentLine
     bool closesBlock = false;
     QString closeMatchesOpenDirective;
     QVector<TherionSourceBlockFrame> blockStackBefore;
+    // The previous line ends in a continuation backslash, so this line is part of that command, not a command.
+    bool continuesPreviousLine = false;
 
     [[nodiscard]] bool shouldValidateCommandCatalog() const;
     [[nodiscard]] bool hasUnmatchedClose() const;

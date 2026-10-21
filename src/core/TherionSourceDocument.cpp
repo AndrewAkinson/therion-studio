@@ -121,17 +121,34 @@ TherionSourceDocument TherionSourceDocument::fromText(
     const QHash<QString, QString> closeToOpen = therionCloseToOpenDirectiveMap();
     QVector<TherionSourceBlockFrame> stack;
     QVector<ActiveBlockFrame> activeStack;
+    // Therion joins a line ending in a backslash with the next before reading commands (thinput.cxx). Inside a code
+    // block the physical endcode line still closes it.
+    bool previousLineContinues = false;
+    TherionSourceLineRole continuedRole = TherionSourceLineRole::Command;
 
     for (const TherionParsedSourceLine &sourceLine : document.parsedDocument_.lines) {
         TherionSourceDocumentLine semanticLine;
         semanticLine.sourceLine = sourceLine;
         semanticLine.blockStackBefore = stack;
         semanticLine.currentBlockDirective = stack.isEmpty() ? QString() : stack.constLast().directive;
+        const bool insideCodeBlock = normalizedTherionDirectiveToken(semanticLine.currentBlockDirective)
+            == QStringLiteral("code");
+        const bool continuesPrevious = previousLineContinues && !insideCodeBlock;
+        previousLineContinues = !insideCodeBlock
+            && !sourceLine.parsed.tokens.isEmpty()
+            && TherionDocumentParser::continuationMarkerIndex(sourceLine.text) >= 0;
 
         if (sourceLine.parsed.tokens.isEmpty()) {
             semanticLine.role = sourceLine.isCommentOnly()
                 ? TherionSourceLineRole::Comment
                 : TherionSourceLineRole::Empty;
+            document.lines_.append(semanticLine);
+            continue;
+        }
+
+        if (continuesPrevious) {
+            semanticLine.continuesPreviousLine = true;
+            semanticLine.role = continuedRole;
             document.lines_.append(semanticLine);
             continue;
         }
@@ -151,6 +168,7 @@ TherionSourceDocument TherionSourceDocument::fromText(
                 && !semanticLine.closesBlock
             ? TherionSourceLineRole::BlockContent
             : TherionSourceLineRole::Command;
+        continuedRole = semanticLine.role;
 
         if (semanticLine.opensBlock) {
             TherionSourceBlockRange range;
