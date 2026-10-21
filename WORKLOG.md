@@ -128,6 +128,13 @@ Active planning only. Completed history belongs in archive files. Stable archite
 
 ### Validation And Catalog Metadata
 
+- Validation accuracy: a measured run on a real multi-survey project showed most project-validation findings were false
+  (catalog aliases missing, a quoted-continuation parser bug, per-station errors in drawings the target config does not
+  read). The fix sequence and severity policy are planned (Therion referee test as potential) in
+  `plans/VALIDATION_ACCURACY_PLAN.md` (V1 next). GitHub issues #49 (bracketed label text) and #50
+  (`-scale` rejected for labels) are planned there as V1 (line splitting matches Therion) and V2
+  (catalog from Therion's option tables).
+
 - Treat full-project validation as an explicit/manual workflow by default; use the Settings toggle only when projects are
   small enough or the user wants live full-project diagnostics.
 - Use `plans/PROJECT_SCAN_VALIDATION_OPTIMIZATION_PLAN.md` only for future validation/cache follow-ups; Structure and
