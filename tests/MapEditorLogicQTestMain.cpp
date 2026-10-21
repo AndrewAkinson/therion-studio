@@ -11,6 +11,7 @@ int runMapEditorObjectMovePlannerTest(int argc, char **argv);
 int runMapEditorPointSymbolGeometryTest(int argc, char **argv);
 int runMapEditorBackgroundTransformTest(int argc, char **argv);
 int runMapEditorSceneGenerationTest(int argc, char **argv);
+int runMapEditorScrapVisibilityTest(int argc, char **argv);
 int runMapEditorSourceProjectionCacheTest(int argc, char **argv);
 int runMapEditorSvgBackgroundMetadataTest(int argc, char **argv);
 int runMapEditorXviStationSnapLogicTest(int argc, char **argv);
@@ -28,6 +29,7 @@ int main(int argc, char **argv)
         {"MapEditorPointSymbolGeometryTest", runMapEditorPointSymbolGeometryTest},
         {"MapEditorBackgroundTransformTest", runMapEditorBackgroundTransformTest},
         {"MapEditorSceneGenerationTest", runMapEditorSceneGenerationTest},
+        {"MapEditorScrapVisibilityTest", runMapEditorScrapVisibilityTest},
         {"MapEditorSourceProjectionCacheTest", runMapEditorSourceProjectionCacheTest},
         {"MapEditorSvgBackgroundMetadataTest", runMapEditorSvgBackgroundMetadataTest},
         {"MapEditorXviStationSnapLogicTest", runMapEditorXviStationSnapLogicTest},

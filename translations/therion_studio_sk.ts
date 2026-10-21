@@ -4311,6 +4311,11 @@ Napriek tomu bod zmazať?</translation>
         <translation>Potiahnutím objekt presuniete</translation>
     </message>
     <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorInspectorObjectController.cpp" line="250"/>
+        <source>Fade object</source>
+        <translation>Stlmiť objekt</translation>
+    </message>
+    <message>
         <location filename="../src/app/text_editor/map_editor/MapEditorInspectorObjectController.cpp" line="233"/>
         <source>Hide object</source>
         <translation>Skryť objekt</translation>
@@ -5212,6 +5217,39 @@ Napriek tomu bod zmazať?</translation>
         <location filename="../src/app/text_editor/map_editor/MapEditorObjectMovePlanner.cpp" line="228"/>
         <source>Cannot move a map object without document text.</source>
         <translation>Mapový objekt nemožno presunúť bez textu dokumentu.</translation>
+    </message>
+</context>
+<context>
+    <name>TherionStudio::MapEditorScrapVisibilityMenu</name>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorScrapVisibilityMenu.cpp" line="26"/>
+        <source>Show</source>
+        <translation>Zobraziť</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorScrapVisibilityMenu.cpp" line="28"/>
+        <source>Fade</source>
+        <translation>Stlmiť</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorScrapVisibilityMenu.cpp" line="30"/>
+        <source>Hide</source>
+        <translation>Skryť</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorScrapVisibilityMenu.cpp" line="54"/>
+        <source>This Scrap</source>
+        <translation>Tento scrap</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorScrapVisibilityMenu.cpp" line="60"/>
+        <source>Other Scraps</source>
+        <translation>Ostatné scrapy</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorScrapVisibilityMenu.cpp" line="74"/>
+        <source>Show All Scraps</source>
+        <translation>Zobraziť všetky scrapy</translation>
     </message>
 </context>
 <context>

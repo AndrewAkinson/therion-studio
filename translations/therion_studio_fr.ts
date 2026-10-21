@@ -4207,6 +4207,11 @@ Supprimer le sommet malgré tout ?</translation>
         <translation>Glisser pour déplacer cet objet</translation>
     </message>
     <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorInspectorObjectController.cpp" line="250"/>
+        <source>Fade object</source>
+        <translation>Estomper l'objet</translation>
+    </message>
+    <message>
         <location filename="../src/app/text_editor/map_editor/MapEditorInspectorObjectController.cpp" line="233"/>
         <source>Hide object</source>
         <translation>Masquer l&apos;objet</translation>
@@ -5080,6 +5085,39 @@ Supprimer le sommet malgré tout ?</translation>
         <location filename="../src/app/text_editor/map_editor/MapEditorObjectMovePlanner.cpp" line="228"/>
         <source>Cannot move a map object without document text.</source>
         <translation>Impossible de déplacer un objet de dessin sans texte de document.</translation>
+    </message>
+</context>
+<context>
+    <name>TherionStudio::MapEditorScrapVisibilityMenu</name>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorScrapVisibilityMenu.cpp" line="26"/>
+        <source>Show</source>
+        <translation>Afficher</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorScrapVisibilityMenu.cpp" line="28"/>
+        <source>Fade</source>
+        <translation>Estomper</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorScrapVisibilityMenu.cpp" line="30"/>
+        <source>Hide</source>
+        <translation>Masquer</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorScrapVisibilityMenu.cpp" line="54"/>
+        <source>This Scrap</source>
+        <translation>Ce scrap</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorScrapVisibilityMenu.cpp" line="60"/>
+        <source>Other Scraps</source>
+        <translation>Autres scraps</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorScrapVisibilityMenu.cpp" line="74"/>
+        <source>Show All Scraps</source>
+        <translation>Afficher tous les scraps</translation>
     </message>
 </context>
 <context>

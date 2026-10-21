@@ -245,6 +245,7 @@ set(THERION_MAP_EDITOR_QTEST_SUITES
     MapEditorPointSymbolGeometryTest
     MapEditorBackgroundTransformTest
     MapEditorSceneGenerationTest
+    MapEditorScrapVisibilityTest
     MapEditorSourceProjectionCacheTest
     MapEditorSvgBackgroundMetadataTest
     MapEditorXviStationSnapLogicTest
@@ -252,6 +253,9 @@ set(THERION_MAP_EDITOR_QTEST_SUITES
 
 set(THERION_MAP_EDITOR_BACKGROUND_UI_QTEST_SUITES
     MapEditorBackgroundRoundTripTest)
+
+set(THERION_MAP_EDITOR_UI_QTEST_SUITES
+    MapEditorScrapVisibilityUiTest)
 
 set(THERION_TEXT_EDITOR_DOCUMENT_QTEST_SUITES
     TextEditorDocumentIoServiceTest
@@ -768,9 +772,14 @@ set(THERION_MAP_EDITOR_SOURCES
     src/app/text_editor/map_editor/MapEditorSceneRenderer.cpp
     src/app/text_editor/map_editor/MapEditorSceneSupport.h
     src/app/text_editor/map_editor/MapEditorSceneThemePolicy.h
+    src/app/text_editor/map_editor/MapEditorScrapVisibility.cpp
+    src/app/text_editor/map_editor/MapEditorScrapVisibility.h
+    src/app/text_editor/map_editor/MapEditorScrapVisibilityMenu.cpp
+    src/app/text_editor/map_editor/MapEditorScrapVisibilityMenu.h
     src/app/text_editor/map_editor/MapEditorTabEventRouting.cpp
     src/app/text_editor/map_editor/MapEditorTabControllers.cpp
     src/app/text_editor/map_editor/MapEditorTabInspectorControllerDelegates.cpp
+    src/app/text_editor/map_editor/MapEditorTabScrapVisibility.cpp
     src/app/text_editor/map_editor/MapEditorTabCanvasEditContext.cpp
     src/app/text_editor/map_editor/MapEditorTabSceneRefreshLifecycle.cpp
     src/app/text_editor/map_editor/MapEditorTabSelectionInspectorWorkflow.cpp
@@ -1302,6 +1311,7 @@ qt_add_executable(MapEditorLogicQTests
     tests/MapEditorPointSymbolGeometryTest.cpp
     tests/MapEditorBackgroundTransformTest.cpp
     tests/MapEditorSceneGenerationTest.cpp
+    tests/MapEditorScrapVisibilityTest.cpp
     tests/MapEditorSourceProjectionCacheTest.cpp
     tests/MapEditorSvgBackgroundMetadataTest.cpp
     tests/MapEditorXviStationSnapLogicTest.cpp
@@ -1327,6 +1337,8 @@ qt_add_executable(MapEditorLogicQTests
     src/app/text_editor/map_editor/MapEditorBackgroundTransform.h
     src/app/text_editor/map_editor/MapEditorSceneGeneration.cpp
     src/app/text_editor/map_editor/MapEditorSceneGeneration.h
+    src/app/text_editor/map_editor/MapEditorScrapVisibility.cpp
+    src/app/text_editor/map_editor/MapEditorScrapVisibility.h
     src/app/text_editor/map_editor/MapEditorSourceProjectionCache.cpp
     src/app/text_editor/map_editor/MapEditorSourceProjectionCache.h
     src/app/text_editor/map_editor/MapEditorUndoArbitrationService.cpp
@@ -1761,6 +1773,22 @@ qt_add_resources(MapEditorBackgroundUiQTests MapEditorBackgroundUiQTestsResource
     FILES
         ${THERION_STUDIO_RESOURCE_FILES})
 
+qt_add_executable(MapEditorUiQTests
+    tests/MapEditorUiQTestMain.cpp
+    tests/MapEditorScrapVisibilityUiTest.cpp)
+
+target_link_libraries(MapEditorUiQTests PRIVATE
+    therion_map_editor_ui_test_support
+    Qt6::Test)
+
+target_compile_definitions(MapEditorUiQTests PRIVATE
+    THERION_STUDIO_TESTING)
+
+qt_add_resources(MapEditorUiQTests MapEditorUiQTestsResources
+    PREFIX "/"
+    FILES
+        ${THERION_STUDIO_RESOURCE_FILES})
+
 therion_add_map_editor_ui_test(MapEditorBackgroundLayerVisibilityTest
     tests/MapEditorBackgroundLayerVisibilityTest.cpp
     "MapEditorBackgroundLayerVisibilityResources")
@@ -1879,7 +1907,8 @@ set(THERION_UI_TEST_TARGETS
     MapEditorViewportTabletInputTest)
 
 set(THERION_UI_QTEST_AGGREGATE_TARGETS
-    MapEditorBackgroundUiQTests)
+    MapEditorBackgroundUiQTests
+    MapEditorUiQTests)
 
 set(THERION_CORPUS_TEST_TARGETS)
 if(TARGET ThreeDViewerLoxCorpusTest)
@@ -1934,6 +1963,7 @@ set(THERION_QTEST_SUITE_CASES
     ${THERION_THREE_D_VIEWER_QTEST_SUITES}
     ${THERION_MAP_EDITOR_QTEST_SUITES}
     ${THERION_MAP_EDITOR_BACKGROUND_UI_QTEST_SUITES}
+    ${THERION_MAP_EDITOR_UI_QTEST_SUITES}
     ${THERION_TEXT_EDITOR_DOCUMENT_QTEST_SUITES}
     ${THERION_TEXT_EDITOR_RAW_QTEST_SUITES}
     ${THERION_BLOCK_EDITOR_QTEST_SUITES}
@@ -1950,6 +1980,7 @@ therion_add_qtest_suite_cases(MainWindowServiceQTests ${THERION_MAIN_WINDOW_QTES
 therion_add_qtest_suite_cases(ThreeDViewerQTests ${THERION_THREE_D_VIEWER_QTEST_SUITES})
 therion_add_qtest_suite_cases(MapEditorLogicQTests ${THERION_MAP_EDITOR_QTEST_SUITES})
 therion_add_qtest_suite_cases(MapEditorBackgroundUiQTests ${THERION_MAP_EDITOR_BACKGROUND_UI_QTEST_SUITES})
+therion_add_qtest_suite_cases(MapEditorUiQTests ${THERION_MAP_EDITOR_UI_QTEST_SUITES})
 therion_add_qtest_suite_cases(TextEditorDocumentServiceQTests ${THERION_TEXT_EDITOR_DOCUMENT_QTEST_SUITES})
 therion_add_qtest_suite_cases(TextEditorRawEditorQTests ${THERION_TEXT_EDITOR_RAW_QTEST_SUITES})
 therion_add_qtest_suite_cases(BlockEditorLogicQTests ${THERION_BLOCK_EDITOR_QTEST_SUITES})
@@ -1986,6 +2017,7 @@ set_tests_properties(
 # tests rather than with the unit label applied to the other suite cases.
 set_tests_properties(
     ${THERION_MAP_EDITOR_BACKGROUND_UI_QTEST_SUITES}
+    ${THERION_MAP_EDITOR_UI_QTEST_SUITES}
     PROPERTIES
         LABELS "ui")
 
