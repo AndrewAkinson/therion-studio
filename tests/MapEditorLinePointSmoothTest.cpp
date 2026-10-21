@@ -1,3 +1,4 @@
+#include "../src/app/text_editor/map_editor/MapEditorLineVertexHandles.h"
 #include "../src/app/text_editor/map_editor/MapEditorSceneSupport.h"
 #include "../src/app/text_editor/map_editor/MapEditorSourceReferenceResolver.h"
 
@@ -83,6 +84,36 @@ private slots:
         QVERIFY(line.has_value());
         QCOMPARE(smoothRows(coordinateRowsForLineVertices(line->lineVertices, line->closed)),
                  smoothRows(middleRows.split(QLatin1Char('\n'))));
+    }
+
+    // Unticking Smooth makes a corner but keeps both handles; ticking again lines them up keeping their lengths
+    // (GitHub #48).
+    void unticksAndReticksSmoothKeepingHandles()
+    {
+        // Smooth middle point: handles at (20 0) and (40 0), lengths 10 and 10.
+        std::optional<MapGeometryFeature> line = lineFeatureForLineNumber(lineText(QStringLiteral("40 0"), QString()), 2);
+        QVERIFY(line.has_value());
+        QVector<MapGeometryFeature::TH2LineVertex> vertices = line->lineVertices;
+        QVERIFY(lineVertexIsSmooth(vertices.at(1)));
+
+        setLineVertexSmooth(&vertices, 1, line->closed, false);
+        QCOMPARE(vertices.at(1).incomingControl, std::optional<QPointF>(QPointF(20.0, 0.0)));
+        QCOMPARE(vertices.at(1).outgoingControl, std::optional<QPointF>(QPointF(40.0, 0.0)));
+        QVERIFY(!lineVertexIsSmooth(vertices.at(1)));
+        QCOMPARE(smoothRows(coordinateRowsForLineVertices(vertices, line->closed)),
+                 QStringList({QStringLiteral("smooth off")}));
+
+        // Now a corner: move the outgoing handle off line and further out, then tick Smooth again.
+        vertices[1].outgoingControl = QPointF(30.0, 20.0);
+        setLineVertexSmooth(&vertices, 1, line->closed, true);
+        const MapGeometryFeature::TH2LineVertex &vertex = vertices.at(1);
+        QVERIFY(lineVertexIsSmooth(vertex));
+        QVERIFY(!vertex.smoothRow.has_value());
+        const QPointF incoming = vertex.incomingControl.value() - vertex.anchor;
+        const QPointF outgoing = vertex.outgoingControl.value() - vertex.anchor;
+        QVERIFY(qFuzzyCompare(std::hypot(incoming.x(), incoming.y()), 10.0));
+        QVERIFY(qFuzzyCompare(std::hypot(outgoing.x(), outgoing.y()), 20.0));
+        QVERIFY(smoothRows(coordinateRowsForLineVertices(vertices, line->closed)).isEmpty());
     }
 };
 
