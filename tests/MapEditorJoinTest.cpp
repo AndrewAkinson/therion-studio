@@ -268,6 +268,29 @@ private slots:
         QVERIFY(first_->findChildren<MapEditorJoinViewLink *>().isEmpty());
     }
 
+    void keepsComputedFitWhenPartnerHasOnlyXvi()
+    {
+        // Computed positions place the first drawing at 2 m per XVI metre; the second drawing has none.
+        const QHash<QString, Th2StationPosition> positions = {
+            {QStringLiteral("1@a"), Th2StationPosition{0.0, 0.0, 0.0}},
+            {QStringLiteral("2@a"), Th2StationPosition{20.0, 0.0, 0.0}},
+            {QStringLiteral("3@a"), Th2StationPosition{20.0, 10.0, 0.0}}};
+        MapEditorJoinPlacement placement;
+        placement.positions = &positions;
+        placement.firstStationKeysByLine = {
+            {3, QStringLiteral("1@a")}, {4, QStringLiteral("2@a")}, {5, QStringLiteral("3@a")}};
+        placement.projection = QStringLiteral("plan");
+        QVERIFY(openMapEditorJoinPair(first_, kFirstJoinLine, second_, kSecondJoinLine, false, placement));
+
+        // The second drawing's station 2 is 10 m east of its join station, which the computed fit draws
+        // 393.7 first units east of the first join station (787.4 with the XVI fit alone).
+        MapEditorJoinOutline *outline = MapEditorJoinOutline::find(first_, second_);
+        QVERIFY(outline != nullptr && outline->item() != nullptr);
+        const QPointF partnerStation = second_->mapSourceToSceneTransform().map(QPointF(10 * 19.685, 0));
+        const QPointF expected = first_->mapSourceToSceneTransform().map(kFirstJoin + QPointF(393.7, 0));
+        QVERIFY(near(outline->item()->mapToScene(partnerStation), expected, 1e-3));
+    }
+
 private:
     static constexpr int kFirstJoinLine = 5;
     static constexpr int kSecondJoinLine = 3;

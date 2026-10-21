@@ -1505,8 +1505,8 @@ Pokud je soubor otevřený, nejprve se zavře.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStructureBrowser.cpp" line="1211"/>
-        <source>Cannot align the joined drawings: a scrap has no XVI centreline stations or -scale.</source>
-        <translation>Spojené kresby nelze zarovnat: scrap nemá stanice centreline z XVI ani -scale.</translation>
+        <source>Cannot align the joined drawings: a scrap has neither computed station positions nor matching XVI centreline stations.</source>
+        <translation>Spojené kresby nelze zarovnat: scrap nemá vypočtené polohy stanic ani odpovídající stanice centreline z XVI.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowJoinPlacement.cpp" line="107"/>

@@ -51,8 +51,13 @@ bool openMapEditorJoinPair(MapEditorTab *first,
     if (sharedFrame) {
         placed = sharedFramePartnerToThisTransform(firstFit, secondFit);
     } else if (firstJoin.has_value() && secondJoin.has_value()) {
-        firstFit = first->centrelineFitForSourceLine(firstJoinLine);
-        secondFit = second->centrelineFitForSourceLine(secondJoinLine);
+        // Keep a computed fit for one drawing and fit only the other to its centreline.
+        if (!firstFit.isValid()) {
+            firstFit = first->centrelineFitForSourceLine(firstJoinLine);
+        }
+        if (!secondFit.isValid()) {
+            secondFit = second->centrelineFitForSourceLine(secondJoinLine);
+        }
         if (firstFit.isValid() && secondFit.isValid()) {
             placed = joinPartnerToThisTransform(firstFit, *firstJoin, secondFit, *secondJoin);
         }

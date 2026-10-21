@@ -1465,8 +1465,8 @@ Si le fichier est ouvert, il sera d&apos;abord fermé.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStructureBrowser.cpp" line="1211"/>
-        <source>Cannot align the joined drawings: a scrap has no XVI centreline stations or -scale.</source>
-        <translation>Impossible d’aligner les dessins joints : un scrap n’a ni stations de centreline XVI ni -scale.</translation>
+        <source>Cannot align the joined drawings: a scrap has neither computed station positions nor matching XVI centreline stations.</source>
+        <translation>Impossible d’aligner les dessins joints : un scrap n’a ni positions de stations calculées ni stations de centreline XVI correspondantes.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowJoinPlacement.cpp" line="107"/>
