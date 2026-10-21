@@ -7,7 +7,7 @@
   },
   "summary": "Specifies layout for 2D maps. Settings which apply to atlas mode are marked \"A\"; map mode \"M\".",
   "syntax": [
-    "layout <id> [OPTIONS] copy <source layout id> cs <coordinate system> north <true/grid> scale <picture length> <real length> base-scale <picture length> <real length> units <metric/imperial> rotate <number> symbol-set <symbol-set> symbol-assign <point/line/area/group/special> <symbol-type> \\ <symbol-set> symbol-hide <point/line/area/group/special> <symbol-type> symbol-show <point/line/area/group/special> <symbol-type> symbol-colour <point/line/area/group/special> <symbol-type> <colour> min-symbol-scale <scale> fonts-setup <tinysize> <smallsize> <normalsize> <largesize> <hugesize> size <width> <height> <units> overlap <value> <units> page-setup <dimensions> <units> page-numbers <on/off> exclude-pages <on/off> <list> title-pages <on/off> nav-factor <factor> nav-size <x-size> <y-size> transparency <on/off> opacity <value> surface <top/bottom/off> surface-opacity <value> sketches <on/off> layers <on/off> grid <off/top/bottom> grid-origin <x> <y> <z> <units> grid-size <x> <y> <z> <units> grid-coords <off/border/all> origin <x> <y> <z> <units> origin-label <x-label> <y-label> own-pages <number> page-grid <on/off> legend <on/off/all> legend-columns <number> legend-width <n> <units> colour-legend <smooth/discrete/off/on> map-comment <string> map-header <x> <y> <off/n/s/e/w/ne/nw/se/sw/center> map-header-bg <on/off> map-image <x> <y> <n/s/e/w/ne/nw/se/sw/center> <filename> statistics <explo/topo/carto/copyright all/off/number> <explo/topo-length on/hide/off> <carto/copyright-count on/hide/off> scale-bar <length> <units> survey-level <N/all> language <xx[_YY]> colo[u]r-model <cmyk/rgb/grayscale> colo[u]r <item> <colour> smooth-shading <off/quick> debug <on/all/first/second/scrap-names/station-names/off> geospatial <on/off> doc-author <string> doc-keywords <string> doc-subject <string> doc-title <string> code <metapost/tex-map/tex-atlas> endcode endlayout"
+    "layout <id> [OPTIONS] copy <source layout id> cs <coordinate system> north <true/grid> scale <picture length> <real length> base-scale <picture length> <real length> units <metric/imperial> rotate <number> symbol-set <symbol-set> symbol-assign <point/line/area/group/special> <symbol-type> <symbol-set> symbol-hide <point/line/area/group/special> <symbol-type> symbol-show <point/line/area/group/special> <symbol-type> symbol-colour <point/line/area/group/special> <symbol-type> <colour> min-symbol-scale <scale> fonts-setup <tinysize> <smallsize> <normalsize> <largesize> <hugesize> size <width> <height> <units> overlap <value> <units> page-setup <dimensions> <units> page-numbers <on/off> exclude-pages <on/off> <list> title-pages <on/off> nav-factor <factor> nav-size <x-size> <y-size> transparency <on/off> opacity <value> surface <top/bottom/off> surface-opacity <value> sketches <on/off> layers <on/off> grid <off/top/bottom> grid-origin <x> <y> <z> <units> grid-size <x> <y> <z> <units> grid-coords <off/border/all> origin <x> <y> <z> <units> origin-label <x-label> <y-label> own-pages <number> page-grid <on/off> legend <on/off/all> legend-columns <number> legend-width <n> <units> colour-legend <smooth/discrete/off/on> map-comment <string> map-header <x> <y> <off/n/s/e/w/ne/nw/se/sw/center> map-header-bg <on/off> map-image <x> <y> <n/s/e/w/ne/nw/se/sw/center> <filename> statistics <explo/topo/carto/copyright all/off/number> <explo/topo-length on/hide/off> <carto/copyright-count on/hide/off> scale-bar <length> <units> survey-level <N/all> language <xx[_YY]> colo[u]r-model <cmyk/rgb/grayscale> colo[u]r <item> <colour> smooth-shading <off/quick> debug <on/all/first/second/scrap-names/station-names/off> geospatial <on/off> doc-author <string> doc-keywords <string> doc-subject <string> doc-title <string> code <metapost/tex-map/tex-atlas> endcode endlayout"
   ],
   "contexts": [
     "none"
@@ -150,13 +150,13 @@
       "dependencies": []
     },
     {
-      "raw": "symbol-colo[u]r <point/line/area/group/special> <symbol-type> <colour> = change colour of particular symbol or group of symbols. (Note: colour change currently applies to pattern fills only if (1) output format is PDF and (2) \\ version is at least 1.000) (M, A)",
+      "raw": "symbol-colo[u]r <point/line/area/group/special> <symbol-type> <colour> = change colour of particular symbol or group of symbols. (Note: colour change currently applies to pattern fills only if (1) output format is PDF and (2) version is at least 1.000) (M, A)",
       "name": "symbol-colo[u]r <point/line/area/group/special> <symbol-type> <colour>",
       "signature": "symbol-colo[u]r <point/line/area/group/special> <symbol-type> <colour>",
       "option_key": "-symbol-colour",
       "value_arity": "N",
       "value_domain": "enum",
-      "description": "change colour of particular symbol or group of symbols. (Note: colour change currently applies to pattern fills only if (1) output format is PDF and (2) \\ version is at least 1.000) (M, A)",
+      "description": "change colour of particular symbol or group of symbols. (Note: colour change currently applies to pattern fills only if (1) output format is PDF and (2) version is at least 1.000) (M, A)",
       "allowed_values": [
         "point",
         "line",
@@ -767,13 +767,13 @@
       "dependencies": []
     },
     {
-      "raw": "geospatial <on/off> = enable/disable geospatial PDF features. When enabled, compatible applications can use this information (e.g.\\ Acrobat Reader for length measurements and finding coordinates; GIS applications like GDAL (Raster GDAL tools like gdal_translate work fine, while vector tools like ogr2ogr support Therion maps starting from version 3.10.0. Note that QGIS uses GDAL library to import PDF data.) and QGIS for importing and processing georeferenced data). This feature should be used with layers on setting. (M; default: on)",
+      "raw": "geospatial <on/off> = enable/disable geospatial PDF features. When enabled, compatible applications can use this information (e.g. Acrobat Reader for length measurements and finding coordinates; GIS applications like GDAL (Raster GDAL tools like gdal_translate work fine, while vector tools like ogr2ogr support Therion maps starting from version 3.10.0. Note that QGIS uses GDAL library to import PDF data.) and QGIS for importing and processing georeferenced data). This feature should be used with layers on setting. (M; default: on)",
       "name": "geospatial <on/off>",
       "signature": "geospatial <on/off>",
       "option_key": "-geospatial",
       "value_arity": "1",
       "value_domain": "enum",
-      "description": "enable/disable geospatial PDF features. When enabled, compatible applications can use this information (e.g.\\ Acrobat Reader for length measurements and finding coordinates; GIS applications like GDAL (Raster GDAL tools like gdal_translate work fine, while vector tools like ogr2ogr support Therion maps starting from version 3.10.0. Note that QGIS uses GDAL library to import PDF data.) and QGIS for importing and processing georeferenced data). This feature should be used with layers on setting. (M; default: on)",
+      "description": "enable/disable geospatial PDF features. When enabled, compatible applications can use this information (e.g. Acrobat Reader for length measurements and finding coordinates; GIS applications like GDAL (Raster GDAL tools like gdal_translate work fine, while vector tools like ogr2ogr support Therion maps starting from version 3.10.0. Note that QGIS uses GDAL library to import PDF data.) and QGIS for importing and processing georeferenced data). This feature should be used with layers on setting. (M; default: on)",
       "allowed_values": [
         "on",
         "off"
@@ -825,13 +825,13 @@
       "dependencies": []
     },
     {
-      "raw": "code <metapost/tex-map/tex-atlas> = Add/redefine \\ and \\ macros here. This allows user to configure various things (like user defined symbols, map and atlas layout at one place &c.) See the chapter Changing layout for details.",
+      "raw": "code <metapost/tex-map/tex-atlas> = Add/redefine and macros here. This allows user to configure various things (like user defined symbols, map and atlas layout at one place &c.) See the chapter Changing layout for details.",
       "name": "code <metapost/tex-map/tex-atlas>",
       "signature": "code <metapost/tex-map/tex-atlas>",
       "option_key": "-code",
       "value_arity": "1",
       "value_domain": "enum",
-      "description": "Add/redefine \\ and \\ macros here. This allows user to configure various things (like user defined symbols, map and atlas layout at one place &c.) See the chapter Changing layout for details.",
+      "description": "Add/redefine and macros here. This allows user to configure various things (like user defined symbols, map and atlas layout at one place &c.) See the chapter Changing layout for details.",
       "allowed_values": [
         "metapost",
         "tex-map",
@@ -840,13 +840,13 @@
       "dependencies": []
     },
     {
-      "raw": "endcode = should end the TeX\\ and \\ sections",
+      "raw": "endcode = should end the TeX and sections",
       "name": "endcode",
       "signature": "endcode",
       "option_key": "-endcode",
       "value_arity": "0",
       "value_domain": "none",
-      "description": "should end the TeX\\ and \\ sections",
+      "description": "should end the TeX and sections",
       "allowed_values": [],
       "dependencies": []
     }

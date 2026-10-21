@@ -320,13 +320,13 @@
       "dependencies": []
     },
     {
-      "raw": "--reproducible-output = Create reproducible PDF and SVG files. No volatile information is included (e.g. creation date or software version is omitted from the metadata). \\ variables and are set to predefined constants. This option enforces the use of Therion loop closure. To get the same output files on different platforms, it's necessary to install the same set of basic fonts used by Therion (CM, CS and/or CMCYR font families; the \".pfb\" font files have to be exactly the same on all platforms as they are embedded into PDF files.) and use reasonably recent \\ distribution on all platforms.",
+      "raw": "--reproducible-output = Create reproducible PDF and SVG files. No volatile information is included (e.g. creation date or software version is omitted from the metadata). variables and are set to predefined constants. This option enforces the use of Therion loop closure. To get the same output files on different platforms, it's necessary to install the same set of basic fonts used by Therion (CM, CS and/or CMCYR font families; the \".pfb\" font files have to be exactly the same on all platforms as they are embedded into PDF files.) and use reasonably recent distribution on all platforms.",
       "name": "--reproducible-output",
       "signature": "--reproducible-output",
       "option_key": "-reproducible-output",
       "value_arity": "0",
       "value_domain": "none",
-      "description": "Create reproducible PDF and SVG files. No volatile information is included (e.g. creation date or software version is omitted from the metadata). \\ variables and are set to predefined constants. This option enforces the use of Therion loop closure. To get the same output files on different platforms, it's necessary to install the same set of basic fonts used by Therion (CM, CS and/or CMCYR font families; the \".pfb\" font files have to be exactly the same on all platforms as they are embedded into PDF files.) and use reasonably recent \\ distribution on all platforms.",
+      "description": "Create reproducible PDF and SVG files. No volatile information is included (e.g. creation date or software version is omitted from the metadata). variables and are set to predefined constants. This option enforces the use of Therion loop closure. To get the same output files on different platforms, it's necessary to install the same set of basic fonts used by Therion (CM, CS and/or CMCYR font families; the \".pfb\" font files have to be exactly the same on all platforms as they are embedded into PDF files.) and use reasonably recent distribution on all platforms.",
       "allowed_values": [],
       "dependencies": []
     },
@@ -364,13 +364,13 @@
       "dependencies": []
     },
     {
-      "raw": "--use-extern-libs = Don't copy \\ and \\ macros to working directory. \\ and \\ should search for them on their own. Use with caution.",
+      "raw": "--use-extern-libs = Don't copy and macros to working directory. and should search for them on their own. Use with caution.",
       "name": "--use-extern-libs",
       "signature": "--use-extern-libs",
       "option_key": "-use-extern-libs",
       "value_arity": "0",
       "value_domain": "none",
-      "description": "Don't copy \\ and \\ macros to working directory. \\ and \\ should search for them on their own. Use with caution.",
+      "description": "Don't copy and macros to working directory. and should search for them on their own. Use with caution.",
       "allowed_values": [],
       "dependencies": []
     },

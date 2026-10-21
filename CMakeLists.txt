@@ -1445,6 +1445,14 @@ therion_add_app_unit_test(ProjectValidationScannerTest
     src/app/text_editor/block_editor/BlockEditorDirectiveRules.cpp
     src/app/text_editor/block_editor/BlockEditorSourceText.cpp)
 
+therion_add_app_unit_test(TherionCatalogOptionTablesTest
+    tests/TherionCatalogOptionTablesTest.cpp
+    src/app/text_editor/TextEditorValidationCatalog.cpp
+    src/app/text_editor/raw_editor/RawEditorCommandMetadataLoader.cpp
+    src/app/text_editor/block_editor/BlockEditorDirectiveRules.cpp
+    src/app/text_editor/block_editor/BlockEditorSourceText.cpp)
+target_link_libraries(TherionCatalogOptionTablesTest PRIVATE Qt6::Test)
+
 therion_add_app_unit_test(ProjectValidationControllerTest
     tests/ProjectValidationControllerTest.cpp)
 
@@ -1838,6 +1846,7 @@ set(THERION_UNIT_TEST_TARGETS
     ProjectSourceSnapshotTest
     ProjectSearchScannerTest
     ProjectValidationScannerTest
+    TherionCatalogOptionTablesTest
     ProjectValidationControllerTest
     ValidationResultsMarkdownExporterTest
     SessionStoreTest
