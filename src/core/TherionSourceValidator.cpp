@@ -1284,35 +1284,6 @@ bool catalogCommandAllowedInContext(const TherionSourceValidationCatalog &catalo
         || contexts.contains(context, Qt::CaseInsensitive);
 }
 
-TherionSourceDiagnostic diagnosticForUnclosedCodeBeforeParentCommand(const TherionSourceDocument &sourceDocument,
-                                                                     const TherionSourceBlockFrame &codeBlock,
-                                                                     const QString &parentCommand,
-                                                                     const QString &parentContext)
-{
-    TherionSourceDiagnostic diagnostic;
-    diagnostic.code = QStringLiteral("unclosed-block");
-    diagnostic.severity = TherionSourceDiagnosticSeverity::Error;
-    diagnostic.lineNumber = codeBlock.lineNumber;
-    diagnostic.columnNumber = 1;
-    diagnostic.columnLength = codeBlock.directive.size();
-    diagnostic.title = QCoreApplication::translate("TherionStudio::TherionSourceValidator", "Unclosed block");
-    diagnostic.message = QCoreApplication::translate("TherionStudio::TherionSourceValidator", "Block `%1` should be closed with `%2` before command `%3` in `%4` context.")
-                             .arg(QStringLiteral("code"),
-                                  QStringLiteral("endcode"),
-                                  parentCommand,
-                                  parentContext);
-    diagnostic.currentText = codeBlock.lineText;
-
-    const TherionSourceDocumentLine *codeLine = sourceDocument.lineAtLineNumber(codeBlock.lineNumber);
-    if (codeLine != nullptr && !codeLine->sourceLine.parsed.tokenSpans.isEmpty()) {
-        const TherionParsedToken &token = codeLine->sourceLine.parsed.tokenSpans.constFirst();
-        diagnostic.columnNumber = token.start + 1;
-        diagnostic.columnLength = token.length;
-        diagnostic.currentText = codeLine->sourceLine.text;
-    }
-    return diagnostic;
-}
-
 void appendCodeBoundaryDiagnostics(TherionSourceValidationResult *result,
                                    const TherionSourceDocument &sourceDocument,
                                    const TherionSourceValidationCatalog &catalog)
@@ -1321,30 +1292,79 @@ void appendCodeBoundaryDiagnostics(TherionSourceValidationResult *result,
         return;
     }
 
-    QSet<int> reportedCodeOpenLines;
-    for (const TherionSourceDocumentLine &line : sourceDocument.lines()) {
-        if (line.blockStackBefore.size() < 2
-            || line.normalizedDirective.isEmpty()
-            || line.normalizedDirective == QStringLiteral("endcode")
-            || line.blockStackBefore.constLast().directive != QStringLiteral("code")) {
+    // One warning per code block that ends early. Therion accepts both cases (checked with 6.4.0): it reads a layout
+    // command inside a code block as a layout setting, and it ends the block at endlayout.
+    for (const TherionSourceBlockRange &range : sourceDocument.blockRanges()) {
+        if (range.directive != QStringLiteral("code") || range.parentStack.isEmpty()) {
             continue;
         }
 
-        const QString parentContext = line.blockStackBefore.at(line.blockStackBefore.size() - 2).directive;
-        if (!catalogCommandAllowedInContext(catalog, line.normalizedDirective, parentContext)) {
+        const QString parentContext = range.parentStack.constLast().directive;
+        const int endLineNumber = range.isClosed() ? range.closeLineNumber : sourceDocument.lines().size() + 1;
+        const TherionSourceDocumentLine *firstParentCommand = nullptr;
+        bool onlyParentCommandsAfter = true;
+        for (int lineNumber = range.openLineNumber + 1; lineNumber < endLineNumber; ++lineNumber) {
+            const TherionSourceDocumentLine *line = sourceDocument.lineAtLineNumber(lineNumber);
+            if (line == nullptr || line->normalizedDirective.isEmpty()) {
+                continue;
+            }
+            const bool parentCommand = catalogCommandAllowedInContext(catalog, line->normalizedDirective, parentContext);
+            if (firstParentCommand == nullptr) {
+                firstParentCommand = parentCommand ? line : nullptr;
+            } else if (!parentCommand) {
+                onlyParentCommandsAfter = false;
+            }
+        }
+        if (firstParentCommand == nullptr && !range.closedByEnclosingBlock) {
             continue;
         }
 
-        const TherionSourceBlockFrame codeBlock = line.blockStackBefore.constLast();
-        if (reportedCodeOpenLines.contains(codeBlock.lineNumber)) {
-            continue;
+        TherionSourceDiagnostic diagnostic;
+        diagnostic.code = QStringLiteral("unclosed-block");
+        diagnostic.severity = TherionSourceDiagnosticSeverity::Warning;
+        diagnostic.lineNumber = range.openLineNumber;
+        diagnostic.columnNumber = leadingWhitespace(range.openLineText).size() + 1;
+        diagnostic.columnLength = range.directive.size();
+        diagnostic.title = QCoreApplication::translate("TherionStudio::TherionSourceValidator", "Unclosed block");
+        diagnostic.currentText = range.openLineText;
+        const TherionSourceDocumentLine *endLine = firstParentCommand;
+        if (firstParentCommand != nullptr) {
+            diagnostic.message = QCoreApplication::translate("TherionStudio::TherionSourceValidator",
+                                                             "Block `code` has no `endcode` before `%1` on line %2; "
+                                                             "Therion reads `%1` as a `%3` command.")
+                                     .arg(firstParentCommand->normalizedDirective)
+                                     .arg(firstParentCommand->sourceLine.lineNumber)
+                                     .arg(parentContext);
+        } else {
+            endLine = sourceDocument.lineAtLineNumber(range.closeLineNumber);
+            diagnostic.message = QCoreApplication::translate("TherionStudio::TherionSourceValidator",
+                                                             "Block `%1` has no `%2`; Therion ends it at `%3` on line %4.")
+                                     .arg(range.directive,
+                                          QStringLiteral("endcode"),
+                                          endLine != nullptr ? endLine->normalizedDirective : QString())
+                                     .arg(range.closeLineNumber);
         }
-        reportedCodeOpenLines.insert(codeBlock.lineNumber);
 
-        result->diagnostics.append(diagnosticForUnclosedCodeBeforeParentCommand(sourceDocument,
-                                                                                codeBlock,
-                                                                                line.normalizedDirective,
-                                                                                parentContext));
+        // Inserting endcode is only safe when the block has no endcode of its own and no code follows the point
+        // where it goes.
+        if (range.closedByEnclosingBlock && onlyParentCommandsAfter && endLine != nullptr) {
+            const int insertionLineNumber = endLine->sourceLine.lineNumber;
+            const QString insertedLine = leadingWhitespace(range.openLineText) + QStringLiteral("endcode");
+            diagnostic.suggestedText = QCoreApplication::translate("TherionStudio::TherionSourceValidator",
+                                                                   "Insert before line %1:\n%2")
+                                           .arg(insertionLineNumber)
+                                           .arg(insertedLine);
+            diagnostic.hasFix = true;
+            diagnostic.fix.startOffset = endLine->sourceLine.startOffset;
+            diagnostic.fix.length = 0;
+            diagnostic.fix.replacementText = insertedLine
+                + lineEndingForInsertion(sourceDocument, insertionLineNumber - 1, sourceDocument.toText());
+            diagnostic.fix.description = QCoreApplication::translate("TherionStudio::TherionSourceValidator",
+                                                                     "Insert %1 before line %2")
+                                             .arg(QStringLiteral("endcode"))
+                                             .arg(insertionLineNumber);
+        }
+        result->diagnostics.append(diagnostic);
     }
 }
 

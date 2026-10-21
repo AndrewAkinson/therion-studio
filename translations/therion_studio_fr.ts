@@ -7282,6 +7282,16 @@ Supprimer le sommet malgré tout ?</translation>
         <translation>Bloc non fermé</translation>
     </message>
     <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="1332"/>
+        <source>Block `code` has no `endcode` before `%1` on line %2; Therion reads `%1` as a `%3` command.</source>
+        <translation>Le bloc `code` n’a pas de `endcode` avant `%1` à la ligne %2 ; Therion lit `%1` comme une commande de `%3`.</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="1340"/>
+        <source>Block `%1` has no `%2`; Therion ends it at `%3` on line %4.</source>
+        <translation>Le bloc `%1` n’a pas de `%2` ; Therion le termine à `%3` à la ligne %4.</translation>
+    </message>
+    <message>
         <location filename="../src/core/TherionSourceValidator.cpp" line="1253"/>
         <source>Block `%1` is not closed before the end of the document. Expected `%2`.</source>
         <translation>Le bloc `%1` n&apos;est pas fermé avant la fin du document. Attendu : `%2`.</translation>

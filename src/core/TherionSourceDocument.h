@@ -51,6 +51,8 @@ struct TherionSourceBlockRange
     QString openLineText;
     QString closeLineText;
     QVector<TherionSourceBlockFrame> parentStack;
+    // Closed by the enclosing block's close (a code block ended by endlayout), not by its own close directive.
+    bool closedByEnclosingBlock = false;
 
     [[nodiscard]] bool isClosed() const;
 };

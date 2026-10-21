@@ -131,8 +131,25 @@ TherionSourceDocument TherionSourceDocument::fromText(
         semanticLine.sourceLine = sourceLine;
         semanticLine.blockStackBefore = stack;
         semanticLine.currentBlockDirective = stack.isEmpty() ? QString() : stack.constLast().directive;
-        const bool insideCodeBlock = normalizedTherionDirectiveToken(semanticLine.currentBlockDirective)
+        bool insideCodeBlock = normalizedTherionDirectiveToken(semanticLine.currentBlockDirective)
             == QStringLiteral("code");
+        // Therion ends a layout at endlayout even inside code ... endcode, which ends the code block with it.
+        if (insideCodeBlock && stack.size() >= 2 && !sourceLine.parsed.tokens.isEmpty()
+            && normalizedTherionDirectiveToken(sourceLine.parsed.directive)
+                == openToClose.value(stack.at(stack.size() - 2).directive)) {
+            if (!activeStack.isEmpty()) {
+                TherionSourceBlockRange &range = document.blockRanges_[activeStack.constLast().rangeIndex];
+                range.closeLineNumber = sourceLine.lineNumber;
+                range.endOffset = sourceLine.startOffset;
+                range.closeLineText = sourceLine.text;
+                range.closedByEnclosingBlock = true;
+                activeStack.removeLast();
+            }
+            stack.removeLast();
+            semanticLine.blockStackBefore = stack;
+            semanticLine.currentBlockDirective = stack.constLast().directive;
+            insideCodeBlock = false;
+        }
         const bool continuesPrevious = previousLineContinues && !insideCodeBlock;
         previousLineContinues = !insideCodeBlock
             && !sourceLine.parsed.tokens.isEmpty()

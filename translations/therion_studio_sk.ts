@@ -7462,6 +7462,16 @@ subtype blocks</translation>
         <translation>Neuzavretý blok</translation>
     </message>
     <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="1332"/>
+        <source>Block `code` has no `endcode` before `%1` on line %2; Therion reads `%1` as a `%3` command.</source>
+        <translation>Blok `code` nemá pred `%1` na riadku %2 `endcode`; Therion číta `%1` ako príkaz bloku `%3`.</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="1340"/>
+        <source>Block `%1` has no `%2`; Therion ends it at `%3` on line %4.</source>
+        <translation>Blok `%1` nemá `%2`; Therion ho ukončí príkazom `%3` na riadku %4.</translation>
+    </message>
+    <message>
         <location filename="../src/core/TherionSourceValidator.cpp" line="1253"/>
         <source>Block `%1` is not closed before the end of the document. Expected `%2`.</source>
         <translation>Blok `%1` nie je pred koncom dokumentu uzavretý. Očakáva sa `%2`.</translation>

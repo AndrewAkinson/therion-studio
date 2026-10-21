@@ -183,6 +183,13 @@ Inside `code ... endcode` the physical `endcode` still closes the block; the V5 
 `\\` before it. Not changed: Studio joins continued lines with one space, while Therion joins them with no space and
 keeps the next line's leading spaces; this only affects the joined value text.
 
+Follow-up found by V3 (decided 2026-10-21): a layout's `code` block without `endcode` made Studio read the following
+layouts as TeX, because only `endcode` closed a code block. Therion ends the layout, and the code block with it, at
+`endlayout` (checked with Therion 6.4.0). Studio now does the same. Therion also reads a layout command inside an open
+code block (`scale`, `legend`) as a layout setting, so both cases give one warning per code block (the earlier check
+gave an error); the fix inserts `endcode` before the first layout command, or before `endlayout`, and is offered only
+when the block has no `endcode` of its own and no code follows that point.
+
 - Find where the shared source model (`TherionSourceText` / `TherionSourceLogicalDocument`) joins continued physical
   lines and why a quoted value spanning lines is split. Fix it there, not in validation, using V1's splitting rules.
 - Tests: round-trip of a multi-line quoted `map-comment` in a `layout` block (text unchanged, one logical command,
