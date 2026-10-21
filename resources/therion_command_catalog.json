@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at_utc": "2026-10-21T10:52:22.896298+00:00",
+    "generated_at_utc": "2026-10-21T11:03:35.906904+00:00",
     "generator_version": "4",
     "source_repository": "https://github.com/therion/therion",
     "source_reference": "v6.4.0 (e8a908a4240437b296351d9fce55ea0e78f67a41)",
@@ -6044,9 +6044,9 @@
       ],
       "arguments": [
         {
-          "raw": "<dimensions>",
-          "name": "<dimensions>",
-          "signature": "<dimensions>",
+          "raw": "<value>",
+          "name": "<value>",
+          "signature": "<value>",
           "option_key": "",
           "value_arity": "1",
           "value_domain": "keyword",
@@ -6055,9 +6055,64 @@
           "dependencies": []
         },
         {
-          "raw": "<units>",
-          "name": "<units>",
-          "signature": "<units>",
+          "raw": "<value>",
+          "name": "<value>",
+          "signature": "<value>",
+          "option_key": "",
+          "value_arity": "1",
+          "value_domain": "keyword",
+          "description": "",
+          "allowed_values": [],
+          "dependencies": []
+        },
+        {
+          "raw": "<value>",
+          "name": "<value>",
+          "signature": "<value>",
+          "option_key": "",
+          "value_arity": "1",
+          "value_domain": "keyword",
+          "description": "",
+          "allowed_values": [],
+          "dependencies": []
+        },
+        {
+          "raw": "<value>",
+          "name": "<value>",
+          "signature": "<value>",
+          "option_key": "",
+          "value_arity": "1",
+          "value_domain": "keyword",
+          "description": "",
+          "allowed_values": [],
+          "dependencies": []
+        },
+        {
+          "raw": "<value>",
+          "name": "<value>",
+          "signature": "<value>",
+          "option_key": "",
+          "value_arity": "1",
+          "value_domain": "keyword",
+          "description": "",
+          "allowed_values": [],
+          "dependencies": []
+        },
+        {
+          "raw": "<value>",
+          "name": "<value>",
+          "signature": "<value>",
+          "option_key": "",
+          "value_arity": "1",
+          "value_domain": "keyword",
+          "description": "",
+          "allowed_values": [],
+          "dependencies": []
+        },
+        {
+          "raw": "<value>",
+          "name": "<value>",
+          "signature": "<value>",
           "option_key": "",
           "value_arity": "1",
           "value_domain": "keyword",
@@ -9490,20 +9545,25 @@
       ],
       "arguments": [
         {
-          "raw": "<explo/topo/carto/copyright all/off/number>",
-          "name": "<explo/topo/carto/copyright all/off/number>",
-          "signature": "<explo/topo/carto/copyright all/off/number>",
+          "raw": "<value>",
+          "name": "<value>",
+          "signature": "<value>",
           "option_key": "",
           "value_arity": "1",
-          "value_domain": "enum",
+          "value_domain": "keyword",
           "description": "",
-          "allowed_values": [
-            "explo",
-            "topo",
-            "carto",
-            "off",
-            "number"
-          ],
+          "allowed_values": [],
+          "dependencies": []
+        },
+        {
+          "raw": "<value>",
+          "name": "<value>",
+          "signature": "<value>",
+          "option_key": "",
+          "value_arity": "1",
+          "value_domain": "keyword",
+          "description": "",
+          "allowed_values": [],
           "dependencies": []
         }
       ],
@@ -10499,8 +10559,8 @@
         },
         {
           "raw": "<units>",
-          "name": "<units>",
-          "signature": "<units>",
+          "name": "[<units>]",
+          "signature": "[<units>]",
           "option_key": "",
           "value_arity": "1",
           "value_domain": "keyword",

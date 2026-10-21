@@ -63,6 +63,20 @@ private slots:
         // Only the Therion command-line switch is not an export option.
         QCOMPARE(unknownOptions.size(), 1);
         QVERIFY(unknownOptions.first().contains(QStringLiteral("-print-symbols")));
+
+        // Layout block lines take the values Therion's layout options take (each accepted by Therion 6.4.0).
+        const TherionSourceValidationResult layout = TherionSourceValidator::validate(
+            QStringLiteral("layout x\n"
+                           "  units metric\n"
+                           "  page-setup 29.7 21 27.7 19 1 1 cm\n"
+                           "  statistics explo-length off\n"
+                           "  color map-fg 50\n"
+                           "endlayout\n"),
+            catalog,
+            configMetadata);
+        for (const TherionSourceDiagnostic &diagnostic : layout.diagnostics) {
+            QFAIL(qPrintable(QStringLiteral("line %1: %2").arg(diagnostic.lineNumber).arg(diagnostic.message)));
+        }
     }
 };
 

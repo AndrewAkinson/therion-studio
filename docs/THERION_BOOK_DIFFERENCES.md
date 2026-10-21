@@ -139,3 +139,5 @@ Therion Studio follows the tables; each line is a candidate fix for the book.
 - export: -use-extern-libs is not an option of this command in Therion; removed
 - export: -v is not an option of this command in Therion; removed
 - export: -x is not an option of this command in Therion; removed
+- layout: page-setup takes 7 value(s) in Therion; the book's heading gives 2
+- layout: statistics takes 2 value(s) in Therion; the book's heading gives 1
