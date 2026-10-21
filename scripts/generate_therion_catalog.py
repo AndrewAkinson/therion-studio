@@ -877,6 +877,7 @@ THERION_OPTION_CLASSES = {
     "grade": "thgrade",
     "import": "thimport",
     "join": "thjoin",
+    "layout": "thlayout",
     "line": "thline",
     "lookup": "thlookup",
     "map": "thmap",
@@ -886,6 +887,9 @@ THERION_OPTION_CLASSES = {
     "surface": "thsurface",
     "survey": "thsurvey",
 }
+
+# Export options are read by thexport and the exporter for each export type (parse_options).
+THERION_EXPORT_CLASSES = ["thexport", "thexpmap", "thexpmodel", "thexptable", "thexpdb"]
 
 
 class TherionOptionSource:
@@ -922,6 +926,9 @@ class TherionOptionSource:
     def option_table_and_counts(self, class_name: str) -> tuple[str, dict[str, int]]:
         body = self.method_body(class_name, "get_cmd_option_desc")
         table_match = re.search(r"thmatch_token\(\s*\w+\s*,\s*(thtt_\w+)\s*\)", body)
+        # thlayout returns its counts through get_default_cod.
+        if "get_default_cod" in body:
+            body += self.method_body(class_name, "get_default_cod")
         counts: dict[str, int] = {}
         for cases, count in re.findall(
             r"((?:case\s+TT_\w+\s*:\s*)+)return\s+thcmd_option_desc\(\s*id\s*,\s*(\d+)\s*\)", body
@@ -953,6 +960,43 @@ class TherionOptionSource:
             chain.append(class_name)
             class_name = self.parent_class(class_name)
         return chain
+
+    def export_options(self) -> list[tuple[list[str], int, str]]:
+        """Export options from each exporter's parse_options: the value count is the number of argx++ steps in an
+        option's case less the step past the option itself."""
+        options: list[tuple[list[str], int, str]] = []
+        seen: set[str] = set()
+        for class_name in THERION_EXPORT_CLASSES:
+            body = self.method_body(class_name, "parse_options")
+            table_match = re.search(r"thmatch_token\(\s*args\[argx\]\s*,\s*(thtt_\w+)\s*\)", body)
+            if not table_match:
+                continue
+            table = self.table(table_match.group(1))
+            counts: dict[str, int] = {}
+            pending: list[str] = []
+            cases = list(re.finditer(r"case\s+(TT_\w+)\s*:", body))
+            for index, match in enumerate(cases):
+                pending.append(match.group(1))
+                end = cases[index + 1].start() if index + 1 < len(cases) else len(body)
+                segment = body[match.end():end]
+                if not segment.strip():
+                    continue
+                for enum_name in pending:
+                    if enum_name in table:
+                        counts[enum_name] = max(segment.count("argx++") - 1, 0)
+                pending = []
+            for enum_name, tokens in table.items():
+                if enum_name.endswith("_UNKNOWN") or enum_name not in counts:
+                    continue
+                new_tokens = [token.lstrip("-") for token in tokens if token.lstrip("-") not in seen]
+                if new_tokens:
+                    seen.update(new_tokens)
+                    options.append((new_tokens, counts[enum_name], class_name))
+        return options
+
+    def export_layout_option_family(self) -> bool:
+        """export map passes -layout-<option> to the layout (thexpmap parse_options)."""
+        return '"-layout-"' in self.method_body("thexpmap", "parse_options")
 
     def command_line_options(self, class_name: str) -> list[tuple[list[str], int, str]]:
         """Each option as (tokens, value count, defining class); the first class in the chain that knows a
@@ -1062,24 +1106,31 @@ def apply_therion_option_tables(catalog: dict[str, Any], source_root: Path) -> l
                     return option
         return None
 
-    for command_name, class_name in sorted(THERION_OPTION_CLASSES.items()):
+    def merge(command_name: str, therion_options: list[tuple[list[str], int, str]], keep_family: bool = False) -> None:
         command = commands_by_name.get(command_name)
         if command is None:
-            continue
-        book_options = [option for option in command.get("options", []) if option.get("option_key")]
+            return
+        # Wildcard families such as -layout-xxx stand for many options and are not in any table.
+        family = [option for option in command.get("options", [])
+                  if keep_family and "xxx" in str(option.get("option_key", ""))]
+        book_options = [option for option in command.get("options", [])
+                        if option.get("option_key") and option not in family]
         other_entries = [option for option in command.get("options", []) if not option.get("option_key")]
         matched: list[dict[str, Any]] = []
         added: list[dict[str, Any]] = []
-        for tokens, value_count, defining_class in source.command_line_options(class_name):
-            option = next((entry for entry in book_options
-                           if entry not in matched and set(option_entry_tokens(entry)) & set(tokens)), None)
+        for tokens, value_count, defining_class in therion_options:
+            # The book may give one option several headings (layout statistics); all of them are this option.
+            entries = [entry for entry in book_options
+                       if entry not in matched and set(option_entry_tokens(entry)) & set(tokens)]
             arity = arity_token(value_count)
-            if option is None:
+            if not entries:
                 report.append(f"{command_name}: -{tokens[0]} is accepted by Therion but the book does not list it "
                               "for this command")
                 option = new_option_entry(tokens, value_count, book_help(tokens[0], defining_class))
                 added.append(option)
-            else:
+                matched.append(option)
+                continue
+            for option in entries:
                 known = option_entry_tokens(option)
                 missing_aliases = [token for token in tokens if token not in known]
                 if missing_aliases:
@@ -1099,13 +1150,17 @@ def apply_therion_option_tables(catalog: dict[str, Any], source_root: Path) -> l
                         option["value_domain"] = "unknown"
                         if " " not in str(option["signature"]).strip():
                             option["signature"] = f"{option['signature']} <value>"
-            matched.append(option)
+                matched.append(option)
         for option in book_options:
             if option not in matched:
-                report.append(f"{command_name}: {option['option_key']} is in the book but Therion rejects it; removed")
+                report.append(f"{command_name}: {option['option_key']} is not an option of this command in Therion; removed")
         # Keep the book's order; options only Therion lists follow.
-        command["options"] = [option for option in book_options if option in matched] + added + other_entries
-    return report
+        command["options"] = [option for option in book_options if option in matched] + added + family + other_entries
+
+    for command_name, class_name in sorted(THERION_OPTION_CLASSES.items()):
+        merge(command_name, source.command_line_options(class_name))
+    merge("export", source.export_options(), keep_family=source.export_layout_option_family())
+    return list(dict.fromkeys(report))
 
 
 def apply_source_derived_option_applicability(catalog: dict[str, Any], source_root: Path) -> None:

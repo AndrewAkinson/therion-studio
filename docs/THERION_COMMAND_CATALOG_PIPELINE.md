@@ -14,7 +14,7 @@ The catalog is generated from a pinned snapshot of Therion (currently v6.4.0):
 
 The book gives commands, syntax, contexts, and help text. For the object commands, option names, aliases, and
 value counts come from Therion's option tables instead (`thstok` tables read by each class's
-`get_cmd_option_desc`), so the catalog accepts what Therion accepts. The generator writes the differences between the
+`get_cmd_option_desc`, and each exporter's `parse_options` for `export`), so the catalog accepts what Therion accepts. The generator writes the differences between the
 two to `docs/THERION_BOOK_DIFFERENCES.md`, the list of candidate fixes for the book. The snapshot directory
 `therion/` is not committed (it is ignored); recreate it with `scripts/update_thbook_snapshot.sh`.
 

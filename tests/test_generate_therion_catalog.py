@@ -548,9 +548,12 @@ class TherionOptionTablesCatalogTest(unittest.TestCase):
 
     def test_every_table_option_has_its_tokens_and_value_count(self) -> None:
         mismatches = []
-        for command_name, class_name in sorted(self.generator.THERION_OPTION_CLASSES.items()):
+        therion_options = {command_name: self.source.command_line_options(class_name)
+                           for command_name, class_name in self.generator.THERION_OPTION_CLASSES.items()}
+        therion_options["export"] = self.source.export_options()
+        for command_name, command_options in sorted(therion_options.items()):
             options = self.commands_by_name.get(command_name, {}).get("options", [])
-            for tokens, value_count, _ in self.source.command_line_options(class_name):
+            for tokens, value_count, _ in command_options:
                 option = next((entry for entry in options
                                if set(tokens) <= set(self.generator.option_entry_tokens(entry))), None)
                 if option is None:
@@ -570,7 +573,24 @@ class TherionOptionTablesCatalogTest(unittest.TestCase):
     def test_options_therion_rejects_are_removed_and_reported(self) -> None:
         map_keys = {option.get("option_key") for option in self.commands_by_name["map"]["options"]}
         self.assertNotIn("-colour", map_keys)
-        self.assertIn("map: -colour is in the book but Therion rejects it; removed", self.report)
+        self.assertIn("map: -colour is not an option of this command in Therion; removed", self.report)
+
+    def test_export_follows_the_exporters(self) -> None:
+        options = self.commands_by_name["export"]["options"]
+        projection = next(option for option in options if option.get("option_key") == "-projection")
+        self.assertIn("proj", self.generator.option_entry_tokens(projection))
+        enable = next(option for option in options if option.get("option_key") == "-enable")
+        self.assertEqual(enable["value_arity"], "1")
+        keys = {option.get("option_key") for option in options}
+        self.assertIn("-layout-xxx", keys)
+        # Therion's command-line switches are not export options.
+        self.assertFalse({"-d", "-q", "-print-symbols"} & keys)
+
+    def test_layout_keeps_every_heading_of_an_option(self) -> None:
+        statistics = [option for option in self.commands_by_name["layout"]["options"]
+                      if option.get("option_key") == "-statistics"]
+        self.assertGreater(len(statistics), 1)
+        self.assertTrue(all(option["value_arity"] == "N" for option in statistics))
 
     def test_aliases_are_in_the_signature(self) -> None:
         projection = next(option for option in self.commands_by_name["scrap"]["options"]
