@@ -125,15 +125,7 @@ int nameTokenIndexForCategory(const QString &category, const TherionParsedLine &
     return -1;
 }
 
-QString quoteToken(const QString &token, QChar quoteCharacter)
-{
-    QString quotedToken = token;
-    quotedToken.replace(QLatin1Char('\\'), QStringLiteral("\\\\"));
-    quotedToken.replace(quoteCharacter, QStringLiteral("\\") + quoteCharacter);
-    return QString(quoteCharacter) + quotedToken + QString(quoteCharacter);
-}
-
-QString replacementTokenForLine(const QString &newName, const QString &lineText, const TherionParsedToken &tokenSpan)
+QString replacementTokenForLine(const QString &newName, const TherionParsedToken &tokenSpan)
 {
     const QString trimmedName = newName.trimmed();
     const bool requiresQuoting = trimmedName.isEmpty()
@@ -143,10 +135,7 @@ QString replacementTokenForLine(const QString &newName, const QString &lineText,
         return trimmedName;
     }
 
-    const QChar quoteCharacter = (tokenSpan.start < lineText.size() && lineText.at(tokenSpan.start) == QLatin1Char('\''))
-        ? QLatin1Char('\'')
-        : QLatin1Char('"');
-    return quoteToken(trimmedName, quoteCharacter);
+    return quoteTherionArgument(trimmedName);
 }
 
 bool insertPhysicalSourceLines(QString *contents,
@@ -256,7 +245,7 @@ QString serializedInlineToken(const QString &value)
         return trimmed;
     }
 
-    return quoteToken(trimmed, QLatin1Char('"'));
+    return quoteTherionArgument(trimmed);
 }
 
 QString sanitizeScrapName(const QString &preferredName)
@@ -1620,7 +1609,7 @@ bool TherionDocumentEditor::structureEntryNameRewriteEdits(const QString &conten
         return false;
     }
 
-    const QString replacementToken = replacementTokenForLine(trimmedName, lineText, tokenSpan);
+    const QString replacementToken = replacementTokenForLine(trimmedName, tokenSpan);
     edits->append(TherionSourceTextEdit{
         sourceLine.absoluteTokenStart(tokenSpan),
         tokenSpan.length,
@@ -3073,7 +3062,7 @@ bool TherionDocumentEditor::mapObjectQuickFieldsRewriteEdits(const QString &cont
             }
             return false;
         }
-        const QString replacement = replacementTokenForLine(normalizedIdentifier, lineText, parsedLine.tokenSpans.at(1));
+        const QString replacement = replacementTokenForLine(normalizedIdentifier, parsedLine.tokenSpans.at(1));
         if (!replaceTokenText(&lineText, parsedLine, 1, replacement)) {
             if (errorMessage != nullptr) {
                 *errorMessage = QCoreApplication::translate("TherionStudio::TherionDocumentEditor", "The selected scrap ID could not be rewritten.");

@@ -2,6 +2,8 @@
 #include "../../src/core/TherionCommandSyntax.h"
 #include "../../src/core/TherionDocumentEditor.h"
 #include "../../src/core/TherionDocumentParser.h"
+#include "../../src/core/TherionSourceDocument.h"
+#include "../../src/core/TherionSourceLogicalDocument.h"
 
 #include <QtTest/QtTest>
 
@@ -43,6 +45,10 @@ private slots:
     void readsTherionValueText();
     void keepsLabelFormWhenEdited_data();
     void keepsLabelFormWhenEdited();
+    void writesQuotesTherionReads();
+    void findsContinuationMarkers_data();
+    void findsContinuationMarkers();
+    void joinsCodeLineEndingInBackslash();
 };
 
 void TherionLineSplittingTest::splitsLines_data()
@@ -92,30 +98,49 @@ void TherionLineSplittingTest::splitsLines_data()
         << QStringLiteral("revise@0 | s@cave@7 | -stations@14 | [4@a 5@a]@24");
     QTest::newRow("percent comment")
         << QStringLiteral("point 1 2 label % note")
-        << QStringLiteral("point@0 | 1@6 | 2@8 | label@10 | C:% note@16");
+        << QStringLiteral("point@0 | 1@6 | 2@8 | label@10 | %@16 | note@18");
     QTest::newRow("hash inside word")
         << QStringLiteral("point 1 2 label -text abc#def")
-        << QStringLiteral("point@0 | 1@6 | 2@8 | label@10 | -text@16 | abc@22 | C:#def@25");
+        << QStringLiteral("point@0 | 1@6 | 2@8 | label@10 | -text@16 | abc#def@22");
     QTest::newRow("single quote")
         << QStringLiteral("point 1 2 label -text Dan's cave")
-        << QStringLiteral("point@0 | 1@6 | 2@8 | label@10 | -text@16 | Dan@22 | Q:s cave@25");
+        << QStringLiteral("point@0 | 1@6 | 2@8 | label@10 | -text@16 | Dan's@22 | cave@28");
     QTest::newRow("backslash inside line")
         << QStringLiteral("point 1 2 label -text a\\ b")
-        << QStringLiteral("point@0 | 1@6 | 2@8 | label@10 | -text@16 | a b@22");
+        << QStringLiteral("point@0 | 1@6 | 2@8 | label@10 | -text@16 | a\\@22 | b@25");
     QTest::newRow("doubled quote")
         << QStringLiteral("point 1 2 label -text \"say \"\"hi\"\"\"")
-        << QStringLiteral("point@0 | 1@6 | 2@8 | label@10 | -text@16 | Q:say @22 | Q:hi@28 | Q:@32");
+        << QStringLiteral("point@0 | 1@6 | 2@8 | label@10 | -text@16 | Q:say \"hi\"@22");
+
+    QTest::newRow("quote inside word")
+        << QStringLiteral("point 1 2 label -text abc\"def")
+        << QStringLiteral("point@0 | 1@6 | 2@8 | label@10 | -text@16 | abc\"def@22");
+    QTest::newRow("backslash quote inside quotes")
+        << QStringLiteral("point 1 2 label -text \"say \\\"hi\\\"\"")
+        << QStringLiteral("point@0 | 1@6 | 2@8 | label@10 | -text@16 | Q:say \\@22 | hi\\\"\"@29");
+    QTest::newRow("hash starts word")
+        << QStringLiteral("point 1 2 label #note")
+        << QStringLiteral("point@0 | 1@6 | 2@8 | label@10 | C:#note@16");
+    QTest::newRow("double backslash at end")
+        << QStringLiteral("point 1 2 label \\\\")
+        << QStringLiteral("point@0 | 1@6 | 2@8 | label@10 | \\\\@16");
 
     // Lines inside code ... endcode (TeX and MetaPost), which Therion does not split.
     QTest::newRow("tex comment")
         << QStringLiteral("\\framethickness=0.5mm % frame")
-        << QStringLiteral("framethickness=0.5mm@0 | C:% frame@22");
+        << QStringLiteral("\\framethickness=0.5mm@0 | %@22 | frame@24");
     QTest::newRow("tex macro argument")
         << QStringLiteral("\\def\\x#1{[#1]}")
-        << QStringLiteral("defx@0 | C:#1{[#1]}@6");
+        << QStringLiteral("\\def\\x#1{[#1]}@0");
     QTest::newRow("metapost comment")
         << QStringLiteral("draw (0,0)--(1,1) withpen pencircle; % pen")
-        << QStringLiteral("draw@0 | (0,0)--(1,1)@5 | withpen@18 | pencircle;@26 | C:% pen@37");
+        << QStringLiteral("draw@0 | (0,0)--(1,1)@5 | withpen@18 | pencircle;@26 | %@37 | pen@39");
+    QTest::newRow("tex backslash endcode")
+        << QStringLiteral("\\endcode")
+        << QStringLiteral("\\endcode@0");
+    QTest::newRow("tex apostrophe")
+        << QStringLiteral("\\legend{Dan's cave} % note")
+        << QStringLiteral("\\legend{Dan's@0 | cave}@14 | %@20 | note@22");
     QTest::newRow("metapost brackets")
         << QStringLiteral("p := z[1] -- z[2];")
         << QStringLiteral("p@0 | :=@2 | z[1]@5 | --@10 | z[2];@13");
@@ -259,6 +284,67 @@ void TherionLineSplittingTest::keepsLabelFormWhenEdited()
     QCOMPARE(edits.size(), 1);
     contents.replace(edits.first().startOffset, edits.first().length, edits.first().replacementText);
     QCOMPARE(contents.split(QLatin1Char('\n')).at(1), expectedLine);
+}
+
+void TherionLineSplittingTest::writesQuotesTherionReads()
+{
+    const QString text = QStringLiteral("say \"hi\" to Dan's a\\b");
+    const QString quoted = quoteTherionArgument(text);
+    QCOMPARE(quoted, QStringLiteral("\"say \"\"hi\"\" to Dan's a\\b\""));
+    const TherionParsedLine parsed = TherionDocumentParser::parseLine(QStringLiteral("point 1 2 label -text %1").arg(quoted));
+    QCOMPARE(parsed.tokens.last(), text);
+}
+
+void TherionLineSplittingTest::findsContinuationMarkers_data()
+{
+    QTest::addColumn<QString>("line");
+    QTest::addColumn<int>("expectedIndex");
+
+    // Therion joins a line whose last non-space character is a backslash (thinput.cxx); it does not count them.
+    QTest::newRow("single") << QStringLiteral("survey a \\") << 9;
+    QTest::newRow("trailing spaces") << QStringLiteral("survey a \\  ") << 9;
+    QTest::newRow("tex line break") << QStringLiteral("  \\def\\x{A}\\\\") << 12;
+    QTest::newRow("inside line") << QStringLiteral("a\\ b") << -1;
+    QTest::newRow("none") << QStringLiteral("survey a") << -1;
+}
+
+void TherionLineSplittingTest::findsContinuationMarkers()
+{
+    QFETCH(QString, line);
+    QFETCH(int, expectedIndex);
+
+    QCOMPARE(TherionDocumentParser::continuationMarkerIndex(line), expectedIndex);
+}
+
+void TherionLineSplittingTest::joinsCodeLineEndingInBackslash()
+{
+    const QString text = QStringLiteral(
+        "layout test\n"
+        "  code tex-map\n"
+        "    \\def\\x{A}\\\\\n"
+        "  endcode\n"
+        "  scale 1 200\n"
+        "endlayout\n");
+    // Therion 6.4.0 joins the TeX line ending in \\\\ with the endcode line and passes
+    // "\\def\\x{A}\\  endcode" to TeX; it still reads the following layout lines normally.
+    const TherionSourceLogicalDocument logical = TherionSourceLogicalDocument::fromText(text);
+    QVERIFY(logical.commands().size() >= 5);
+    const TherionSourceLogicalCommand &codeLine = logical.commands().at(2);
+    QCOMPARE(codeLine.physicalLineNumbers, QVector<int>({3, 4}));
+    QCOMPARE(codeLine.text, QStringLiteral("    \\def\\x{A}\\ endcode"));
+    QCOMPARE(codeLine.currentBlockDirective, QStringLiteral("code"));
+    QCOMPARE(codeLine.role, TherionSourceLineRole::BlockContent);
+
+    const TherionSourceLogicalCommand &scale = logical.commands().at(3);
+    QCOMPARE(scale.normalizedDirective, QStringLiteral("scale"));
+    QCOMPARE(scale.currentBlockDirective, QStringLiteral("layout"));
+    QVERIFY(logical.commands().at(4).closesBlock);
+
+    const TherionSourceDocument source = TherionSourceDocument::fromText(text);
+    QCOMPARE(source.blockRanges().size(), 2);
+    QCOMPARE(source.blockRanges().at(0).closeLineNumber, 6);
+    QCOMPARE(source.blockRanges().at(1).directive, QStringLiteral("code"));
+    QCOMPARE(source.blockRanges().at(1).closeLineNumber, 4);
 }
 
 int runTherionLineSplittingTest(int argc, char **argv)

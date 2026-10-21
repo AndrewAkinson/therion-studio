@@ -163,6 +163,7 @@ Pour les fichiers `.th2` :
 ### 4.2 Fonctions de l’éditeur de texte
 
 - numéros de ligne et mise en évidence de la ligne active ;
+- les lignes source sont lues comme Therion les lit : `"..."` et `[...]` sont une seule valeur (écrivez `""` pour un guillemet dans une valeur entre guillemets), `#` ne commence un commentaire qu’en début de mot, et `'`, `%` et une barre oblique inverse au milieu d’une ligne sont des caractères ordinaires ; dans les blocs `code ... endcode`, les commentaires TeX et MetaPost commençant par `%` ne sont donc pas colorés comme des commentaires ;
 - saisie semi-automatique des commandes, options, valeurs et chemins ; les propositions de commandes sont filtrées selon le type du document (`.th`, `.th2` ou configuration Therion) ;
 - `Ctrl+Space` pour ouvrir manuellement la saisie semi-automatique ;
 - en mode Raw, la barre d’outils supérieure du document affiche `Formater le document`. Cette action explicite remplace l’indentation initiale par une tabulation pour chaque niveau de bloc Therion, utilise une largeur d’affichage de quatre espaces par tabulation et peut être annulée en une seule étape. Elle ne s’exécute pas automatiquement et ne modifie ni les lignes vides, ni les lignes du corps des blocs de code, ni les fins de ligne, ni l’encodage ;

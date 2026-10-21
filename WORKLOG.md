@@ -133,8 +133,7 @@ Active planning only. Completed history belongs in archive files. Stable archite
   read). The fix sequence and severity policy are planned (Therion referee test as potential) in
   `plans/VALIDATION_ACCURACY_PLAN.md`. GitHub issues #49 (bracketed label text) and #50 (`-scale` rejected for
   labels) are planned there as V1 (line splitting matches Therion) and V2 (catalog from Therion's option tables).
-- V1a (in progress on `ValidationAccuracy`): bracketed values are one value in the shared parser; label text shows
-  without brackets and stays bracketed when edited. V1b next.
+- V1a and V1b done on `ValidationAccuracy` (line splitting follows Therion's `thsplit_args`). V2 next.
 
 - Treat full-project validation as an explicit/manual workflow by default; use the Settings toggle only when projects are
   small enough or the user wants live full-project diagnostics.

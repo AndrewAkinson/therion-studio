@@ -257,9 +257,9 @@ QStringList parseOptionValuesFromEditor(const QString &rawValue, const QString &
 
 QString quoteTherionArgument(const QString &value)
 {
+    // Therion reads "" inside a quoted value as one quote; a backslash is an ordinary character.
     QString escaped = value;
-    escaped.replace(QLatin1Char('\\'), QStringLiteral("\\\\"));
-    escaped.replace(QLatin1Char('"'), QStringLiteral("\\\""));
+    escaped.replace(QLatin1Char('"'), QStringLiteral("\"\""));
     return QStringLiteral("\"%1\"").arg(escaped);
 }
 

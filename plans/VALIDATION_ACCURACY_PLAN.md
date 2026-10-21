@@ -2,7 +2,7 @@
 
 Date: 2026-10-15
 
-Status: V1a in progress. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
+Status: V1a and V1b done. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
 values, Therion's line splitting (`thsplit_args`) first in two parts (V1a, V1b), code blocks as a potential slice,
 and slices renumbered.
 
@@ -99,8 +99,11 @@ V1 is done in two commits, each with its tests and documentation.
 ### V1b - Quotes, Comments, And Backslashes
 
 - Single quotes become ordinary characters (`-text Dan's`), `%` is no longer a comment, `#` starts a comment only at
-  the start of a word, a `\` that does not end the line is an ordinary character, and `""` inside a quoted value is a
-  literal quote.
+  the start of a word, a `\` that does not end the line is an ordinary character, a quote inside a word does not start
+  a quoted value, and `""` inside a quoted value is a literal quote. Only a final `\` continues a line (Therion does
+  not count backslashes); the parser and the logical document share that rule.
+- Generated edits write quotes as Therion reads them: double quotes with `""` for a quote, no backslash escapes, from
+  one shared writer (`quoteTherionArgument`). Studio used to write `\"`, which Therion rejects.
 - In command lines this follows Therion: a line Therion would reject may now get a finding it did not get before
   (for example text after a `%` that Studio used to ignore).
 - In code blocks the only effect is highlighting: TeX and MetaPost `%` comments are no longer coloured as comments,
@@ -194,6 +197,10 @@ errors that remain after V1-V4. The referee test (V8) would only automate checki
 - Review every diagnostic code against it and adjust severities; list each change and its reason in the commit.
 - Tests: the existing tests for each changed code are updated to the new severity only where the policy requires it
   (with the evidence, as `AGENTS.md` asks); a small fixture per changed class.
+- New warning: a line inside `code ... endcode` that ends in `\` (for example the TeX line break `\\`) directly
+  before `endcode`. Therion joins the two lines and passes `endcode` to TeX or MetaPost as text without an error
+  (checked with Therion 6.4.0), so the output silently changes. A warning, as Therion accepts the file; translations
+  for the new text.
 - Documentation: user manuals (all four languages) say what error, warning, and informational mean;
   `docs/THERION_COMPATIBILITY.md` where it names severities.
 

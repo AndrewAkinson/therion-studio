@@ -143,6 +143,7 @@ Pre `.th2` súbory:
 ### 4.2 Funkcie textového editora
 
 - čísla riadkov a zvýraznenie aktívneho riadka,
+- zdrojové riadky sa čítajú rovnako ako v Therione: `"..."` a `[...]` sú jedna hodnota (úvodzovku vnútri hodnoty v úvodzovkách zapíšte ako `""`), `#` začína komentár len na začiatku slova a `'`, `%` a spätná lomka vnútri riadka sú bežné znaky; v blokoch `code ... endcode` preto komentáre TeXu a MetaPostu začínajúce `%` nie sú zafarbené ako komentáre,
 - dopĺňanie príkazov, volieb, hodnôt a ciest pri písaní,
 - `Ctrl+Space` na ručné otvorenie dopĺňania,
 - V režime Zdroj (`Raw`) zobrazuje horný panel dokumentu `Formátovať dokument`. Ide o výslovnú akciu: nahradí počiatočné odsadenie jedným tabulátorom pre každú úroveň bloku Therionu, zobrazuje tabulátor ako štyri medzery a dá sa vrátiť jedným krokom. Nespúšťa sa automaticky a nemení prázdne riadky, obsah blokov `code`, konce riadkov ani kódovanie.

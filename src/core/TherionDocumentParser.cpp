@@ -51,21 +51,14 @@ QVector<TherionParsedLine> TherionParsedSourceDocument::tokenLines() const
     return parsedLines;
 }
 
-namespace
+int TherionDocumentParser::continuationMarkerIndex(const QString &line)
 {
-// Index of a trailing line-continuation backslash, or -1.
-int continuationMarkerIndex(const QString &line)
-{
+    // Therion joins a line ending in a backslash to the next one (thinput.cxx).
     int end = line.size();
     while (end > 0 && line.at(end - 1).isSpace()) {
         --end;
     }
-    int backslashes = 0;
-    while (backslashes < end && line.at(end - 1 - backslashes) == QLatin1Char('\\')) {
-        ++backslashes;
-    }
-    return backslashes % 2 == 1 ? end - 1 : -1;
-}
+    return end > 0 && line.at(end - 1) == QLatin1Char('\\') ? end - 1 : -1;
 }
 
 TherionParsedLine TherionDocumentParser::parseLine(const QString &line, int lineNumber)
@@ -74,112 +67,101 @@ TherionParsedLine TherionDocumentParser::parseLine(const QString &line, int line
     parsedLine.lineNumber = lineNumber;
     parsedLine.rawText = line;
 
-    QString currentToken;
-    int currentTokenStart = -1;
-    QString quotedToken;
-    int quotedTokenStart = -1;
-    bool inSingleQuotes = false;
-    bool inDoubleQuotes = false;
-    bool escaped = false;
-    // A bracketed value is one token that keeps its brackets, as Therion's thsplit_args reads it.
-    int bracketTokenStart = -1;
+    // Splits values as Therion's thsplit_args (thparse.cxx): plain words, "quoted" values with "" for a quote,
+    // and [bracketed] values that nest and keep their brackets. A comment starts only with # at a word start.
+    enum class State
+    {
+        BetweenValues,
+        Word,
+        Quoted,
+        Bracketed
+    };
+    State state = State::BetweenValues;
+    int valueStart = -1;
+    QString quotedText;
     int bracketDepth = 0;
     const int continuationIndex = continuationMarkerIndex(line);
 
-    auto flushToken = [&parsedLine, &currentToken, &currentTokenStart]() {
-        if (currentToken.isEmpty()) {
-            currentTokenStart = -1;
-            return;
-        }
-
-        parsedLine.tokens.append(currentToken);
-        TherionParsedToken tokenSpan;
-        tokenSpan.start = currentTokenStart;
-        tokenSpan.length = currentToken.length();
-        tokenSpan.text = currentToken;
-        parsedLine.tokenSpans.append(tokenSpan);
-        currentToken.clear();
-        currentTokenStart = -1;
-    };
-
-    auto flushQuotedToken = [&parsedLine, &quotedToken, &quotedTokenStart](int endIndex) {
-        if (quotedTokenStart < 0) {
-            return;
-        }
-
-        parsedLine.tokens.append(quotedToken);
-        TherionParsedToken tokenSpan;
-        tokenSpan.start = quotedTokenStart;
-        tokenSpan.length = qMax(endIndex - quotedTokenStart, 0);
-        tokenSpan.text = quotedToken;
-        tokenSpan.type = TherionTokenType::QuotedString;
-        parsedLine.tokenSpans.append(tokenSpan);
-        quotedToken.clear();
-        quotedTokenStart = -1;
-    };
-
-    auto flushBracketToken = [&parsedLine, &line, &bracketTokenStart, &bracketDepth](int endIndex) {
-        if (bracketTokenStart < 0) {
-            return;
-        }
-
-        // An unclosed value runs to the end of the line, without trailing spaces.
-        int end = endIndex;
-        while (end > bracketTokenStart && line.at(end - 1).isSpace()) {
-            --end;
-        }
-        const QString text = line.mid(bracketTokenStart, end - bracketTokenStart);
+    auto appendToken = [&parsedLine](int start, int length, const QString &text, TherionTokenType type) {
         parsedLine.tokens.append(text);
         TherionParsedToken tokenSpan;
-        tokenSpan.start = bracketTokenStart;
-        tokenSpan.length = text.length();
+        tokenSpan.start = start;
+        tokenSpan.length = length;
         tokenSpan.text = text;
+        tokenSpan.type = type;
         parsedLine.tokenSpans.append(tokenSpan);
-        bracketTokenStart = -1;
-        bracketDepth = 0;
+    };
+
+    // An unclosed quoted or bracketed value runs to the end of the line, without trailing spaces.
+    auto unclosedEnd = [&line](int start, int end) {
+        while (end > start && line.at(end - 1).isSpace()) {
+            --end;
+        }
+        return end;
+    };
+
+    auto finishValue = [&](int endIndex) {
+        if (state == State::Word) {
+            appendToken(valueStart, endIndex - valueStart, line.mid(valueStart, endIndex - valueStart),
+                        TherionTokenType::Other);
+        } else if (state == State::Quoted) {
+            const int end = unclosedEnd(valueStart, endIndex);
+            QString text = quotedText;
+            text.truncate(qMax(0, text.size() - (endIndex - end)));
+            appendToken(valueStart, end - valueStart, text, TherionTokenType::QuotedString);
+        } else if (state == State::Bracketed) {
+            const int end = unclosedEnd(valueStart, endIndex);
+            appendToken(valueStart, end - valueStart, line.mid(valueStart, end - valueStart),
+                        TherionTokenType::Other);
+        }
+        state = State::BetweenValues;
     };
 
     for (int index = 0; index < line.length(); ++index) {
         const QChar character = line.at(index);
 
-        if (bracketTokenStart >= 0) {
-            if (index != continuationIndex) {
-                if (character == QLatin1Char('[')) {
-                    ++bracketDepth;
-                } else if (character == QLatin1Char(']') && --bracketDepth == 0) {
-                    flushBracketToken(index + 1);
-                }
-                continue;
-            }
-            flushBracketToken(index);
+        // A quoted or bracketed value ends before a line-continuation marker; the marker stays a word.
+        if ((state == State::Quoted || state == State::Bracketed) && index == continuationIndex) {
+            finishValue(index);
         }
 
-        if (escaped) {
-            if (inSingleQuotes || inDoubleQuotes) {
-                quotedToken.append(character);
+        switch (state) {
+        case State::Word:
+            if (character.isSpace()) {
+                finishValue(index);
+            }
+            continue;
+        case State::Quoted:
+            if (character != QLatin1Char('"')) {
+                quotedText.append(character);
+            } else if (index + 1 < line.length() && line.at(index + 1) == QLatin1Char('"')) {
+                quotedText.append(character);
+                ++index;
             } else {
-                if (currentTokenStart < 0) {
-                    currentTokenStart = index - 1;
-                }
-                currentToken.append(character);
+                appendToken(valueStart, index + 1 - valueStart, quotedText, TherionTokenType::QuotedString);
+                state = State::BetweenValues;
             }
+            continue;
+        case State::Bracketed:
+            if (character == QLatin1Char('[')) {
+                ++bracketDepth;
+            } else if (character == QLatin1Char(']') && --bracketDepth == 0) {
+                appendToken(valueStart, index + 1 - valueStart, line.mid(valueStart, index + 1 - valueStart),
+                            TherionTokenType::Other);
+                state = State::BetweenValues;
+            }
+            continue;
+        case State::BetweenValues:
+            break;
+        }
 
-            escaped = false;
+        if (character.isSpace()) {
             continue;
         }
 
-        if (character == QLatin1Char('\\')) {
-            escaped = true;
-            continue;
-        }
-
-        if (!inSingleQuotes && !inDoubleQuotes && (character == QLatin1Char('#') || character == QLatin1Char('%'))) {
-            flushQuotedToken(index);
-            flushToken();
-
+        if (character == QLatin1Char('#')) {
             parsedLine.commentStart = index;
             parsedLine.commentText = line.mid(index + 1);
-
             TherionParsedToken commentSpan;
             commentSpan.start = index;
             commentSpan.length = line.length() - index;
@@ -189,66 +171,19 @@ TherionParsedLine TherionDocumentParser::parseLine(const QString &line, int line
             break;
         }
 
-        if (!inDoubleQuotes && character == QLatin1Char('\'')) {
-            if (inSingleQuotes) {
-                flushQuotedToken(index + 1);
-                inSingleQuotes = false;
-            } else {
-                flushToken();
-                inSingleQuotes = true;
-                quotedTokenStart = index;
-            }
-            continue;
-        }
-
-        if (!inSingleQuotes && character == QLatin1Char('"')) {
-            if (inDoubleQuotes) {
-                flushQuotedToken(index + 1);
-                inDoubleQuotes = false;
-            } else {
-                flushToken();
-                inDoubleQuotes = true;
-                quotedTokenStart = index;
-            }
-            continue;
-        }
-
-        if (inSingleQuotes || inDoubleQuotes) {
-            quotedToken.append(character);
-            continue;
-        }
-
-        if (character.isSpace()) {
-            flushToken();
-            continue;
-        }
-
-        if (character == QLatin1Char('[') && currentTokenStart < 0 && index != continuationIndex) {
-            bracketTokenStart = index;
+        valueStart = index;
+        if (character == QLatin1Char('"') && index != continuationIndex) {
+            state = State::Quoted;
+            quotedText.clear();
+        } else if (character == QLatin1Char('[') && index != continuationIndex) {
+            state = State::Bracketed;
             bracketDepth = 1;
-            continue;
-        }
-
-        if (currentTokenStart < 0) {
-            currentTokenStart = index;
-        }
-        currentToken.append(character);
-    }
-
-    if (escaped) {
-        if (inSingleQuotes || inDoubleQuotes) {
-            quotedToken.append(QLatin1Char('\\'));
         } else {
-            if (currentTokenStart < 0) {
-                currentTokenStart = line.length() - 1;
-            }
-            currentToken.append(QLatin1Char('\\'));
+            state = State::Word;
         }
     }
 
-    flushBracketToken(line.length());
-    flushQuotedToken(line.length());
-    flushToken();
+    finishValue(line.length());
 
     if (!parsedLine.tokens.isEmpty()) {
         parsedLine.directive = parsedLine.tokens.first().toLower();

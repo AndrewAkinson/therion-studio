@@ -163,6 +163,7 @@ For `.th2` files:
 ### 4.2 Text Editing Features
 
 - line numbers and active-line highlight
+- source lines are read as Therion reads them: `"..."` and `[...]` are single values (write `""` for a quote inside a quoted value), `#` starts a comment only at the start of a word, and `'`, `%`, and a backslash inside a line are ordinary characters; inside `code ... endcode` blocks, TeX and MetaPost `%` comments are therefore not coloured as comments
 - command, option, value, and path autocomplete while typing; command suggestions are filtered for the current document type (`.th`, `.th2`, or Therion config)
 - `Ctrl+Space` to open autocomplete manually
 - In Raw mode, the top document toolbar shows `Format Document`. It is an explicit action: it replaces leading indentation with one tab per Therion block level, uses a tab display width of four spaces, and can be undone in one step. It does not run automatically and leaves blank rows, code-block body rows, line endings, and encoding unchanged.
