@@ -218,7 +218,7 @@ Validation should be conservative and catalog-backed.
   validates join references rather than a second pass; `ProjectJoinRules` checks them per scrap pair once per index
   scan, and the result feeds both the Validation warnings and the `Joins` row marker
 - every station point of every scrap with its resolved station key (`stationPointsByScrapObjectId`), so joined
-  drawings can be fitted to Therion-computed station positions. Those positions come from
+  drawings can be fitted to Therion's measured legs and offset by its computed station positions. Both come from
   `ProjectStationPositionService`, an application service composed by `MainWindow` that runs Therion on its own
   `TherionRunnerService` instance in a temporary folder (never the project) and reads the SQL export through
   `TherionSqlReportDatabase` off the UI thread; the config text and row-to-key rules are pure core functions

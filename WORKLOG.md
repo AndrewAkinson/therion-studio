@@ -322,11 +322,16 @@ Active planning only. Completed history belongs in archive files. Stable archite
 - Phase 2 stage C4 (awaiting review): joined drawings placed from Therion-computed station positions (background
   `export database -fmt sql` run outside the project, shared-frame fit per scrap; XVI fit stays as the fallback);
   join-only rows open aligned (SPECIFICATION 3.8.6, 8.1.5). Open joins are not re-placed when positions arrive.
-- Review changes (awaiting commit): `View -> Joined Drawings` renamed `Linked Drawings` (empty entry
+- Review changes (done): `View -> Joined Drawings` renamed `Linked Drawings` (empty entry
   `No linked drawings`), and the `Link Views` toggle removed so joined drawings always move together, and each drawing's name in that menu brings it to the front (tab or separate map window).
 - Phase 2 stage C5 (fallback placement without Therion) dropped: Therion Studio already needs Therion for much of
   its work; without positions the XVI fit remains. Extended elevations without an equate stay unlinked (no work
   planned). Phase 2 is complete pending review and the PR.
+- Phase 2 section D (done 2026-10-22): fixes found in use. D1 done (wrong `-scale` fallback; `-scale` now only for scraps
+  with fewer than two stations, computed and XVI fits mixed at the join station); D2 open rows whose station is not drawn in the view; D3 join-only rows opening
+  unaligned while positions are stale or a run is going (reduced 2026-10-22 to drawing saves no longer starting a
+  run, done; the rest a known problem); D4 centre on the closest station pair (done 2026-10-22); D2 done 2026-10-22, its survey's nearest scrap stands in; D5 (done,
+  replaces the D1 fix) place drawings as drawn from measured leg vectors, XVI fallback, no `-scale`.
 - Found during C1 (pre-existing, not from the join work): references such as `EntranceSP2@Entrance` to objects in a
   `-namespace off` survey resolve in Therion but not in the project index, so Validation reports false
   `unknown join reference` warnings and C2 would leave those joins uncoloured. Proposed as its own fix branch.
@@ -334,8 +339,8 @@ Active planning only. Completed history belongs in archive files. Stable archite
   `.m`/`.s` suffix convention; user-configurable naming conventions (Settings) would let other conventions be checked.
 - Release note: the join viewer is feature work while 2026.7.2 is scoped to performance; propose it for the release
   after 2026.7.2 unless the maintainers decide otherwise.
-- Next: phase 2 options (open one view in a separate window with a Settings default, link icon on linked tabs, Therion
-  `join` awareness with green equate rows). Open questions are listed in the plan.
+- Next: review and the PR. Left for later (see the plan): re-placing joins opened during a Therion run, rows without
+  a shared station in extended elevations, and chaining legs through undrawn stations.
 
 ### Raster Background Placement (issue #30)
 

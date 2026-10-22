@@ -1505,8 +1505,8 @@ Pokud je soubor otevřený, nejprve se zavře.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStructureBrowser.cpp" line="1211"/>
-        <source>Cannot align the joined drawings: a scrap has no XVI centreline stations or -scale.</source>
-        <translation>Spojené kresby nelze zarovnat: scrap nemá stanice centreline z XVI ani -scale.</translation>
+        <source>Cannot align the joined drawings because a scrap has neither enough measured legs between its station points nor an XVI background.</source>
+        <translation>Spojené kresby nelze zarovnat, protože scrap nemá dost naměřených tahů mezi body stanic ani podklad XVI.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowJoinPlacement.cpp" line="107"/>
@@ -1517,6 +1517,31 @@ Pokud je soubor otevřený, nejprve se zavře.</translation>
         <location filename="../src/app/MainWindowJoinPlacement.cpp" line="109"/>
         <source>No station is shared by these drawings, so they open without alignment.</source>
         <translation>Žádná stanice není těmto kresbám společná, proto se otevřou bez zarovnání.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="124"/>
+        <source>No station is shared by these drawings, and drawings in an extended elevation can only be aligned at a shared station.</source>
+        <translation>Tyto kresby nemají společnou stanici a kresby v rozvinutém řezu lze zarovnat jen na společné stanici.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="126"/>
+        <source>%1 has no station point in this view; open the join again once Therion has computed the station positions, which choose its survey&apos;s nearest drawing.</source>
+        <translation>%1 nemá v tomto pohledu bod stanice; otevřete spojení znovu, až Therion vypočte polohy stanic, podle nichž se vybere nejbližší kresba jejího měření.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="129"/>
+        <source>%1 has no station point in this view, and Therion has computed no position to choose its survey&apos;s nearest drawing.</source>
+        <translation>%1 nemá v tomto pohledu bod stanice a Therion nevypočetl žádnou polohu, podle níž by se vybrala nejbližší kresba jejího měření.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="141"/>
+        <source>%1 has too few measured legs between its station points, so it is placed by its XVI background, which may be turned by the declination.</source>
+        <translation>Kresba %1 má příliš málo naměřených tahů mezi body stanic, proto je umístěna podle podkladu XVI, který může být natočený o deklinaci.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="145"/>
+        <source>The scale of %1 differs from its XVI background by more than a tenth.</source>
+        <translation>Měřítko kresby %1 se od podkladu XVI liší o více než desetinu.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowTherionRunner.cpp" line="141"/>
@@ -6702,6 +6727,16 @@ subtype blocks</translation>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="187"/>
         <source>%1: not drawn in the %2 view</source>
         <translation>%1: není nakreslena v pohledu %2</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="405"/>
+        <source>%1: no station point in its survey&apos;s %2 drawings, and an extended elevation can only be aligned at a shared station</source>
+        <translation>%1: žádný bod stanice v kresbách %2 jejího měření, a rozvinutý řez lze zarovnat jen na společné stanici</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="408"/>
+        <source>%1: no station point in its survey&apos;s %2 drawings, so the drawing nearest the station opens</source>
+        <translation>%1: žádný bod stanice v kresbách %2 jejího měření, proto se otevře kresba nejbližší ke stanici</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="453"/>

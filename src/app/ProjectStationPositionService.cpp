@@ -3,6 +3,7 @@
 #include "TherionRunnerService.h"
 #include "reports/TherionSqlReportDatabase.h"
 
+#include "../core/TherionFileTypes.h"
 #include "../core/TherionStationPositionExport.h"
 
 #include <QDir>
@@ -18,8 +19,8 @@ namespace
 {
 const QString kConfigFileName = QStringLiteral("station-positions.thconfig");
 const QString kExportFileName = QStringLiteral("station-positions.sql");
-// Far more stations than any cave survey; the query reads them all.
-constexpr int kMaximumStations = 10000000;
+// Far more stations and legs than any cave survey; the queries read them all.
+constexpr int kMaximumRows = 10000000;
 }
 
 ProjectStationPositionService::ProjectStationPositionService(const QString &temporaryBasePath, QObject *parent)
@@ -62,6 +63,7 @@ void ProjectStationPositionService::clear()
     ++generation_;
     queued_.reset();
     positions_.clear();
+    legs_.clear();
     attemptKey_.clear();
     attemptStartedAt_ = QDateTime();
     if (running_) {
@@ -81,6 +83,11 @@ const QHash<QString, Th2StationPosition> &ProjectStationPositionService::positio
     return positions_;
 }
 
+const QVector<Th2MeasuredLeg> &ProjectStationPositionService::legs() const
+{
+    return legs_;
+}
+
 bool ProjectStationPositionService::isCurrent(const ProjectStationPositionRequest &request) const
 {
     // A failed attempt is not repeated until a source, the config or the Therion executable changes.
@@ -88,7 +95,9 @@ bool ProjectStationPositionService::isCurrent(const ProjectStationPositionReques
         return false;
     }
     for (const QString &sourceFile : request.sourceFiles) {
-        if (QFileInfo(sourceFile).lastModified() > attemptStartedAt_) {
+        // Legs and positions do not depend on drawings, so saving one does not start a run.
+        if (therionSourceDocumentTypeForFilePath(sourceFile) != TherionSourceDocumentType::TherionMap
+            && QFileInfo(sourceFile).lastModified() > attemptStartedAt_) {
             return false;
         }
     }
@@ -168,6 +177,7 @@ void ProjectStationPositionService::handleLoadFinished()
         return;
     }
     positions_ = result.positions;
+    legs_ = result.legs;
     emit positionsReady();
     finish(QString());
 }
@@ -178,6 +188,7 @@ void ProjectStationPositionService::finish(const QString &errorMessage)
     emit runningChanged(false);
     if (!errorMessage.isEmpty()) {
         positions_.clear();
+        legs_.clear();
         emit positionsFailed(errorMessage);
     }
     if (queued_.has_value()) {
@@ -197,13 +208,17 @@ ProjectStationPositionService::LoadResult ProjectStationPositionService::loadPos
         return result;
     }
     QString queryError;
-    const TherionSqlReportTable table =
-        database.executeReportQuery(therionStationPositionQuery(), &queryError, kMaximumStations);
+    const TherionSqlReportTable stations =
+        database.executeReportQuery(therionStationPositionQuery(), &queryError, kMaximumRows);
+    const TherionSqlReportTable legs = queryError.isEmpty()
+        ? database.executeReportQuery(therionMeasuredLegQuery(), &queryError, kMaximumRows)
+        : TherionSqlReportTable();
     if (!queryError.isEmpty()) {
         result.errorMessage = tr("Station positions could not be read: %1").arg(queryError);
         return result;
     }
-    result.positions = therionStationPositionsFromRows(table.rows);
+    result.positions = therionStationPositionsFromRows(stations.rows);
+    result.legs = therionMeasuredLegsFromRows(legs.rows);
     return result;
 }
 }

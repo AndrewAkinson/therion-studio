@@ -85,9 +85,25 @@ QStringList surveyPairKeys(const QStringList &namespaces)
     return keys;
 }
 
+// Scraps in `projection` with station points, by lower-case survey namespace.
+QHash<QString, QVector<ProjectStructureEntry>> scrapsWithStationsByNamespace(const ProjectIndexSnapshot &snapshot,
+                                                                             const QString &projection)
+{
+    QHash<QString, QVector<ProjectStructureEntry>> scraps;
+    for (const ProjectStructureEntry &entry : snapshot.entries) {
+        if (entry.kind == ProjectStructureEntryKind::Scrap
+            && snapshot.scrapProjectionByObjectId.value(entry.objectId) == projection
+            && !snapshot.stationPointsByScrapObjectId.value(entry.objectId).isEmpty()) {
+            scraps[entry.namespacePath.toLower()].append(entry);
+        }
+    }
+    return scraps;
+}
+
 ProjectJoinSide joinSide(const ProjectIndexSnapshot &snapshot,
                          const ProjectEquateStation &station,
-                         const QString &projection)
+                         const QString &projection,
+                         const QHash<QString, QVector<ProjectStructureEntry>> &surveyScraps)
 {
     ProjectJoinSide side;
     side.station = station;
@@ -97,10 +113,6 @@ ProjectJoinSide joinSide(const ProjectIndexSnapshot &snapshot,
     }
     const QVector<ProjectStationDrawingPoint> points =
         snapshot.stationDrawingPointsByStationKey.value(station.stationKey);
-    if (points.isEmpty()) {
-        side.status = ProjectJoinSideStatus::NotDrawn;
-        return side;
-    }
     for (const ProjectStationDrawingPoint &point : points) {
         if (point.projection == projection) {
             side.status = ProjectJoinSideStatus::Drawn;
@@ -108,7 +120,12 @@ ProjectJoinSide joinSide(const ProjectIndexSnapshot &snapshot,
             return side;
         }
     }
-    side.status = ProjectJoinSideStatus::NotDrawnInProjection;
+    side.surveyScraps = surveyScraps.value(station.namespacePath.toLower());
+    if (!side.surveyScraps.isEmpty()) {
+        side.status = ProjectJoinSideStatus::SurveyDrawnWithoutStation;
+    } else {
+        side.status = points.isEmpty() ? ProjectJoinSideStatus::NotDrawn : ProjectJoinSideStatus::NotDrawnInProjection;
+    }
     return side;
 }
 }
@@ -156,6 +173,7 @@ QVector<ProjectJoinGroup> projectJoinGroups(const ProjectIndexSnapshot &snapshot
         }
     }
 
+    const QHash<QString, QVector<ProjectStructureEntry>> surveyScraps = scrapsWithStationsByNamespace(snapshot, projection);
     QVector<ProjectJoinGroup> groups;
     groups.reserve(snapshot.equateLinks.size() + crossSurveyJoins.size());
     for (const ProjectEquateLink &link : snapshot.equateLinks) {
@@ -168,7 +186,10 @@ QVector<ProjectJoinGroup> projectJoinGroups(const ProjectIndexSnapshot &snapshot
                 if (first.namespacePath.compare(second.namespacePath, Qt::CaseInsensitive) == 0) {
                     continue;
                 }
-                ProjectJoinPair pair{joinSide(snapshot, first, projection), joinSide(snapshot, second, projection)};
+                ProjectJoinPair pair{joinSide(snapshot, first, projection, surveyScraps),
+                                     joinSide(snapshot, second, projection, surveyScraps),
+                                     projection};
+                pair.linkKind = link.kind;
                 pair.joins = joinsBySurveyPair.value(namespacePairKey(first.namespacePath, second.namespacePath));
                 pair.connection = combinedConnection(pair.joins);
                 pair.ruleViolations = projectJoinRuleViolationsFor(snapshot.joinRuleViolations, pair.joins);
@@ -203,5 +224,34 @@ QVector<ProjectJoinGroup> projectJoinGroups(const ProjectIndexSnapshot &snapshot
         groups.append(group);
     }
     return groups;
+}
+
+std::optional<ProjectStructureEntry> nearestSurveyScrap(const ProjectIndexSnapshot &snapshot,
+                                                        const ProjectJoinSide &side,
+                                                        const QHash<QString, Th2StationPosition> &positions)
+{
+    const auto station = positions.constFind(side.station.stationKey);
+    if (station == positions.cend()) {
+        return std::nullopt;
+    }
+    std::optional<ProjectStructureEntry> nearest;
+    double nearestSquared = 0.0;
+    for (const ProjectStructureEntry &scrap : side.surveyScraps) {
+        for (const ProjectScrapStationPoint &point : snapshot.stationPointsByScrapObjectId.value(scrap.objectId)) {
+            const auto position = positions.constFind(point.stationKey);
+            if (position == positions.cend()) {
+                continue;
+            }
+            const double dx = position->x - station->x;
+            const double dy = position->y - station->y;
+            const double dz = position->z - station->z;
+            const double squared = dx * dx + dy * dy + dz * dz;
+            if (!nearest.has_value() || squared < nearestSquared) {
+                nearest = scrap;
+                nearestSquared = squared;
+            }
+        }
+    }
+    return nearest;
 }
 }

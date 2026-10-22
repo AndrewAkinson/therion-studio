@@ -22,4 +22,14 @@ namespace TherionStudio
 // Station positions by project index station key, from rows of therionStationPositionQuery(); unnamed
 // stations (`-`, `.`) and rows that do not parse are skipped.
 [[nodiscard]] QHash<QString, Th2StationPosition> therionStationPositionsFromRows(const QVector<QStringList> &rows);
+
+// Query for the measured legs in an imported Therion SQL export, splays and duplicates left out: from name, from
+// survey full name, to name, to survey full name, length, bearing, gradient. These are the values before loop
+// closure, with calibration and declination applied.
+[[nodiscard]] QString therionMeasuredLegQuery();
+
+// Measured legs from rows of therionMeasuredLegQuery(); legs to unnamed stations and rows that do not parse are
+// skipped. Therion also lists `nosurvey` legs as shots, with the vector computed from the network; they cannot be
+// told apart here, and rarely join two stations of one scrap.
+[[nodiscard]] QVector<Th2MeasuredLeg> therionMeasuredLegsFromRows(const QVector<QStringList> &rows);
 }

@@ -218,12 +218,12 @@ private slots:
     void opensLinksAndClosesAJoinPair()
     {
         // A line that is not a station point cannot be placed; nothing is created.
-        QVERIFY(!openMapEditorJoinPair(first_, 2, second_, kSecondJoinLine));
+        QVERIFY(!openMapEditorJoinPair(first_, 2, second_, kSecondJoinLine).opened());
         QVERIFY(mapEditorJoinPairsFor(first_).isEmpty());
 
-        QVERIFY(openMapEditorJoinPair(first_, kFirstJoinLine, second_, kSecondJoinLine));
+        QVERIFY(openMapEditorJoinPair(first_, kFirstJoinLine, second_, kSecondJoinLine).opened());
         // Opening the same join again replaces it.
-        QVERIFY(openMapEditorJoinPair(first_, kFirstJoinLine, second_, kSecondJoinLine));
+        QVERIFY(openMapEditorJoinPair(first_, kFirstJoinLine, second_, kSecondJoinLine).opened());
         QVERIFY(mapEditorHasJoinLink(first_) && mapEditorHasJoinLink(second_));
         const QVector<MapEditorJoinPair> firstPairs = mapEditorJoinPairsFor(first_);
         const QVector<MapEditorJoinPair> secondPairs = mapEditorJoinPairsFor(second_);
@@ -251,7 +251,7 @@ private slots:
 
         // Opening with a separate window shows the second drawing's map there and keeps the views linked.
         QVERIFY(!second_->isMapPaneDetached());
-        QVERIFY(openMapEditorJoinPair(first_, kFirstJoinLine, second_, kSecondJoinLine, true));
+        QVERIFY(openMapEditorJoinPair(first_, kFirstJoinLine, second_, kSecondJoinLine, true).opened());
         QVERIFY(second_->isMapPaneDetached());
         QWidget *mapWindow = second_->findChild<QGraphicsView *>(QStringLiteral("mapCanvasView"))->window();
         QVERIFY(mapWindow != host_.get());
@@ -266,6 +266,78 @@ private slots:
         QVERIFY(mapEditorJoinPairsFor(first_).isEmpty());
         QVERIFY(mapEditorJoinPairsFor(second_).isEmpty());
         QVERIFY(first_->findChildren<MapEditorJoinViewLink *>().isEmpty());
+    }
+
+    void placesByMeasuredLegsWhenPartnerHasOnlyXvi()
+    {
+        // Measured legs place the first drawing at 2 m per XVI metre; the second drawing has none.
+        const QVector<Th2MeasuredLeg> legs = {{QStringLiteral("1@a"), QStringLiteral("2@a"), {20.0, 0.0, 0.0}},
+                                              {QStringLiteral("2@a"), QStringLiteral("3@a"), {0.0, 10.0, 0.0}}};
+        MapEditorJoinPlacement placement;
+        placement.legs = &legs;
+        placement.firstStationKeysByLine = {
+            {3, QStringLiteral("1@a")}, {4, QStringLiteral("2@a")}, {5, QStringLiteral("3@a")}};
+        placement.projection = QStringLiteral("plan");
+        const MapEditorJoinResult result =
+            openMapEditorJoinPair(first_, kFirstJoinLine, second_, kSecondJoinLine, false, placement);
+        QVERIFY(result.opened());
+        QCOMPARE(result.firstFit.source, Th2CentrelineFitSource::MeasuredLegs);
+        QCOMPARE(result.secondFit.source, Th2CentrelineFitSource::XviStations);
+        // The legs give twice the XVI scale, so the first drawing does not match its background.
+        QVERIFY(result.firstOffBackground && !result.secondOffBackground);
+
+        // The second drawing's station 2 is 10 m east of its join station, which the leg fit draws
+        // 393.7 first units east of the first join station (787.4 with the XVI fit alone).
+        MapEditorJoinOutline *outline = MapEditorJoinOutline::find(first_, second_);
+        QVERIFY(outline != nullptr && outline->item() != nullptr);
+        const QPointF partnerStation = second_->mapSourceToSceneTransform().map(QPointF(10 * 19.685, 0));
+        const QPointF expected = first_->mapSourceToSceneTransform().map(kFirstJoin + QPointF(393.7, 0));
+        QVERIFY(near(outline->item()->mapToScene(partnerStation), expected, 1e-3));
+    }
+
+    void placesTwoStationsApartByTheirComputedOffset()
+    {
+        // A nosurvey leg: the second drawing's station 1 is 2 m north of the first drawing's station 3.
+        MapEditorJoinPlacement placement;
+        placement.sameStation = false;
+        placement.firstStationKeysByLine = {{kFirstJoinLine, QStringLiteral("3@a")}};
+        placement.secondStationKeysByLine = {{kSecondJoinLine, QStringLiteral("1@b")}};
+        placement.projection = QStringLiteral("plan");
+        QCOMPARE(openMapEditorJoinPair(first_, kFirstJoinLine, second_, kSecondJoinLine, false, placement).failure,
+                 MapEditorJoinFailure::NoOffset);
+        QVERIFY(mapEditorJoinPairsFor(first_).isEmpty());
+
+        const QHash<QString, Th2StationPosition> positions = {{QStringLiteral("3@a"), {100.0, 50.0, 0.0}},
+                                                             {QStringLiteral("1@b"), {100.0, 52.0, 0.0}}};
+        placement.positions = &positions;
+        QVERIFY(openMapEditorJoinPair(first_, kFirstJoinLine, second_, kSecondJoinLine, false, placement).opened());
+        MapEditorJoinOutline *outline = MapEditorJoinOutline::find(first_, second_);
+        QVERIFY(outline != nullptr && outline->item() != nullptr);
+        const QPointF partnerJoin = second_->mapSourceToSceneTransform().map(kSecondJoin);
+        const QPointF expected = first_->mapSourceToSceneTransform().map(kFirstJoin + QPointF(0, 2 * 78.74));
+        QVERIFY(near(outline->item()->mapToScene(partnerJoin), expected, 1e-3));
+        // Centred halfway between the two stations.
+        QVERIFY(centredOn(first_, kFirstJoin + QPointF(0, 78.74)));
+    }
+
+    void centresAJoinOnlyRowBetweenTheClosestStations()
+    {
+        // Lines inside each scrap, no join station: the closest computed pair is 3@a and 1@b, 2 m apart.
+        MapEditorJoinPlacement placement;
+        placement.firstStationKeysByLine = {
+            {3, QStringLiteral("1@a")}, {4, QStringLiteral("2@a")}, {5, QStringLiteral("3@a")}};
+        placement.secondStationKeysByLine = {
+            {3, QStringLiteral("1@b")}, {4, QStringLiteral("2@b")}, {5, QStringLiteral("3@b")}};
+        placement.projection = QStringLiteral("plan");
+        const QHash<QString, Th2StationPosition> positions = {{QStringLiteral("1@a"), {0.0, 0.0, 0.0}},
+                                                             {QStringLiteral("2@a"), {10.0, 0.0, 0.0}},
+                                                             {QStringLiteral("3@a"), {10.0, 5.0, 0.0}},
+                                                             {QStringLiteral("1@b"), {12.0, 5.0, 0.0}},
+                                                             {QStringLiteral("2@b"), {22.0, 5.0, 0.0}},
+                                                             {QStringLiteral("3@b"), {22.0, 10.0, 0.0}}};
+        placement.positions = &positions;
+        QVERIFY(openMapEditorJoinPair(first_, kSecondWallLine, second_, kSecondWallLine, false, placement).opened());
+        QVERIFY(centredOn(first_, kFirstJoin + QPointF(78.74, 0)));
     }
 
 private:

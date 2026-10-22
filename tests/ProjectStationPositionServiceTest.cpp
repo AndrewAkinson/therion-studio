@@ -39,7 +39,13 @@ int runFakeTherion()
               "create table SHOT_FLAG (SHOT_ID integer, FLAG char(3));\n"
               "insert into SURVEY values (1, 0, 'a', 'a.cave', NULL);\n"
               "insert into STATION values (1, '1', 1, 10.0, 20.0, 30.0);\n"
-              "insert into STATION values (2, '-', 1, 0.0, 0.0, 0.0);\n");
+              "insert into STATION values (2, '-', 1, 0.0, 0.0, 0.0);\n"
+              "insert into STATION values (3, '2', 1, 10.0, 25.0, 30.0);\n"
+              "insert into SHOT values (1, 1, 3, 1, 5.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0);\n"
+              "insert into SHOT values (2, 1, 2, 1, 2.0, 90.0, 0.0, 2.0, 90.0, 0.0, 0.0, 0.0, 0.0);\n"
+              "insert into SHOT_FLAG values (2, 'spl');\n"
+              "insert into SHOT values (3, 3, 1, 1, 5.0, 180.0, 0.0, 5.0, 180.0, 0.0, 0.0, 0.0, 0.0);\n"
+              "insert into SHOT_FLAG values (3, 'dpl');\n");
     return 0;
 }
 
@@ -79,10 +85,14 @@ private slots:
         QVERIFY(ready.wait(10000));
         QCOMPARE(failed.count(), 0);
         QVERIFY(!service.isRunning());
-        QCOMPARE(service.positions().size(), 1);
+        QCOMPARE(service.positions().size(), 2);
         const Th2StationPosition station =
             service.positions().value(ProjectStructureIndex::stationKey(QStringLiteral("1"), QStringLiteral("a.cave")));
         QCOMPARE(station.y, 20.0);
+        // Splays and duplicates are left out of the measured legs.
+        QCOMPARE(service.legs().size(), 1);
+        QCOMPARE(service.legs().first().toStationKey, ProjectStructureIndex::stationKey(QStringLiteral("2"), QStringLiteral("a.cave")));
+        QCOMPARE(service.legs().first().vector.y, 5.0);
         // Nothing is written into the project.
         QCOMPARE(QDir(project.path()).entryList(QDir::Files).size(), 2);
 
@@ -90,8 +100,25 @@ private slots:
         service.request(request);
         QVERIFY(!service.isRunning());
 
+        // A newer drawing does not make them stale; a newer .th does.
+        const QDateTime later = QDateTime::currentDateTime().addSecs(60);
+        QFile drawing(QDir(project.path()).filePath(QStringLiteral("cave.th2")));
+        QVERIFY(drawing.open(QIODevice::WriteOnly));
+        QVERIFY(drawing.setFileTime(later, QFileDevice::FileModificationTime));
+        ProjectStationPositionRequest withDrawing = request;
+        withDrawing.sourceFiles.append(drawing.fileName());
+        service.request(withDrawing);
+        QVERIFY(!service.isRunning());
+        QFile source(request.sourceFiles.first());
+        QVERIFY(source.open(QIODevice::ReadWrite));
+        QVERIFY(source.setFileTime(later, QFileDevice::FileModificationTime));
+        service.request(withDrawing);
+        QVERIFY(service.isRunning());
+        QVERIFY(ready.wait(10000));
+
         service.clear();
         QVERIFY(service.positions().isEmpty());
+        QVERIFY(service.legs().isEmpty());
     }
 
     void reportsAFailedRunOnce()

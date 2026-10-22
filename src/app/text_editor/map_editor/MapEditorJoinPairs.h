@@ -21,29 +21,55 @@ struct MapEditorJoinPair
     QPointer<MapEditorJoinOutline> outline;
 };
 
-// Station positions computed by Therion and the stations each drawing's station points draw (by source line),
-// for placing both drawings in Therion's frame.
+// Therion data for placing two drawings, and the stations each drawing's station points draw (by source line).
 struct MapEditorJoinPlacement
 {
+    // Measured legs place each drawing as drawn; without them, or where a scrap has too few, its XVI does.
+    const QVector<Th2MeasuredLeg> *legs = nullptr;
+    // Computed positions give only the offset between drawings that do not share the join station.
     const QHash<QString, Th2StationPosition> *positions = nullptr;
     QHash<int, QString> firstStationKeysByLine;
     QHash<int, QString> secondStationKeysByLine;
     QString projection;
+    // The two join station points draw one station (an equate), so they are put at the same point.
+    bool sameStation = true;
+};
+
+enum class MapEditorJoinFailure
+{
+    None,
+    // A drawing has too few measured legs between its station points and no usable XVI.
+    NoFit,
+    // The drawings share no station and computed positions give no offset (none yet, or extended).
+    NoOffset,
+};
+
+struct MapEditorJoinResult
+{
+    MapEditorJoinFailure failure = MapEditorJoinFailure::None;
+    Th2CentrelineFit firstFit;
+    Th2CentrelineFit secondFit;
+    // Placed by measured legs, but its XVI background has a different scale.
+    bool firstOffBackground = false;
+    bool secondOffBackground = false;
+
+    [[nodiscard]] bool opened() const { return failure == MapEditorJoinFailure::None; }
 };
 
 // Aligns two open drawings, shows each as an outline in the other, links the two views, and zooms both onto the
 // join. `firstJoinLine` and `secondJoinLine` are the join-station points, or for a join with no shared station
-// any line inside each joined scrap. With computed positions for both scraps (`placement`), both are placed in
-// Therion's frame and the view is centred between the scraps when there is no join station; otherwise each
-// scrap's centreline fit is linked at the join station. With `separateSecondMap`, the second drawing's map is
-// shown in its separate map window. Replaces any existing join between the same two editors. Returns false,
-// changing nothing, when either drawing cannot be placed.
-bool openMapEditorJoinPair(MapEditorTab *first,
-                           int firstJoinLine,
-                           MapEditorTab *second,
-                           int secondJoinLine,
-                           bool separateSecondMap = false,
-                           const MapEditorJoinPlacement &placement = {});
+// any line inside each joined scrap. Each drawing is scaled and turned as drawn (see MapEditorJoinPlacement). The
+// join station points are put at the same point, or apart by their computed offset when they are two stations;
+// without join station points, the closest pair of station points by computed position is used. The views are
+// centred halfway between the two stations used. With `separateSecondMap`, the second drawing's map is shown in its
+// separate map window. Replaces any existing join between the same two editors. Changes nothing when the drawings
+// cannot be placed.
+MapEditorJoinResult openMapEditorJoinPair(MapEditorTab *first,
+                                          int firstJoinLine,
+                                          MapEditorTab *second,
+                                          int secondJoinLine,
+                                          bool separateSecondMap = false,
+                                          const MapEditorJoinPlacement &placement = {});
 
 [[nodiscard]] QVector<MapEditorJoinPair> mapEditorJoinPairsFor(MapEditorTab *tab);
 

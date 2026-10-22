@@ -9,8 +9,8 @@ Join view that opens the two `.th2` drawings containing the equated stations sid
 through the centreline, each fully editable and saved independently, with a faded read-only outline of the partner
 drawing in each pane.
 
-Status: phase 1 implemented (slices 1–6 below). Phase 2 (options) agreed in outline on 2026-10-14; open questions are
-listed in that section. Specification, architecture, user manual, worklog and translations are updated in the same
+Status: phase 1 implemented (slices 1–6 below). Phase 2 (options A-C and fixes D1-D5) implemented by 2026-10-22,
+pending review and the PR; items left for later are noted in their sections. Specification, architecture, user manual, worklog and translations are updated in the same
 changes that implement each slice. Not archived until phase 2 is done.
 
 ## Current State
@@ -243,6 +243,168 @@ Staged implementation:
   Note (2026-10-15): nothing to do at the moment; revisit only if a way to give extended elevations a shared frame
   appears.
 
+### D. Fixes found in use (2026-10-21)
+
+Reported while testing on a real project. Status: all done (2026-10-22). D1 was fixed and then replaced by D5, D3 was
+reduced to its stale-check part, then D4 and D2 followed. D1 came first because it might have explained D3, and its
+result changed D2-D4.
+
+- **D1 Alignment is wrong even with a shared point.** Equate rows, where both drawings draw the shared station, do not
+  line up correctly. Investigate before changing anything else. Measure where the shared station point lands in each
+  pane in the common frame and how far apart it is. Then find which placement was used (computed fit or the XVI
+  anchor, see D3) and check each step. That means station keys matched to the SQL `FULL_NAME`, plan and elevation
+  projection and its sign, the per-scrap similarity fit against a drawing with several scraps, and the
+  partner-to-this transform (partner fit, then the inverse of this fit). Record the cause here with its numbers before
+  the fix is agreed.
+
+  Result (2026-10-21, measured on the test project with a scratch tool that calls the branch's own core functions;
+  every available equate row in plan, extended, elevation 0, 90 and 315):
+  - Placement with computed positions is correct. Both copies of the shared station land within 0.23 m of each other
+    (most under 0.1 m); fit residuals are 0.00-0.76 m RMS. The one row 2 m apart has its two stations 2 m apart in
+    Therion's own positions. Station keys, the plan and elevation projection and its sign, the per-scrap fit and the
+    partner-to-this transform all check out. The outline and the view link apply the same transform.
+  - The fallback, used when computed positions are missing, still being computed or failed, and always in extended,
+    is correct where both scraps match their XVI centreline stations. At 10 m from the join it is out by 0.6 m at
+    most (rotation within 1.9 degrees, scale within 4 percent).
+  - The fault is the `-scale` fallback. A scrap whose XVI is missing, or does not contain its stations, is placed by
+    its `-scale` option. 9 rows in plan and elevations use it. In 5 of them (1 plan, 1 elevation 0, 3 elevation 90)
+    the scale is 2 to 5 times wrong, so the partner is 5 to 42 m out at 10 m from the join, while the shared station
+    still coincides. In the other 4 the `-scale` happens to be right. 5 extended rows also use `-scale`; they cannot
+    be checked because extended has no computed frame.
+  - Therion does the same steps differently. It applies `-scale` first, but a scrap with two or more station points
+    is then refitted to the stations (`thdb2d::pp_adjust_points`), so `-scale` only decides scale and rotation for
+    a scrap with fewer than two stations. Studio uses `-scale` even for scraps with many stations.
+
+  Fix (agreed and done): with computed positions, fit each scrap to them on its own, and link the two
+  drawings at the join station when only one of them can be fitted that way (computed metres and XVI metres should
+  both be north-up metres in plan and the same elevation; to be checked). Use `-scale` only for a scrap with fewer
+  than two station points, as Therion does. Otherwise refuse the placement and say why, instead of opening the
+  drawings misaligned. D3 then matters less, because rows only fall back while positions are being computed.
+
+  After the fix, measured the same way: no row is placed by a wrong `-scale`. Without computed positions the XVI
+  placement is out by 0.54 m at most at 10 m from the join. The computed and XVI frames of the same scrap differ by
+  2.2 degrees and 4 percent at most, so linking one of each at the join station is sound. Rows that can no longer be
+  placed without computed positions: 3 plan, 1 elevation 0 and 4 elevation 90 (placed once positions are ready), and
+  5 extended (extended has no computed frame, so these now open without outlines and say why, instead of opening
+  misaligned).
+- **D2 Station not drawn in the view.** Some rows of the form `<station>@<survey> = <station>@<other survey>` are
+  dimmed with "not drawn in plan view", although the survey has a drawing in that view. Only the join station's point
+  is missing. This happens in both plan and elevation views.
+  Revised after D5 (2026-10-22). Such a row has no shared station point, so it is placed like a join-only row. Of the
+  survey's scraps in that view, open the one whose station points lie nearest the station's computed position. Each
+  drawing is placed by its own fit (D5) and offset by the closest pair of computed station points, and the views are
+  centred as in D4. In extended there is no offset, so the row is not openable and says why, as for join-only rows.
+  Without computed positions keep the dimmed row but word the reason exactly, e.g. "<station>@<survey> has no
+  station point in <survey>'s plan drawing". Rows where the survey reads no drawing at all stay as they are.
+  Done (2026-10-22). Changes from the plan: the row is not dimmed without computed positions, because the panel
+  does not know about them; instead opening it says so in the status bar and opens nothing. A station that no
+  drawing draws at all is treated the same when its survey has scraps in the view. The nearest scrap is the one
+  with a station point nearest the station in 3D. On the test project this opens rows in plan and elevation views, and
+  the scrap chosen matches the scraps named by hand in the project's `join` commands where both exist.
+- **D3 Joins opened during a Therion run use the XVI.** While a run is going the placement ignores the previous
+  legs and positions, so joins opened then fall back to the XVI, and join-only rows open unaligned. Since D5 this
+  affects equated rows too, because the legs come from the same run. Every drawing save starts a run, because the
+  results count as out of date when any source is newer, `.th2` drawings included.
+  Revised 2026-10-22. Only `.th` files and the config make the results out of date, since the SQL export does not
+  depend on the drawings. The rest is dropped and kept as a known problem: a join opened during a run after a `.th`
+  or config change uses the XVI, or opens unaligned, until it is opened again. If that proves a nuisance, keep the
+  previous results while a run is going and re-place joins that opened without them.
+  Done (2026-10-22): drawings are left out of the stale check.
+- **D4 Centre on where the drawings meet.** Join-only rows are centred between the middles of the two scraps, which can
+  be well away from where they meet. Instead centre both views halfway between the closest pair of station points,
+  one in each scrap, using their computed positions (the user's suggestion). D5 already finds this pair for the
+  offset, so D4 reuses it. Rows whose two stations are linked by a `nosurvey` leg are centred halfway between those
+  two stations. Placement itself stays on each drawing's fit (D5).
+  Done (2026-10-22): every row is centred halfway between the two stations that place it, which for an equate is
+  the join station.
+
+- **D5 Place drawings as drawn, from measured legs (replaces the D1 fix).** Agreed in review on 2026-10-22, done
+  (results at the end of this item). The D1 fix still places by Therion's computed station positions, which are loop closed for the whole
+  project, while the drawings were made on unclosed or differently closed data. In the test project the two frames
+  agree within 2.2 degrees and 4 percent, but a cave with large misclosures could be much worse. `-scale` is also
+  still used for scraps with fewer than two stations, and it is unreliable because it can differ in every scrap.
+  The join view should show the drawings as drawn.
+
+  Scale and rotation of each drawing:
+  - Fit the measured leg vectors to the drawing. Therion's SQL export, already read by the app, has a `SHOT` table
+    with measured `LENGTH`, `BEARING` and `GRADIENT` beside the loop closed `ADJ_*` values. Checked with Therion
+    6.4.0 that `BEARING` includes declination and that loop closure only changes `ADJ_*`. Units, calibration and
+    data formats are then Therion's, not reimplemented. Splays and duplicates are left out using `SHOT_FLAG`.
+  - Use every leg with both ends drawn as station points in the scrap. Project the measured vector into the view
+    (plan, or elevation at its angle) and fit scale and rotation from measured to drawn vectors, weighting each leg by
+    its projected length. Drop legs whose projected length is very short (threshold to be set from test data, for
+    example under 1 m or a small fraction of the longest), since a drawing error of 0.1 m turns a 1 m leg by about 6
+    degrees. This also drops legs that run nearly along the view direction in an elevation, and vertical legs in plan.
+  - Extended has no rotation. Fit the scale only, from each leg's horizontal length along x and its vertical change
+    along y. The left or right direction is taken from the drawing, so Therion's extend rules need not be copied.
+  - Legs between drawn stations that pass through stations not drawn in the scrap are not chained for now. Add
+    chaining only if real drawings need it.
+  - If a scrap has too few usable legs, use its XVI grid (`XVIgrids` metres per `XVIgrid` vector) for scale and
+    orientation. Where both are available, compare them and say when they disagree, which means the drawing does not
+    sit on its background.
+  - `-scale` is not used at all.
+
+  Declination. Drawings may not be corrected for declination. SexyTopo has no declination setting, PocketTopo had one
+  but it may have been approximate and may not be stored, and TopoDroid is unknown. Assume drawings are uncorrected
+  unless found otherwise. The leg fit is not affected, because the fitted rotation absorbs it in plan, and extended
+  has no rotation. Two cases are affected.
+  - The XVI grid fallback in plan takes the drawing's north as true, so it may be turned by the declination. The
+    message or tooltip says when a drawing was placed by its XVI grid.
+  - An elevation drawn on uncorrected data is projected at a slightly different angle, a small change of shape that
+    no rotation can remove. To be measured on test data; no correction planned.
+
+  Placement of the two drawings:
+  - Equated rows. Put the shared station at the same point in both drawings.
+  - Rows without a shared station (join-only rows, and `nosurvey` legs) in plan and elevation. Take one station point
+    from each drawing and offset by the projected difference of their computed positions. Use the closest such pair,
+    so that loop closure has least effect, or for a `nosurvey` leg its two stations. Computed positions are used only
+    for this one vector, never for scale or rotation. D4 still decides where the views are centred.
+  - Rows without a shared station in extended. Computed positions are 3D and give no extended offset, so these rows
+    are not openable for now, with a message saying why. To be revisited later.
+
+  Order for each drawing: leg fit, then XVI grid, then no outlines with a message. The shared frame of computed
+  positions from the D1 fix is removed. D2 and D3 change with this, since computed positions are then needed only
+  for rows without a shared station, so revisit both after D5 (done, see D2 and D3).
+
+  Considered and not used. Running Therion on the single survey would close loops inside it and could unroll
+  extended differently from the drawing. Therion cannot export without a config file either (`therion -s file.th`
+  processes the data but writes nothing), though a temporary config would do.
+
+  Verification. Measure with the scratch tool on the test project before and after, in plan, elevations and
+  extended: the gap at the shared station, the error 10 m from the join compared with the XVI placement, legs used
+  and dropped per scrap, and leg fit against XVI grid per scrap. QTests for the leg fit (plan, elevation, extended,
+  short and end-on legs dropped, splays left out), the XVI grid fallback, and the offset for rows without a shared
+  station.
+
+  Done (2026-10-22). Changes from the plan found while measuring:
+  - A station drawn twice in one scrap took the fit 15 percent off (1.1 m RMS), so the legs of a station drawn
+    more than once are left out. Legs more than 0.5 m, and more than three times the median, off the median of the
+    legs' own scale and rotation are also left out as misdrawn; a least-squares first fit was pulled by the bad leg
+    and did not catch it.
+  - The XVI fallback keeps the fit to matching XVI stations when there are two or more, and uses the grid alone
+    otherwise.
+  - The XVI check compares scale only. Rotation differs by the declination when a drawing was made without it.
+  - Legs keep the weighting of a plain least-squares fit of the vectors, so longer legs count more.
+  - Therion also lists `nosurvey` legs in `SHOT`, with the vector computed from the network, and nothing marks
+    them. They are not left out; they rarely join two stations of one scrap, and their vector is still close.
+  - D3 is unchanged, so legs, like positions, are not used while a run is going; joins opened then use the XVI.
+
+  Results on the test project with the scratch tool (every available row, 23 plan, 20 elevation 315, 9 elevation 0,
+  5 elevation 90, 19 extended):
+  - Every row is placed by measured legs on both sides; none needs the XVI and none fails. The 5 extended rows that
+    D1 could not place are placed.
+  - Leg fits agree with fits to computed positions within 1.5 degrees and 3.8 percent, and with the XVI within 1.9
+    degrees and, except one drawing, 1 percent. That drawing's XVI is at a quarter of the legs' scale and of the
+    computed positions' scale, and the status bar now says so.
+  - Compared with the D1 placement from computed positions, the partner moves at most 0.47 m at 10 m from the join;
+    the shared station, up to 0.23 m apart before, now coincides.
+  - Angle error of single legs against the computed fit: up to 22 degrees under 1 m, up to 3.2 degrees from 1 to
+    2 m, under 1.5 degrees for most longer legs (one 4.6). This supports leaving out legs under 1 m.
+  - Join-only rows find a closest station pair 3.5 to 15.5 m apart.
+
+Each slice is a separate commit on `JoinViewer` with tests, doc and translation updates, measured on the test project
+before and after, and checked in the app.
+
 ### Open questions for phase 2
 
 Answered (2026-10-14):
@@ -261,7 +423,8 @@ Answered (2026-10-14):
 
 Still open:
 
-1. Check during C4 whether `export database` can leave out the shot tables; only the station table is read either way.
+1. Check during C4 whether `export database` can leave out the shot tables. No longer wanted once D5 is done, since
+   it reads the `SHOT` table.
 
 ## Risks
 
