@@ -2,7 +2,7 @@
 
 Date: 2026-10-15
 
-Status: V1a, V1b, V2a, V2b, V3, V4, V4b, and V5 done. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
+Status: V1a, V1b, V2a, V2b, V3, V4, V4b, V5, and V5b done. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
 values, Therion's line splitting (`thsplit_args`) first in two parts (V1a, V1b), code blocks as a potential slice,
 and slices renumbered.
 
@@ -277,6 +277,70 @@ errors that remain after V1-V4. The referee test (V8) would only automate checki
 - Documentation: user manuals (all four languages) say what error, warning, and informational mean;
   `docs/THERION_COMPATIBILITY.md` where it names severities.
 
+## V5b - Drawing Object IDs Are Unique In The Survey
+
+Goal: report a duplicate `point`, `line` or `area` `-id` wherever Therion reports it, and only there.
+
+Done (2026-10-22). The real project used for the findings table has no duplicate IDs and gains no findings; IDs
+repeated across scraps and IDs equal to a station name were added by hand in the app and reported as expected. A
+trial merge with `NamespaceOffBug` is clean. That branch makes objects in a `-namespace off` survey resolve through
+the survey name, and this slice puts their IDs in the parent's namespace, which is the same Therion rule seen from
+lookup and from uniqueness. Also found while testing, the index scanned files in hash order, so a duplicate across
+two files could be reported on the earlier one; it now scans in source graph order and reports the later one, as
+Therion does.
+
+Therion keys every named object by its survey namespace, not its scrap (`thdatabase.cxx`, `duplicate object name`,
+the map is keyed by name and `get_nss()` survey). Drawing object IDs, `survey`, `map` and `scrap` names all share
+that map, so an ID must be unique across every scrap and `.th2` file the survey reads. Area borders are also looked
+up in the survey, then must be in the area's scrap (`thdb2d.cxx`, `line outside of current scrap`), which the
+existing `unknown-area-line-reference` check already covers.
+
+Both duplicate checks key drawing object IDs by their scrap, so duplicates in different scraps or files of one
+survey go unreported (Therion fails with an error).
+
+- Raw editor (`TherionSourceValidator.cpp`): `duplicateObjectIdKey` uses `objectIdScopeKey`, the whole block stack,
+  which includes the scrap. Key drawing object IDs with the same scope as `survey`, `map` and `scrap` names, built
+  from the survey frames only and skipping `-namespace off` surveys like the index does, and put both in one key
+  space, so a point `-id` equal to a scrap name is also found. In a `.th2` without survey blocks the scope is the
+  file. One key function replaces `duplicateObjectIdKey` and `duplicateNamespaceNameKey`.
+- Project index (`ProjectStructureIndex.cpp`): `duplicateIdentityLookupKey` keys drawing objects by
+  `parentObjectId` (the scrap). Use `entry.namespacePath`, which the source graph scan already sets from the survey
+  that inputs the drawing (with `-namespace off` applied), in the same `namespace@` key space as survey, map and scrap
+  names. This finds duplicates across `.th2` files read by one survey. `structureEntryUsesScrapObjectIdNamespace`
+  goes.
+- Drawings with no owning survey: with a target config, only files it reads are scanned (V4), so nothing changes.
+  Without a config the index falls back to every unincluded file as a root, and unrelated drawings would all share
+  the empty namespace. In that case key them by file, so unrelated drawings are not reported against each other.
+- Station names: centreline stations go into the same map, so a drawing object `-id` equal to a station name in the
+  same survey also fails. Checked with Therion 6.4.0, a label `-id 3` in a survey with station `3` gives
+  `object already exist -- 3`, reported on the centreline data line. The project index already collects stations
+  by survey namespace for the station-reference check (`stationReferencesFromProject`), so look each drawing object
+  ID up there and report a `duplicate-object-id` at the `-id` value, naming the station. Project check only, as the
+  Raw editor sees one file.
+- Case: Therion compares names with `strcmp`, but the index lowercased IDs before comparing, which the wider scope
+  would turn into more false duplicates (`wall` and `Wall`). Compare IDs case-sensitively, as the Raw editor already
+  does.
+- Severity stays error (V5 table, `duplicate object name`, `object already exist`).
+- Tests (QTest, small fixtures)
+  - Raw editor: the same `-id` in two scraps of one file is reported (update `reportsDuplicateObjectIdsInSameSourceScope`,
+    which expects it not to be); a point `-id` equal to a scrap name is reported; the same `-id` in two surveys of one
+    `.th` is not.
+  - Index: two `.th2` files input by one survey with the same `-id`, reported once at the later one; the same files
+    input by two surveys, not reported; a `-namespace off` survey shares its parent's namespace; no config and two
+    unrelated drawings, not reported; a drawing `-id` equal to a station name in the same survey, reported, and in
+    another survey, not reported.
+  - Check each fixture with Therion 6.4.0, as for V5.
+- Measure on the real project used for the findings table: count new `duplicate-object-id` findings and confirm
+  each against Therion, before and after.
+- Documentation: `SPECIFICATION.md` (duplicate IDs within the survey namespace, across scraps and files); the
+  validation paragraph of the four manuals; `docs/THERION_COMPATIBILITY.md` (lines 37 and 45 already corrected, cherry-picked from
+  `docs/scraps-are-not-namespaces`; add that station names share the namespace with drawing object IDs);
+  translations for any new text; WORKLOG (remove the follow-up line that commit added).
+
+Not in this slice
+- The map editor makes new IDs (line split) unique only in the open file, so it can still create a duplicate with
+  another file of the survey. The validator would now report it; making the editor avoid it is a separate change.
+
 ## V6 (potential) - Code Blocks Split By Their Own Rules
 
 Potential, not scheduled. Studio already understands blocks: `TherionSourceDocument` builds the block stack (`survey`,
@@ -312,6 +376,7 @@ WORKLOG backlog item "Compiler-confirmed project-index comparison". Revisit afte
 | V4 | Drawings outside the target config's source graph (Information severity) | |
 | V4b | Document type from how Therion reads a file | |
 | V5 | Severity policy | |
+| V5b | Drawing object IDs unique in the survey, not the scrap | |
 | V6 (p) | Code blocks split by their own rules (TeX and MetaPost) | |
 | V7 (p) | Validate each drawing against the config that reads it | |
 | V8 (p) | Therion referee test | |

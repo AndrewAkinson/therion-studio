@@ -128,6 +128,8 @@ StationReferenceIndex stationReferencesFromProject(
     const QHash<QString, QString> &inMemoryFileContentsByPath,
     const std::function<bool()> &shouldCancel);
 QVector<ProjectIndexDiagnostic> scanDuplicateObjectIds(const QVector<ProjectStructureEntry> &entries,
+                                                       const StationReferenceIndex &stationIndex,
+                                                       bool separateUnownedFiles,
                                                        ParsedFileCache *cache,
                                                        const QHash<QString, QString> &inMemoryFileContentsByPath,
                                                        const std::function<bool()> &shouldCancel);
@@ -289,6 +291,12 @@ MapReferenceParts parseMapReference(const QString &referenceName)
     return parts;
 }
 
+// Therion keys named objects by survey namespace and compares names case-sensitively (thobjectid).
+QString namespaceIdentityKey(const QString &namespacePath, const QString &name)
+{
+    return normalizedNamespaceToken(namespacePath) + QLatin1Char('\n') + name.trimmed();
+}
+
 QString namespacedReferenceLookupKey(const QString &name, const QString &namespacePath)
 {
     return QStringLiteral("%1@%2").arg(mapReferenceLookupKey(name), normalizedNamespaceToken(namespacePath));
@@ -303,6 +311,8 @@ struct StationReferenceIndex
 {
     QHash<QString, QVector<QString>> keysByExactReference;
     ReferenceKeyIndex keysByNameAndNamespace;
+    // namespaceIdentityKey of each centreline station, compared case-sensitively like Therion.
+    QSet<QString> namespaceIdentityKeys;
 };
 
 enum class ReferenceResolutionState
@@ -529,6 +539,7 @@ void addStationReferenceKey(StationReferenceIndex *index,
         : ownerNamespacePath;
     index->keysByNameAndNamespace.keysByNameAndNamespace[
         namespacedReferenceLookupKey(reference.name, targetNamespacePath)].append(candidateKey);
+    index->namespaceIdentityKeys.insert(namespaceIdentityKey(targetNamespacePath, reference.name));
 }
 
 ReferenceResolution resolveStationReference(const StationReferenceIndex &index,
@@ -910,15 +921,6 @@ QString surveyNameFromLine(const TherionParsedLine &parsedLine)
     return parsedLine.tokens.value(1, QStringLiteral("survey"));
 }
 
-bool surveyCreatesNamespace(const TherionParsedLine &parsedLine)
-{
-    QString namespaceValue = commandOptionValue(parsedLine.tokens, QStringLiteral("namespace"));
-    if (namespaceValue.isEmpty()) {
-        namespaceValue = commandOptionValue(parsedLine.tokens, QStringLiteral("-namespace"));
-    }
-    return namespaceValue.compare(QStringLiteral("off"), Qt::CaseInsensitive) != 0;
-}
-
 QString normalizedStructureDirective(const QString &directive)
 {
     if (directive == QStringLiteral("centerline")) {
@@ -1157,7 +1159,7 @@ void appendProjectStructureFromFile(const QString &filePath,
             const QString openingName = directive == QStringLiteral("survey")
                 ? surveyNameFromLine(parsedLine)
                 : sectionNameFromLine(parsedLine);
-            const bool createsNamespace = directive == QStringLiteral("survey") ? surveyCreatesNamespace(parsedLine) : true;
+            const bool createsNamespace = directive == QStringLiteral("survey") ? surveyCommandCreatesNamespace(parsedLine) : true;
             const ProjectStructureEntry entry = appendStructureEntry(entries,
                                                                     openingKind,
                                                                     openingName,
@@ -1296,7 +1298,7 @@ bool structureEntryKindParticipatesInDuplicateIdentity(ProjectStructureEntryKind
         || kind == ProjectStructureEntryKind::Area;
 }
 
-bool structureEntryUsesScrapObjectIdNamespace(ProjectStructureEntryKind kind)
+bool structureEntryUsesObjectIdOption(ProjectStructureEntryKind kind)
 {
     return kind == ProjectStructureEntryKind::Point
         || kind == ProjectStructureEntryKind::Line
@@ -1323,22 +1325,16 @@ QString parentNamespacePathForDuplicateIdentity(const ProjectStructureEntry &ent
     return parts.join(QLatin1Char('.'));
 }
 
-QString duplicateIdentityLookupKey(const ProjectStructureEntry &entry,
-                                   const QString &identifier)
+// The survey namespace an entry's name or -id belongs to; drawing object IDs share it with survey, map and scrap names.
+std::optional<QString> duplicateIdentityNamespacePath(const ProjectStructureEntry &entry)
 {
-    if (structureEntryUsesScrapObjectIdNamespace(entry.kind)) {
-        return QStringLiteral("object@%1:%2")
-            .arg(entry.parentObjectId,
-                 normalizedIdentityToken(identifier));
+    if (structureEntryUsesObjectIdOption(entry.kind)) {
+        return entry.namespacePath;
     }
-
     if (structureEntryUsesParentNamespaceName(entry.kind)) {
-        return QStringLiteral("namespace@%1:%2")
-            .arg(normalizedNamespaceToken(parentNamespacePathForDuplicateIdentity(entry)),
-                 normalizedIdentityToken(identifier));
+        return parentNamespacePathForDuplicateIdentity(entry);
     }
-
-    return QString();
+    return std::nullopt;
 }
 
 std::optional<TherionSourceLogicalArgumentRange> commandDuplicateIdentityRange(
@@ -1352,7 +1348,7 @@ std::optional<TherionSourceLogicalArgumentRange> commandDuplicateIdentityRange(
         return command.positionalArgumentRanges.constFirst();
     }
 
-    if (!structureEntryUsesScrapObjectIdNamespace(kind)) {
+    if (!structureEntryUsesObjectIdOption(kind)) {
         return std::nullopt;
     }
 
@@ -1598,6 +1594,8 @@ ProjectIndexSnapshot scanProjectIndexFromFilePaths(const QString &projectRootPat
         return cancelSnapshot();
     }
     snapshot.diagnostics += scanDuplicateObjectIds(snapshot.entries,
+                                                   stationReferenceIndex,
+                                                   configResolution.rootFiles.isEmpty(),
                                                    &cache,
                                                    inMemoryFileContentsByPath,
                                                    shouldCancel);
@@ -2085,12 +2083,16 @@ QVector<ProjectIndexDiagnostic> scanStationReferences(const QVector<ProjectStruc
 }
 
 QVector<ProjectIndexDiagnostic> scanDuplicateObjectIds(const QVector<ProjectStructureEntry> &entries,
+                                                       const StationReferenceIndex &stationIndex,
+                                                       bool separateUnownedFiles,
                                                        ParsedFileCache *cache,
                                                        const QHash<QString, QString> &inMemoryFileContentsByPath,
                                                        const std::function<bool()> &shouldCancel)
 {
     QVector<ProjectIndexDiagnostic> diagnostics;
     QHash<QString, QVector<ProjectStructureEntry>> entriesByFile;
+    // Source graph order, so the later of two files is reported, as Therion does.
+    QStringList fileOrder;
     for (const ProjectStructureEntry &entry : entries) {
         if (!structureEntryKindParticipatesInDuplicateIdentity(entry.kind)
             || entry.name.trimmed().isEmpty()
@@ -2098,22 +2100,26 @@ QVector<ProjectIndexDiagnostic> scanDuplicateObjectIds(const QVector<ProjectStru
             || entry.lineNumber <= 0) {
             continue;
         }
-        entriesByFile[normalizedFilePathKey(entry.sourceFile)].append(entry);
+        const QString fileKey = normalizedFilePathKey(entry.sourceFile);
+        if (!entriesByFile.contains(fileKey)) {
+            fileOrder.append(fileKey);
+        }
+        entriesByFile[fileKey].append(entry);
     }
 
     QHash<QString, ProjectStructureEntry> firstEntryByIdKey;
-    for (auto fileIt = entriesByFile.constBegin(); fileIt != entriesByFile.constEnd(); ++fileIt) {
+    for (const QString &fileKey : std::as_const(fileOrder)) {
         if (projectIndexScanShouldCancel(shouldCancel)) {
             return diagnostics;
         }
         const TherionSourceLogicalDocument &logicalDocument =
-            logicalDocumentForFile(fileIt.key(), cache, inMemoryFileContentsByPath);
+            logicalDocumentForFile(fileKey, cache, inMemoryFileContentsByPath);
         QHash<int, TherionSourceLogicalCommand> commandsByStartLine;
         for (const TherionSourceLogicalCommand &command : logicalDocument.commands()) {
             commandsByStartLine.insert(command.startLineNumber, command);
         }
 
-        for (const ProjectStructureEntry &entry : fileIt.value()) {
+        for (const ProjectStructureEntry &entry : entriesByFile.value(fileKey)) {
             if (projectIndexScanShouldCancel(shouldCancel)) {
                 return diagnostics;
             }
@@ -2128,18 +2134,27 @@ QVector<ProjectIndexDiagnostic> scanDuplicateObjectIds(const QVector<ProjectStru
                 continue;
             }
 
-            const QString idKey = duplicateIdentityLookupKey(entry, idRange->text);
-            if (idKey.isEmpty()) {
+            const std::optional<QString> namespacePath = duplicateIdentityNamespacePath(entry);
+            if (!namespacePath.has_value()) {
                 continue;
             }
-            const auto firstIt = firstEntryByIdKey.constFind(idKey);
-            if (firstIt == firstEntryByIdKey.constEnd()) {
+            const QString identityKey = namespaceIdentityKey(*namespacePath, idRange->text);
+            // Without a config, drawings outside any survey may be unrelated, so each file is its own scope.
+            const QString idKey = separateUnownedFiles && namespacePath->trimmed().isEmpty()
+                ? fileKey + QLatin1Char('\n') + identityKey
+                : identityKey;
+            ProjectIndexDiagnosticKind kind = ProjectIndexDiagnosticKind::DuplicateObjectId;
+            if (!firstEntryByIdKey.contains(idKey)) {
                 firstEntryByIdKey.insert(idKey, entry);
-                continue;
+                if (!structureEntryUsesObjectIdOption(entry.kind)
+                    || !stationIndex.namespaceIdentityKeys.contains(identityKey)) {
+                    continue;
+                }
+                kind = ProjectIndexDiagnosticKind::ObjectIdMatchesStation;
             }
 
             appendProjectIndexDiagnostic(&diagnostics,
-                                         ProjectIndexDiagnosticKind::DuplicateObjectId,
+                                         kind,
                                          entry.objectId,
                                          entry.sourceFile,
                                          idRange->physicalRange.lineNumber,

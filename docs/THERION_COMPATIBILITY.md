@@ -39,6 +39,8 @@ Therion Studio is an editor and early-feedback tool. The Therion compiler remain
 - `survey`, `map`, and `scrap` names share the parent survey namespace for reference purposes. A duplicate among these names in the same parent namespace is a compatibility risk and should be diagnosed conservatively when source ranges are known.
 - Map drawing object IDs (`point -id`, `line -id`, `area -id`) are not scoped by scrap. They share the survey namespace with each other and with `survey`, `map` and `scrap` names, so an ID must be unique across every scrap and `.th2` file in that survey. Scraps are not namespaces.
 - Station names are scoped by survey/centerline namespace. Repeated station names in different surveys are valid.
+- Centreline station names share the survey namespace with drawing object IDs, so a `point`, `line` or `area` `-id` equal to a station name in the same survey fails in Therion (`object already exist`).
+- Therion compares names case-sensitively, so `wall` and `Wall` are different IDs.
 - Duplicate diagnostics should point at the later repeated identifier token, not the whole line, when the source range is available.
 - Cross-file duplicate checks must respect the effective Therion namespace, not only the physical file path.
 

@@ -2741,6 +2741,11 @@ Line-point options: %1</translation>
         <translation>ID objektu `%1` už v tomto namespace používa iný objekt.</translation>
     </message>
     <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="245"/>
+        <source>Object id `%1` is also the name of a station in this survey.</source>
+        <translation>ID objektu `%1` je zároveň menom stanice v tomto survey.</translation>
+    </message>
+    <message>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="318"/>
         <source>Drawing not read by the config</source>
         <translation>Kresba nie je načítaná konfiguráciou</translation>

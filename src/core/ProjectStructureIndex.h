@@ -40,6 +40,7 @@ enum class ProjectIndexDiagnosticKind
     UnknownStationReference,
     AmbiguousStationReference,
     DuplicateObjectId,
+    ObjectIdMatchesStation,
 };
 
 enum class ProjectStationReferenceResolutionState

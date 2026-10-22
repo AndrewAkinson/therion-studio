@@ -2683,6 +2683,11 @@ Lignes de points : %1</translation>
         <translation>L&apos;identifiant d&apos;objet `%1` est déjà utilisé par un autre objet dans cet espace de noms.</translation>
     </message>
     <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="245"/>
+        <source>Object id `%1` is also the name of a station in this survey.</source>
+        <translation>L'identifiant d'objet `%1` est aussi le nom d'une station de ce survey.</translation>
+    </message>
+    <message>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="318"/>
         <source>Drawing not read by the config</source>
         <translation>Dessin non lu par la configuration</translation>

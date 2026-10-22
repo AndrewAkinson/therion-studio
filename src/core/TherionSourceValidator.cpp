@@ -473,17 +473,18 @@ TherionParsedLine parseValidatorSyntheticLine(const QString &lineText)
     return TherionDocumentParser::parseLine(lineText);
 }
 
-QString objectIdScopeKey(const QVector<TherionSourceBlockFrame> &blockStack)
+// Therion keys named objects by survey namespace, so scraps and `-namespace off` surveys add nothing.
+QString surveyNamespaceScopeKey(const QVector<TherionSourceBlockFrame> &blockStack)
 {
     QStringList parts;
-    parts.reserve(blockStack.size());
     for (const TherionSourceBlockFrame &frame : blockStack) {
-        const TherionParsedLine parsedLine = parseValidatorSyntheticLine(frame.lineText);
-        QString id;
-        if (parsedLine.tokens.size() > 1) {
-            id = parsedLine.tokens.at(1).trimmed();
+        if (frame.directive != QStringLiteral("survey")) {
+            continue;
         }
-        parts.append(frame.directive + QLatin1Char(':') + id);
+        const TherionParsedLine parsedLine = parseValidatorSyntheticLine(frame.lineText);
+        if (surveyCommandCreatesNamespace(parsedLine)) {
+            parts.append(parsedLine.tokens.value(1).trimmed());
+        }
     }
     return parts.join(QLatin1Char('/'));
 }
@@ -505,25 +506,7 @@ QString scrapObjectScopeKey(const QVector<TherionSourceBlockFrame> &blockStack)
     return parts.join(QLatin1Char('/'));
 }
 
-QString duplicateObjectIdKey(const TherionSourceLogicalCommand &command,
-                             const QString &objectId)
-{
-    return QStringLiteral("object\n")
-        + objectIdScopeKey(command.blockStackBefore)
-        + QLatin1Char('\n')
-        + objectId.trimmed();
-}
-
-QString duplicateNamespaceNameKey(const TherionSourceLogicalCommand &command,
-                                  const QString &name)
-{
-    return QStringLiteral("namespace\n")
-        + objectIdScopeKey(command.blockStackBefore)
-        + QLatin1Char('\n')
-        + name.trimmed();
-}
-
-bool commandUsesScrapObjectIdNamespace(const QString &commandName)
+bool commandUsesObjectIdOption(const QString &commandName)
 {
     return commandName == QStringLiteral("line")
         || commandName == QStringLiteral("point")
@@ -636,7 +619,7 @@ std::optional<TherionSourceLogicalArgumentRange> commandObjectIdentityRange(
         return command.positionalArgumentRanges.constFirst();
     }
 
-    if (!commandUsesScrapObjectIdNamespace(commandName)) {
+    if (!commandUsesObjectIdOption(commandName)) {
         return std::nullopt;
     }
 
@@ -656,13 +639,11 @@ std::optional<QString> commandDuplicateIdentityKey(const TherionSourceLogicalCom
                                                    const QString &identity)
 {
     const QString commandName = commandNameForDuplicateValidation(command);
-    if (commandUsesScrapObjectIdNamespace(commandName)) {
-        return duplicateObjectIdKey(command, identity);
+    // Object IDs share the namespace with survey, map and scrap names.
+    if (!commandUsesObjectIdOption(commandName) && !commandUsesParentNamespaceName(commandName)) {
+        return std::nullopt;
     }
-    if (commandUsesParentNamespaceName(commandName)) {
-        return duplicateNamespaceNameKey(command, identity);
-    }
-    return std::nullopt;
+    return surveyNamespaceScopeKey(command.blockStackBefore) + QLatin1Char('\n') + identity.trimmed();
 }
 
 TherionSourceDiagnostic diagnosticForDuplicateObjectId(

@@ -198,6 +198,15 @@ QString commandOptionValue(const QStringList &tokens, const QString &optionName)
     return values.isEmpty() ? QString() : values.constFirst().trimmed();
 }
 
+bool surveyCommandCreatesNamespace(const TherionParsedLine &parsedLine)
+{
+    QString namespaceValue = commandOptionValue(parsedLine.tokens, QStringLiteral("namespace"));
+    if (namespaceValue.isEmpty()) {
+        namespaceValue = commandOptionValue(parsedLine.tokens, QStringLiteral("-namespace"));
+    }
+    return namespaceValue.compare(QStringLiteral("off"), Qt::CaseInsensitive) != 0;
+}
+
 QHash<QString, QString> commandOptionValuesByName(const QStringList &tokens)
 {
     QHash<QString, QString> values;

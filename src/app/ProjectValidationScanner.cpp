@@ -239,6 +239,12 @@ TherionSourceDiagnostic diagnosticForProjectIndexDiagnostic(const ProjectIndexDi
         diagnostic.message = QObject::tr("Object id `%1` is already used by another object in this namespace.")
                                  .arg(indexDiagnostic.referencedName);
         break;
+    case ProjectIndexDiagnosticKind::ObjectIdMatchesStation:
+        diagnostic.code = QStringLiteral("duplicate-object-id");
+        diagnostic.title = QObject::tr("Duplicate object id");
+        diagnostic.message = QObject::tr("Object id `%1` is also the name of a station in this survey.")
+                                 .arg(indexDiagnostic.referencedName);
+        break;
     }
 
     return diagnostic;

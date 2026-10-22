@@ -230,6 +230,7 @@ bool isStructureRelationshipDiagnostic(const TherionStudio::ProjectIndexDiagnost
     case TherionStudio::ProjectIndexDiagnosticKind::UnknownStationReference:
     case TherionStudio::ProjectIndexDiagnosticKind::AmbiguousStationReference:
     case TherionStudio::ProjectIndexDiagnosticKind::DuplicateObjectId:
+    case TherionStudio::ProjectIndexDiagnosticKind::ObjectIdMatchesStation:
         return false;
     }
     return false;
@@ -254,6 +255,7 @@ QString diagnosticStructureItemText(const TherionStudio::ProjectIndexDiagnostic 
     case TherionStudio::ProjectIndexDiagnosticKind::UnknownStationReference:
     case TherionStudio::ProjectIndexDiagnosticKind::AmbiguousStationReference:
     case TherionStudio::ProjectIndexDiagnosticKind::DuplicateObjectId:
+    case TherionStudio::ProjectIndexDiagnosticKind::ObjectIdMatchesStation:
         break;
     }
 

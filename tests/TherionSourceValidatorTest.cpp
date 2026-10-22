@@ -167,7 +167,7 @@ void keepsQuotedTextValuesStartingWithDash()
             "Quoted text values that start with '-' should not be reported as malformed option tokens.");
 }
 
-void reportsDuplicateObjectIdsInSameSourceScope()
+void reportsDuplicateObjectIdsAcrossScrapsOfOneSurvey()
 {
     const QString contents = QStringLiteral("scrap test\n"
                                             "line wall -id line-1\n"
@@ -189,8 +189,8 @@ void reportsDuplicateObjectIdsInSameSourceScope()
                                             "endscrap\n");
     const TherionSourceValidationResult result = TherionSourceValidator::validate(contents);
 
-    require(result.diagnostics.size() == 2,
-            "Duplicate object ids should be reported for later objects in the same source scope, regardless of object type.");
+    require(result.diagnostics.size() == 3,
+            "Duplicate object ids should be reported for later objects in the same survey, regardless of object type or scrap.");
     const TherionSourceDiagnostic &diagnostic = result.diagnostics.at(0);
     require(diagnostic.code == QStringLiteral("duplicate-object-id"),
             "Duplicate explicit object ids should use the duplicate-object-id diagnostic code.");
@@ -203,6 +203,46 @@ void reportsDuplicateObjectIdsInSameSourceScope()
     require(result.diagnostics.at(1).lineNumber == 10
                 && diagnosticSourceRange(result.diagnostics.at(1)) == QStringLiteral("line-1"),
             "Duplicate explicit IDs should share one namespace for point, line, and area objects in a scrap.");
+    require(result.diagnostics.at(2).lineNumber == 14
+                && diagnosticSourceRange(result.diagnostics.at(2)) == QStringLiteral("line-1"),
+            "Scraps are not namespaces, so an ID repeated in another scrap of the survey should be reported.");
+}
+
+void scopesObjectIdsBySurveyNamespace()
+{
+    const QString contents = QStringLiteral("survey a\n"
+                                            "scrap s1\n"
+                                            "point 0 0 label -id s1\n"
+                                            "endscrap\n"
+                                            "endsurvey\n"
+                                            "survey b\n"
+                                            "scrap t\n"
+                                            "point 0 0 label -id x\n"
+                                            "endscrap\n"
+                                            "endsurvey\n"
+                                            "survey c\n"
+                                            "scrap u\n"
+                                            "point 0 0 label -id x\n"
+                                            "endscrap\n"
+                                            "survey d -namespace off\n"
+                                            "scrap v\n"
+                                            "point 0 0 label -id x\n"
+                                            "point 0 0 label -id X\n"
+                                            "endscrap\n"
+                                            "endsurvey\n"
+                                            "endsurvey\n");
+    const TherionSourceValidationResult result = TherionSourceValidator::validate(contents);
+
+    QVector<int> duplicateLines;
+    for (const TherionSourceDiagnostic &diagnostic : result.diagnostics) {
+        if (diagnostic.code == QStringLiteral("duplicate-object-id")) {
+            duplicateLines.append(diagnostic.lineNumber);
+        }
+    }
+    // Line 3 repeats a scrap name; line 17 is in a -namespace off survey, so it shares survey c's namespace with line 13.
+    // Line 8 is in another survey, and line 18 differs only in case, which Therion treats as a different name.
+    require(duplicateLines == QVector<int>({3, 17}),
+            "Object IDs should share the survey namespace with scrap names, skip -namespace off surveys, and be case-sensitive.");
 }
 
 void reportsDuplicateNamespaceObjectNamesInSameParentScope()
@@ -980,8 +1020,9 @@ int main(int argc, char **argv)
     acceptsSingleLinePointSmoothOffBeforeEndline();
     reportsAndFixesOptionLikeSubtype();
     keepsQuotedTextValuesStartingWithDash();
-    reportsDuplicateObjectIdsInSameSourceScope();
+    reportsDuplicateObjectIdsAcrossScrapsOfOneSurvey();
     reportsDuplicateNamespaceObjectNamesInSameParentScope();
+    scopesObjectIdsBySurveyNamespace();
     reportsUnknownAreaLineReferencesInCurrentScrap();
     reportsUnknownCommandWithoutSafeFix();
     reportsUnknownOptionAndMissingOptionValue();
