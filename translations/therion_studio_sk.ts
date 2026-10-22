@@ -1505,8 +1505,8 @@ Ak je súbor otvorený, najprv sa zavrie.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStructureBrowser.cpp" line="1211"/>
-        <source>Cannot align the joined drawings: a scrap has neither computed station positions nor matching XVI centreline stations.</source>
-        <translation>Spojené kresby nie je možné zarovnať: scrap nemá vypočítané polohy staníc ani zodpovedajúce stanice centreline z XVI.</translation>
+        <source>Cannot align the joined drawings because a scrap has neither enough measured legs between its station points nor an XVI background.</source>
+        <translation>Spojené kresby nemožno zarovnať, pretože scrap nemá dosť nameraných ťahov medzi bodmi staníc ani podklad XVI.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowJoinPlacement.cpp" line="107"/>
@@ -1517,6 +1517,21 @@ Ak je súbor otvorený, najprv sa zavrie.</translation>
         <location filename="../src/app/MainWindowJoinPlacement.cpp" line="109"/>
         <source>No station is shared by these drawings, so they open without alignment.</source>
         <translation>Žiadna stanica nie je týmto kresbám spoločná, preto sa otvoria bez zarovnania.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="124"/>
+        <source>No station is shared by these drawings, and drawings in an extended elevation can only be aligned at a shared station.</source>
+        <translation>Tieto kresby nemajú spoločnú stanicu a kresby v rozvinutom reze možno zarovnať iba na spoločnej stanici.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="141"/>
+        <source>%1 has too few measured legs between its station points, so it is placed by its XVI background, which may be turned by the declination.</source>
+        <translation>Kresba %1 má príliš málo nameraných ťahov medzi bodmi staníc, preto je umiestnená podľa podkladu XVI, ktorý môže byť natočený o deklináciu.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="145"/>
+        <source>The scale of %1 differs from its XVI background by more than a tenth.</source>
+        <translation>Mierka kresby %1 sa od podkladu XVI líši o viac ako desatinu.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowTherionRunner.cpp" line="141"/>

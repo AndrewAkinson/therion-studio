@@ -106,7 +106,7 @@ private slots:
         const TherionXviDocument xvi = xviDocument(kXviText);
         const QVector<Th2StationFitPair> pairs = xviStationFitPairs(points, xvi);
         QCOMPARE(pairs.size(), 3);
-        const Th2CentrelineFit fit = fitTh2ScrapToCentreline(pairs, xviMetresPerDrawingUnit(xvi), std::nullopt);
+        const Th2CentrelineFit fit = fitTh2ScrapToCentreline(pairs, xviGridTransform(xvi));
         QCOMPARE(fit.source, Th2CentrelineFitSource::XviStations);
         QCOMPARE(fit.stationCount, 3);
         QVERIFY(nearlyEqual(fit.rmsResidualMetres, 0.0));
@@ -136,52 +136,43 @@ private slots:
         QCOMPARE(fit.stationCount, 2);
         QVERIFY(nearlyEqual(fit.drawingToMetres.scale(), 1.0 / 78.74));
 
-        // Therion refits a scrap with two or more stations to them, so its -scale does not place it (D1).
+        // The scrap -scale never places a drawing (D5).
         QVERIFY(!fitTh2ScrapContainingLine(th2.commands(), 5, {}).isValid());
         QVERIFY(!fitTh2ScrapContainingLine(th2.commands(), 8, {}).isValid());
     }
 
-    void usesScrapScaleOnlyBelowTwoStations()
+    void neverUsesScrapScale()
     {
         const TherionSourceLogicalDocument th2 = TherionSourceLogicalDocument::fromText(QStringLiteral(
             "scrap one -scale [2 cm]\n"
             "point 10 20 station -name 1\n"
             "endscrap\n"));
-        const Th2CentrelineFit fit = fitTh2ScrapContainingLine(th2.commands(), 2, {});
-        QCOMPARE(fit.source, Th2CentrelineFitSource::ScrapScale);
-        QVERIFY(nearlyEqual(fit.drawingToMetres.scale(), 0.02));
+        QVERIFY(!fitTh2ScrapContainingLine(th2.commands(), 2, {}).isValid());
     }
 
-    void usesXviGridScaleForSingleStation()
+    void usesXviGridWithFewerThanTwoStations()
     {
+        // A grid turned 90 degrees: its x axis points north in the drawing, 2 units per metre.
+        const TherionXviDocument turned = xviDocument(QStringLiteral(
+            "set XVIgrids {1 m}\nset XVIstations {\n  {0 0 77}\n}\nset XVIgrid {0 0 0 2 -2 0 1 1}\n"));
+        const std::optional<Th2SimilarityTransform> grid = xviGridTransform(turned);
+        QVERIFY(grid.has_value());
+        QVERIFY(nearlyEqual(grid->map(QPointF(0, 2)), QPointF(1, 0)));
+
         const QVector<Th2StationFitPair> pairs = {{QStringLiteral("1"), QPointF(10, 20), QPointF(3, 4)}};
-        const Th2CentrelineFit fit = fitTh2ScrapToCentreline(pairs, 0.5, std::nullopt);
-        QCOMPARE(fit.source, Th2CentrelineFitSource::XviStations);
+        const Th2CentrelineFit fit = fitTh2ScrapToCentreline(pairs, grid);
+        QCOMPARE(fit.source, Th2CentrelineFitSource::XviGrid);
         QCOMPARE(fit.stationCount, 1);
-        QVERIFY(nearlyEqual(fit.drawingToMetres.map(QPointF(10, 20)), QPointF(3, 4)));
-        QVERIFY(nearlyEqual(fit.drawingToMetres.map(QPointF(12, 20)), QPointF(4, 4)));
-    }
+        QVERIFY(nearlyEqual(fit.drawingToMetres.scale(), 0.5));
+        QVERIFY(!fitTh2ScrapToCentreline({}, std::nullopt).isValid());
 
-    void fallsBackToScrapScale()
-    {
+        // A scrap whose stations are not in the XVI is still placed by its grid.
         const TherionSourceLogicalDocument th2 = TherionSourceLogicalDocument::fromText(QStringLiteral(
-            "scrap s -projection plan -scale [0 0 787.40 787.40 0.0 0.0 10 10 m]\n"
-            "endscrap\n"
-            "scrap t -scale [2 cm]\n"
-            "endscrap\n"
-            "scrap u\n"
+            "scrap s\n"
+            "point 0 0 station -name 5\n"
+            "point 9 9 station -name 6\n"
             "endscrap\n"));
-        const std::optional<Th2SimilarityTransform> eightPoint = th2ScrapScaleTransform(th2.commands(), 1);
-        QVERIFY(eightPoint.has_value());
-        QVERIFY(nearlyEqual(eightPoint->map(QPointF(787.40, 0.0)), QPointF(10.0, 0.0)));
-        const std::optional<Th2SimilarityTransform> length = th2ScrapScaleTransform(th2.commands(), 3);
-        QVERIFY(length.has_value());
-        QVERIFY(nearlyEqual(length->map(QPointF(100, 0)), QPointF(2.0, 0.0)));
-        QVERIFY(!th2ScrapScaleTransform(th2.commands(), 5).has_value());
-
-        const Th2CentrelineFit fit = fitTh2ScrapToCentreline({}, std::nullopt, eightPoint);
-        QCOMPARE(fit.source, Th2CentrelineFitSource::ScrapScale);
-        QVERIFY(!fitTh2ScrapToCentreline({}, std::nullopt, std::nullopt).isValid());
+        QCOMPARE(fitTh2ScrapContainingLine(th2.commands(), 2, {turned}).source, Th2CentrelineFitSource::XviGrid);
     }
 
     void linksPartnerDrawingAtJoinStation()
@@ -202,6 +193,11 @@ private slots:
         // One metre in the partner drawing is one metre in this drawing.
         const QPointF partnerMetreEast = partnerJoin + QPointF(19.685, 0.0);
         QVERIFY(nearlyEqual(partnerToThis.map(partnerMetreEast), thisJoin + QPointF(78.74, 0.0), 1e-6));
+
+        // Two stations 2 m apart (a nosurvey leg): the partner's lands 2 m north of this drawing's.
+        const Th2SimilarityTransform apart =
+            joinPartnerToThisTransform(thisFit, thisJoin, partnerFit, partnerJoin, QPointF(0.0, 2.0));
+        QVERIFY(nearlyEqual(apart.map(partnerJoin), thisJoin + QPointF(0.0, 157.48), 1e-6));
     }
 
     void projectsStationPositionsIntoScrapViews()
@@ -219,50 +215,150 @@ private slots:
         QVERIFY(!projectedStationMetres(position, QStringLiteral("elevation 100 grad")).has_value());
     }
 
-    void fitsScrapsToComputedPositionsInOneFrame()
+    void fitsScrapToMeasuredLegsAsDrawn()
     {
-        const TherionSourceLogicalDocument first = TherionSourceLogicalDocument::fromText(QStringLiteral(
+        // Drawn at 10 units per metre and turned 90 degrees anticlockwise: east is drawn up the page.
+        const TherionSourceLogicalDocument th2 = TherionSourceLogicalDocument::fromText(QStringLiteral(
             "scrap a\n"
             "point 0 0 station -name 1\n"
-            "point 100 0 station -name 2\n"
-            "point 5 5 station -name unknown\n"
-            "endscrap\n"
-            "scrap single\n"
+            "point 0 100 station -name 2\n"
+            "point -50 100 station -name 3\n"
+            "point -53 100 station -name 4\n"
+            "point 0 0 station -name 9\n"
+            "endscrap\n"));
+        const QHash<int, QString> keys = {{2, QStringLiteral("1@a")},
+                                          {3, QStringLiteral("2@a")},
+                                          {4, QStringLiteral("3@a")},
+                                          {5, QStringLiteral("4@a")},
+                                          {6, QStringLiteral("9@a")}};
+        const QVector<Th2MeasuredLeg> legs = {
+            {QStringLiteral("1@a"), QStringLiteral("2@a"), {10.0, 0.0, 1.0}},
+            {QStringLiteral("2@a"), QStringLiteral("3@a"), {0.0, 5.0, 0.0}},
+            // 0.3 m: too short to trust, and drawn badly.
+            {QStringLiteral("3@a"), QStringLiteral("4@a"), {0.3, 0.3, 0.0}},
+            // One end not drawn in this scrap.
+            {QStringLiteral("2@a"), QStringLiteral("7@a"), {40.0, 0.0, 0.0}},
+        };
+        const Th2CentrelineFit fit = fitTh2ScrapToMeasuredLegs(th2.commands(), 3, keys, legs, QStringLiteral("plan"));
+        QCOMPARE(fit.source, Th2CentrelineFitSource::MeasuredLegs);
+        QCOMPARE(fit.stationCount, 2);
+        QVERIFY(nearlyEqual(fit.rmsResidualMetres, 0.0));
+        QVERIFY(nearlyEqual(fit.drawingToMetres.map(QPointF(0, 100)) - fit.drawingToMetres.map(QPointF()),
+                            QPointF(10.0, 0.0)));
+
+        // Too few usable legs, or a projection with no fixed frame, gives no fit.
+        QVERIFY(!fitTh2ScrapToMeasuredLegs(th2.commands(), 3, keys, legs.mid(2), QStringLiteral("plan")).isValid());
+        QVERIFY(!fitTh2ScrapToMeasuredLegs(th2.commands(), 3, keys, legs, QStringLiteral("none")).isValid());
+    }
+
+    void leavesOutDuplicatedAndMisdrawnStations()
+    {
+        // 10 units per metre along x. Station 5 is drawn 3 m off its leg; station 6 is drawn twice.
+        const TherionSourceLogicalDocument th2 = TherionSourceLogicalDocument::fromText(QStringLiteral(
+            "scrap a\n"
             "point 0 0 station -name 1\n"
+            "point 50 0 station -name 2\n"
+            "point 100 0 station -name 3\n"
+            "point 150 0 station -name 4\n"
+            "point 200 30 station -name 5\n"
+            "point 0 200 station -name 6\n"
+            "point 0 -900 station -name 6\n"
             "endscrap\n"));
-        const TherionSourceLogicalDocument second = TherionSourceLogicalDocument::fromText(QStringLiteral(
-            "scrap b\n"
-            "point 0 0 station -name 2\n"
-            "point 0 50 station -name 3\n"
+        QHash<int, QString> keys;
+        for (int line = 2; line <= 8; ++line) {
+            keys.insert(line, QStringLiteral("%1@a").arg(line == 8 ? 6 : line - 1));
+        }
+        const QVector<Th2MeasuredLeg> legs = {
+            {QStringLiteral("1@a"), QStringLiteral("2@a"), {5.0, 0.0, 0.0}},
+            {QStringLiteral("2@a"), QStringLiteral("3@a"), {5.0, 0.0, 0.0}},
+            {QStringLiteral("3@a"), QStringLiteral("4@a"), {5.0, 0.0, 0.0}},
+            {QStringLiteral("4@a"), QStringLiteral("5@a"), {5.0, 0.0, 0.0}},
+            {QStringLiteral("1@a"), QStringLiteral("6@a"), {0.0, 50.0, 0.0}},
+        };
+        const Th2CentrelineFit fit = fitTh2ScrapToMeasuredLegs(th2.commands(), 2, keys, legs, QStringLiteral("plan"));
+        QCOMPARE(fit.stationCount, 3);
+        QVERIFY(nearlyEqual(fit.drawingToMetres.scale(), 0.1));
+        QVERIFY(nearlyEqual(fit.rmsResidualMetres, 0.0));
+    }
+
+    void dropsLegsSeenEndOnInElevation()
+    {
+        // Elevation looking north (0): a leg running north is seen end on.
+        const TherionSourceLogicalDocument th2 = TherionSourceLogicalDocument::fromText(QStringLiteral(
+            "scrap e -projection [elevation 0]\n"
+            "point 0 0 station -name 1\n"
+            "point 40 0 station -name 2\n"
+            "point 0 30 station -name 3\n"
             "endscrap\n"));
-        const QHash<QString, Th2StationPosition> positions = {{QStringLiteral("1@x"), {1000.0, 2000.0, 0.0}},
-                                                             {QStringLiteral("2@x"), {1010.0, 2000.0, 0.0}},
-                                                             {QStringLiteral("3@y"), {1010.0, 2005.0, 0.0}}};
-        const QHash<int, QString> firstKeys = {{2, QStringLiteral("1@x")},
-                                               {3, QStringLiteral("2@x")},
-                                               {4, QStringLiteral("missing@x")},
-                                               {7, QStringLiteral("1@x")}};
-        const QHash<int, QString> secondKeys = {{2, QStringLiteral("2@x")}, {3, QStringLiteral("3@y")}};
+        const QHash<int, QString> keys = {{2, QStringLiteral("1@e")}, {3, QStringLiteral("2@e")}, {4, QStringLiteral("3@e")}};
+        const QVector<Th2MeasuredLeg> legs = {
+            {QStringLiteral("1@e"), QStringLiteral("2@e"), {4.0, 0.0, 0.0}},
+            {QStringLiteral("1@e"), QStringLiteral("3@e"), {0.0, 20.0, 0.2}},
+        };
+        const Th2CentrelineFit fit =
+            fitTh2ScrapToMeasuredLegs(th2.commands(), 2, keys, legs, QStringLiteral("elevation 0"));
+        QCOMPARE(fit.stationCount, 1);
+        QVERIFY(nearlyEqual(fit.drawingToMetres.scale(), 0.1));
+    }
 
-        const Th2CentrelineFit firstFit =
-            fitTh2ScrapToStationPositions(first.commands(), 2, firstKeys, positions, QStringLiteral("plan"));
-        const Th2CentrelineFit secondFit =
-            fitTh2ScrapToStationPositions(second.commands(), 3, secondKeys, positions, QStringLiteral("plan"));
-        QCOMPARE(firstFit.source, Th2CentrelineFitSource::ComputedStations);
-        QCOMPARE(firstFit.stationCount, 2);
-        QVERIFY(nearlyEqual(firstFit.drawingToMetres.scale(), 0.1));
-        QVERIFY(nearlyEqual(firstFit.rmsResidualMetres, 0.0));
+    void fitsExtendedScaleOnlyAsDrawn()
+    {
+        // Drawn going left at 10 units per metre, with a pitch down.
+        const TherionSourceLogicalDocument th2 = TherionSourceLogicalDocument::fromText(QStringLiteral(
+            "scrap x -projection extended\n"
+            "point 0 0 station -name 1\n"
+            "point -50 0 station -name 2\n"
+            "point -50 -80 station -name 3\n"
+            "endscrap\n"));
+        const QHash<int, QString> keys = {{2, QStringLiteral("1@x")}, {3, QStringLiteral("2@x")}, {4, QStringLiteral("3@x")}};
+        const QVector<Th2MeasuredLeg> legs = {
+            {QStringLiteral("1@x"), QStringLiteral("2@x"), {3.0, 4.0, 0.0}},
+            {QStringLiteral("2@x"), QStringLiteral("3@x"), {0.0, 0.0, -8.0}},
+        };
+        const Th2CentrelineFit fit = fitTh2ScrapToMeasuredLegs(th2.commands(), 2, keys, legs, QStringLiteral("extended"));
+        QCOMPARE(fit.stationCount, 2);
+        QVERIFY(nearlyEqual(fit.drawingToMetres.b, 0.0));
+        QVERIFY(nearlyEqual(fit.drawingToMetres.a, 0.1));
+        QVERIFY(nearlyEqual(fit.rmsResidualMetres, 0.0));
+    }
 
-        // No anchor is needed: both drawings are placed in Therion's frame.
-        const Th2SimilarityTransform secondToFirst = sharedFramePartnerToThisTransform(firstFit, secondFit);
-        QVERIFY(nearlyEqual(secondToFirst.map(QPointF(0, 0)), QPointF(100, 0), 1e-6));
-        QVERIFY(nearlyEqual(secondToFirst.map(QPointF(0, 50)), QPointF(100, 50), 1e-6));
+    void comparesFitScales()
+    {
+        Th2CentrelineFit legs;
+        legs.drawingToMetres = Th2SimilarityTransform::fromScale(0.1);
+        Th2CentrelineFit xvi;
+        xvi.drawingToMetres = Th2SimilarityTransform{0.0, 0.105, 0.0, 0.0};
+        QVERIFY(!th2FitScalesDisagree(legs, xvi));
+        xvi.drawingToMetres = Th2SimilarityTransform::fromScale(0.2);
+        QVERIFY(th2FitScalesDisagree(legs, xvi));
+    }
 
-        // One matched point, or a projection with no fixed frame, gives no fit.
-        QVERIFY(!fitTh2ScrapToStationPositions(first.commands(), 7, firstKeys, positions, QStringLiteral("plan"))
-                     .isValid());
-        QVERIFY(!fitTh2ScrapToStationPositions(first.commands(), 2, firstKeys, positions, QStringLiteral("extended"))
-                     .isValid());
+    void anchorsDrawingsAtTheClosestComputedStations()
+    {
+        const QVector<Th2ScrapStationPoint> thisPoints = {{QStringLiteral("1"), QPointF(0, 0), 2},
+                                                          {QStringLiteral("2"), QPointF(100, 0), 3}};
+        const QVector<Th2ScrapStationPoint> partnerPoints = {{QStringLiteral("5"), QPointF(7, 7), 4},
+                                                             {QStringLiteral("6"), QPointF(9, 9), 5}};
+        const QHash<int, QString> thisKeys = {{2, QStringLiteral("1@x")}, {3, QStringLiteral("2@x")}};
+        const QHash<int, QString> partnerKeys = {{4, QStringLiteral("5@y")}, {5, QStringLiteral("6@y")}};
+        const QHash<QString, Th2StationPosition> positions = {{QStringLiteral("1@x"), {0.0, 0.0, 0.0}},
+                                                             {QStringLiteral("2@x"), {10.0, 0.0, 0.0}},
+                                                             {QStringLiteral("5@y"), {11.0, 2.0, 0.0}},
+                                                             {QStringLiteral("6@y"), {30.0, 0.0, 0.0}}};
+        const std::optional<Th2JoinAnchor> anchor = closestComputedStationPair(
+            thisPoints, thisKeys, partnerPoints, partnerKeys, positions, QStringLiteral("plan"));
+        QVERIFY(anchor.has_value());
+        QCOMPARE(anchor->thisPoint, QPointF(100, 0));
+        QCOMPARE(anchor->partnerPoint, QPointF(7, 7));
+        QVERIFY(nearlyEqual(anchor->partnerOffsetMetres, QPointF(1.0, 2.0)));
+
+        // Extended has no computed frame, so drawings that share no station cannot be anchored.
+        QVERIFY(!closestComputedStationPair(thisPoints, thisKeys, partnerPoints, partnerKeys, positions,
+                                            QStringLiteral("extended"))
+                     .has_value());
+        QVERIFY(!computedStationOffsetMetres(QStringLiteral("1@x"), QStringLiteral("missing@y"), positions,
+                                             QStringLiteral("plan"))
+                     .has_value());
     }
 };
 

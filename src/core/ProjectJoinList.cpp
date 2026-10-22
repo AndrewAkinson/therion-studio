@@ -169,6 +169,7 @@ QVector<ProjectJoinGroup> projectJoinGroups(const ProjectIndexSnapshot &snapshot
                     continue;
                 }
                 ProjectJoinPair pair{joinSide(snapshot, first, projection), joinSide(snapshot, second, projection)};
+                pair.linkKind = link.kind;
                 pair.joins = joinsBySurveyPair.value(namespacePairKey(first.namespacePath, second.namespacePath));
                 pair.connection = combinedConnection(pair.joins);
                 pair.ruleViolations = projectJoinRuleViolationsFor(snapshot.joinRuleViolations, pair.joins);

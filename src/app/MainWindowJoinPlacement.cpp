@@ -7,6 +7,7 @@
 #include "text_editor/map_editor/MapEditorTab.h"
 
 #include <QDir>
+#include <QFileInfo>
 #include <QSet>
 #include <QStatusBar>
 #include <QTabWidget>
@@ -62,17 +63,19 @@ void MainWindow::requestJoinStationPositions()
 
 TherionStudio::MapEditorJoinPlacement MainWindow::joinPlacement(const QString &firstScrapObjectId,
                                                                 const QString &secondScrapObjectId,
-                                                                const QString &projection) const
+                                                                const QString &projection,
+                                                                bool sameStation) const
 {
     TherionStudio::MapEditorJoinPlacement placement;
-    if (stationPositionService_ == nullptr || stationPositionService_->isRunning()
-        || stationPositionService_->positions().isEmpty()) {
-        return placement;
-    }
-    placement.positions = &stationPositionService_->positions();
     placement.firstStationKeysByLine = stationKeysByLine(lastStructureSidebarProjectIndex_, firstScrapObjectId);
     placement.secondStationKeysByLine = stationKeysByLine(lastStructureSidebarProjectIndex_, secondScrapObjectId);
     placement.projection = projection;
+    placement.sameStation = sameStation;
+    if (stationPositionService_ != nullptr && !stationPositionService_->isRunning()
+        && !stationPositionService_->positions().isEmpty()) {
+        placement.legs = &stationPositionService_->legs();
+        placement.positions = &stationPositionService_->positions();
+    }
     return placement;
 }
 
@@ -90,8 +93,8 @@ void MainWindow::openProjectJoin(const TherionStudio::ProjectJoinPair &pair, boo
                             separateWindow,
                             joinPlacement(pair.first.drawing->scrapObjectId,
                                           pair.second.drawing->scrapObjectId,
-                                          pair.first.drawing->projection),
-                            tr("Cannot align the joined drawings: a scrap has neither computed station positions nor matching XVI centreline stations."));
+                                          pair.first.drawing->projection,
+                                          pair.linkKind == TherionStudio::ProjectStationLinkKind::Equate));
 }
 
 void MainWindow::openProjectJoinOnly(const TherionStudio::ProjectJoinGroup &group, bool separateWindow)
@@ -103,17 +106,48 @@ void MainWindow::openProjectJoinOnly(const TherionStudio::ProjectJoinGroup &grou
     const TherionStudio::ProjectStructureEntry &first = group.joinOnlyScraps.at(0);
     const TherionStudio::ProjectStructureEntry &second = group.joinOnlyScraps.at(1);
     const QString projection = lastStructureSidebarProjectIndex_.scrapProjectionByObjectId.value(first.objectId);
-    const QString failure = stationPositionService_ != nullptr && stationPositionService_->isRunning()
-        ? tr("No station is shared by these drawings; they will line up once Therion has computed the station "
-             "positions. Open the join again then.")
-        : tr("No station is shared by these drawings, so they open without alignment.");
     openProjectJoinDrawings(first.sourceFile,
                             first.lineNumber,
                             second.sourceFile,
                             second.lineNumber,
                             separateWindow,
-                            joinPlacement(first.objectId, second.objectId, projection),
-                            failure);
+                            joinPlacement(first.objectId, second.objectId, projection, false));
+}
+
+QString MainWindow::joinFailureMessage(TherionStudio::MapEditorJoinFailure failure, const QString &projection) const
+{
+    if (failure == TherionStudio::MapEditorJoinFailure::NoFit) {
+        return tr("Cannot align the joined drawings because a scrap has neither enough measured legs between its "
+                  "station points nor an XVI background.");
+    }
+    if (projection == QStringLiteral("extended")) {
+        return tr("No station is shared by these drawings, and drawings in an extended elevation can only be "
+                  "aligned at a shared station.");
+    }
+    return stationPositionService_ != nullptr && stationPositionService_->isRunning()
+        ? tr("No station is shared by these drawings; they will line up once Therion has computed the station "
+             "positions. Open the join again then.")
+        : tr("No station is shared by these drawings, so they open without alignment.");
+}
+
+QString MainWindow::joinPlacementNotes(const TherionStudio::MapEditorJoinResult &result,
+                                       const QString &firstFile,
+                                       const QString &secondFile) const
+{
+    QStringList notes;
+    const auto addNotes = [this, &notes](const TherionStudio::Th2CentrelineFit &fit, bool offBackground, const QString &file) {
+        const QString name = QFileInfo(file).fileName();
+        if (fit.source != TherionStudio::Th2CentrelineFitSource::MeasuredLegs) {
+            notes.append(tr("%1 has too few measured legs between its station points, so it is placed by its XVI "
+                            "background, which may be turned by the declination.")
+                             .arg(name));
+        } else if (offBackground) {
+            notes.append(tr("The scale of %1 differs from its XVI background by more than a tenth.").arg(name));
+        }
+    };
+    addNotes(result.firstFit, result.firstOffBackground, firstFile);
+    addNotes(result.secondFit, result.secondOffBackground, secondFile);
+    return notes.join(QLatin1Char(' '));
 }
 
 void MainWindow::openProjectJoinDrawings(const QString &firstFile,
@@ -121,8 +155,7 @@ void MainWindow::openProjectJoinDrawings(const QString &firstFile,
                                          const QString &secondFile,
                                          int secondLine,
                                          bool separateWindow,
-                                         const TherionStudio::MapEditorJoinPlacement &placement,
-                                         const QString &failureMessage)
+                                         const TherionStudio::MapEditorJoinPlacement &placement)
 {
     auto *firstTab = qobject_cast<TherionStudio::MapEditorTab *>(openProjectSourceLocation(firstFile, firstLine));
     auto *secondTab = qobject_cast<TherionStudio::MapEditorTab *>(openProjectSourceLocation(secondFile, secondLine));
@@ -135,8 +168,12 @@ void MainWindow::openProjectJoinDrawings(const QString &firstFile,
         // The main window shows the first drawing; the second drawing's map is in its separate window.
         editorTabs_->setCurrentWidget(firstTab);
     }
-    if (!TherionStudio::openMapEditorJoinPair(firstTab, firstLine, secondTab, secondLine, separateWindow, placement)) {
-        statusBar()->showMessage(failureMessage, 5000);
+    const TherionStudio::MapEditorJoinResult result =
+        TherionStudio::openMapEditorJoinPair(firstTab, firstLine, secondTab, secondLine, separateWindow, placement);
+    if (!result.opened()) {
+        statusBar()->showMessage(joinFailureMessage(result.failure, placement.projection), 5000);
+    } else if (const QString notes = joinPlacementNotes(result, firstFile, secondFile); !notes.isEmpty()) {
+        statusBar()->showMessage(notes, 8000);
     }
     // Keep the Joined indicator and link icons current as the join is removed or its drawing closed.
     for (const TherionStudio::MapEditorJoinPair &joinPair : TherionStudio::mapEditorJoinPairsFor(firstTab)) {

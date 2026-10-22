@@ -27,7 +27,7 @@ struct ProjectStationPositionRequest
     QStringList sourceFiles;
 };
 
-// Station positions computed by Therion for the whole project, used to place joined drawings in one frame.
+// Measured legs and computed station positions from Therion for the whole project, used to place joined drawings.
 // Runs Therion in the background on its own runner (the Compiler panel stays free) with a temporary config that
 // only exports the database, in a temporary folder outside the project. One run at a time: a request while running
 // is queued once.
@@ -47,6 +47,8 @@ public:
 
     [[nodiscard]] bool isRunning() const;
     [[nodiscard]] const QHash<QString, Th2StationPosition> &positions() const;
+    // From the same export as positions(), so both are present or both empty.
+    [[nodiscard]] const QVector<Th2MeasuredLeg> &legs() const;
 
 signals:
     void runningChanged(bool running);
@@ -57,6 +59,7 @@ private:
     struct LoadResult
     {
         QHash<QString, Th2StationPosition> positions;
+        QVector<Th2MeasuredLeg> legs;
         QString errorMessage;
         quint64 generation = 0;
     };
@@ -77,6 +80,7 @@ private:
     QString attemptKey_;
     QDateTime attemptStartedAt_;
     QHash<QString, Th2StationPosition> positions_;
+    QVector<Th2MeasuredLeg> legs_;
     bool running_ = false;
     quint64 generation_ = 0;
 };

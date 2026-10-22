@@ -4,6 +4,7 @@
 #include <QDir>
 #include <QFile>
 #include <QTemporaryDir>
+#include <QtMath>
 #include <QtTest/QtTest>
 
 using namespace TherionStudio;
@@ -60,6 +61,26 @@ private slots:
         QCOMPARE(station.z, -3.0);
         QVERIFY(positions.contains(ProjectStructureIndex::stationKey(QStringLiteral("0"), QString())));
         QVERIFY(therionStationPositionQuery().contains(QStringLiteral("FULL_NAME")));
+    }
+
+    void readsMeasuredLegVectors()
+    {
+        const QVector<Th2MeasuredLeg> legs = therionMeasuredLegsFromRows(
+            {{QStringLiteral("1"), QStringLiteral("a"), QStringLiteral("2"), QStringLiteral("a"), QStringLiteral("10"),
+              QStringLiteral("90"), QStringLiteral("30")},
+             {QStringLiteral("2"), QStringLiteral("a"), QStringLiteral("-"), QStringLiteral("a"), QStringLiteral("2"),
+              QStringLiteral("0"), QStringLiteral("0")},
+             {QStringLiteral("2"), QStringLiteral("a"), QStringLiteral("3"), QStringLiteral("a"), QStringLiteral("x"),
+              QStringLiteral("0"), QStringLiteral("0")},
+             {QStringLiteral("short")}});
+        QCOMPARE(legs.size(), 1);
+        QCOMPARE(legs.first().fromStationKey, ProjectStructureIndex::stationKey(QStringLiteral("1"), QStringLiteral("a")));
+        QCOMPARE(legs.first().toStationKey, ProjectStructureIndex::stationKey(QStringLiteral("2"), QStringLiteral("a")));
+        // 10 m east, 30 degrees up.
+        QVERIFY(qAbs(legs.first().vector.x - 10.0 * qCos(qDegreesToRadians(30.0))) < 1e-9);
+        QVERIFY(qAbs(legs.first().vector.y) < 1e-9);
+        QVERIFY(qAbs(legs.first().vector.z - 5.0) < 1e-9);
+        QVERIFY(therionMeasuredLegQuery().contains(QStringLiteral("'spl'")));
     }
 };
 

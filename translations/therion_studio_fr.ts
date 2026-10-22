@@ -1465,8 +1465,8 @@ Si le fichier est ouvert, il sera d&apos;abord fermé.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStructureBrowser.cpp" line="1211"/>
-        <source>Cannot align the joined drawings: a scrap has neither computed station positions nor matching XVI centreline stations.</source>
-        <translation>Impossible d’aligner les dessins joints : un scrap n’a ni positions de stations calculées ni stations de centreline XVI correspondantes.</translation>
+        <source>Cannot align the joined drawings because a scrap has neither enough measured legs between its station points nor an XVI background.</source>
+        <translation>Impossible d’aligner les dessins joints, car un scrap n’a ni assez de visées mesurées entre ses points de station ni de fond XVI.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowJoinPlacement.cpp" line="107"/>
@@ -1477,6 +1477,21 @@ Si le fichier est ouvert, il sera d&apos;abord fermé.</translation>
         <location filename="../src/app/MainWindowJoinPlacement.cpp" line="109"/>
         <source>No station is shared by these drawings, so they open without alignment.</source>
         <translation>Aucune station n’est commune à ces dessins ; ils s’ouvrent donc sans alignement.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="124"/>
+        <source>No station is shared by these drawings, and drawings in an extended elevation can only be aligned at a shared station.</source>
+        <translation>Ces dessins n’ont aucune station commune, et des dessins en coupe développée ne peuvent être alignés que sur une station commune.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="141"/>
+        <source>%1 has too few measured legs between its station points, so it is placed by its XVI background, which may be turned by the declination.</source>
+        <translation>Le dessin %1 a trop peu de visées mesurées entre ses points de station, il est donc placé par son fond XVI, qui peut être tourné de la déclinaison.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="145"/>
+        <source>The scale of %1 differs from its XVI background by more than a tenth.</source>
+        <translation>L’échelle du dessin %1 diffère de celle de son fond XVI de plus d’un dixième.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowTherionRunner.cpp" line="141"/>
