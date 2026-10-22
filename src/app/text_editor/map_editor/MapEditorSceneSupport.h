@@ -92,6 +92,9 @@ inline int mapSceneSelectionOwnerVertex(const QGraphicsItem *item)
         : item->data(kMapSceneOwnerVertexRole).toInt();
 }
 
+// Accepted mouse buttons of a faded item, kept while picking is turned off.
+constexpr int kMapSceneFadedAcceptedButtonsRole = Qt::UserRole + 135;
+
 constexpr qreal kMapEditorCanvasFrameInset = 24.0;
 constexpr qreal kMapEditorCanvasPreviewInset = 20.0;
 

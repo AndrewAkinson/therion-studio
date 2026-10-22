@@ -274,12 +274,26 @@ void MapEditorTab::handleConfigureObjectSettingsTriggered()
     MapEditorObjectDetailsEditController(objectDetailsContext()).handleConfigureObjectSettingsTriggered();
 }
 
-void MapEditorTab::showMapSelectionContextMenu(const QPoint &globalPosition)
+QMenu *MapEditorTab::createMapContextMenu()
 {
     if (QMenu *previousMenu = mapSelectionContextMenu_.data()) {
         mapSelectionContextMenu_.clear();
         previousMenu->close();
     }
+
+    auto *menu = new QMenu(this);
+    mapSelectionContextMenu_ = menu;
+    connect(menu, &QMenu::aboutToHide, this, [this, menu]() {
+        if (mapSelectionContextMenu_ == menu) {
+            mapSelectionContextMenu_.clear();
+        }
+        menu->deleteLater();
+    });
+    return menu;
+}
+
+void MapEditorTab::showMapSelectionContextMenu(const QPoint &globalPosition)
+{
 
     const int segmentContextLineNumber = objectSelectionState_.selectedObjectLineNumber_;
     const bool segmentContextLineSelected = objectSelectionState_.selectedObjectKind_ == QStringLiteral("line")
@@ -298,14 +312,7 @@ void MapEditorTab::showMapSelectionContextMenu(const QPoint &globalPosition)
         objectSelectionState_.selectedObjectCoordinate_ = segmentContextCoordinate;
     }
 
-    auto *menu = new QMenu(this);
-    mapSelectionContextMenu_ = menu;
-    connect(menu, &QMenu::aboutToHide, this, [this, menu]() {
-        if (mapSelectionContextMenu_ == menu) {
-            mapSelectionContextMenu_.clear();
-        }
-        menu->deleteLater();
-    });
+    QMenu *menu = createMapContextMenu();
 
     const bool hasObjectSelection = objectSelectionState_.selectedObjectLineNumber_ > 0
         && !objectSelectionState_.selectedObjectKind_.trimmed().isEmpty();
@@ -803,6 +810,8 @@ void MapEditorTab::showMapSelectionContextMenu(const QPoint &globalPosition)
         }
     }
 
+    addMapScrapVisibilityMenus(menu, objectSelectionState_.selectedObjectLineNumber_);
+    addMapMoveToScrapMenu(menu, objectSelectionState_.selectedObjectLineNumber_);
     menu->popup(globalPosition);
 }
 

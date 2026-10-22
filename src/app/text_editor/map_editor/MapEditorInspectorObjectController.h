@@ -1,6 +1,8 @@
 #pragma once
 
 #include "MapEditorInspectorObjectContext.h"
+#include "MapEditorMoveToScrapPlanner.h"
+#include "MapEditorScrapVisibilityMenu.h"
 
 #include <QMap>
 #include <QModelIndex>
@@ -25,15 +27,25 @@ public:
     void handleInspectorObjectSelectionChanged(const QModelIndex &current);
     void handleInspectorObjectClicked(const QModelIndex &index);
     bool moveInspectorObject(const QModelIndex &sourceIndex, const QModelIndex &targetIndex, bool afterTarget);
+    bool moveObjectToScrap(int lineNumber, int targetScrapLineNumber);
+    [[nodiscard]] QVector<MapEditorMoveToScrapTarget> moveToScrapTargets(int lineNumber) const;
     void applyInspectorObjectVisibility();
     void hideAllObjects();
-    void showAllObjects();
     void selectNextObject(bool forward = true);
     void selectPreviousObject();
+    [[nodiscard]] int inspectorObjectLineNumberAt(const QPoint &viewportPosition) const;
+    [[nodiscard]] MapEditorScrapVisibilityMenuState scrapVisibilityMenuState(int lineNumber) const;
+    void setScrapVisibility(int lineNumber, MapEditorScrapVisibilityTarget target, MapEditorObjectVisibility visibility);
+    [[nodiscard]] bool allObjectsShown() const;
+    void showAllObjects();
 
 private:
     QString tr(const char *text) const;
     void rebuildInspectorObjectLineIndex() const;
+    [[nodiscard]] MapEditorObjectVisibilityLines visibilityLines() const;
+    bool applyObjectMovePlan(const MapEditorObjectMovePlan &movePlan,
+                             const QString &beforeText,
+                             const QString &undoLabel);
     void syncInspectorObjectSelectionToLine(int lineNumber, bool scrollToSelection, bool expandAncestors);
     QSet<int> collapsedScrapLineNumbers() const;
     void restoreInspectorObjectExpansion(const QSet<int> &collapsedScrapLines);

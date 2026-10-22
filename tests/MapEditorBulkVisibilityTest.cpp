@@ -167,7 +167,7 @@ private slots:
         // Initial state: all geometry items are visible
         const int totalItems = items.size();
         QCOMPARE(countVisibleItems(items), totalItems);
-        QVERIFY(countRowsWithVisibilityTooltip(model, QStringLiteral("Hide object")) > 0);
+        QVERIFY(countRowsWithVisibilityTooltip(model, QStringLiteral("Fade object")) > 0);
         QCOMPARE(countRowsWithVisibilityTooltip(model, QStringLiteral("Show object")), 0);
 
         // Click Hide All
@@ -176,7 +176,7 @@ private slots:
 
         // All geometry items should now be hidden
         QCOMPARE(countVisibleItems(items), 0);
-        QCOMPARE(countRowsWithVisibilityTooltip(model, QStringLiteral("Hide object")), 0);
+        QCOMPARE(countRowsWithVisibilityTooltip(model, QStringLiteral("Fade object")), 0);
         QVERIFY(countRowsWithVisibilityTooltip(model, QStringLiteral("Show object")) > 0);
 
         // Click Show All
@@ -185,7 +185,7 @@ private slots:
 
         // All geometry items should now be visible again
         QCOMPARE(countVisibleItems(items), totalItems);
-        QVERIFY(countRowsWithVisibilityTooltip(model, QStringLiteral("Hide object")) > 0);
+        QVERIFY(countRowsWithVisibilityTooltip(model, QStringLiteral("Fade object")) > 0);
         QCOMPARE(countRowsWithVisibilityTooltip(model, QStringLiteral("Show object")), 0);
     }
 
