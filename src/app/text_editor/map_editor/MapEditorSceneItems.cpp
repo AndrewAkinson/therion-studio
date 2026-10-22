@@ -1114,7 +1114,7 @@ QVector<MapLineSecondaryMove> collectLineSecondaryMovesForVertexDrag(const MapGe
         } else if (vertex.outgoingSourceVertexIndex == sourceVertexIndex) {
             role = LineVertexRole::OutgoingControl;
         }
-        if (role == LineVertexRole::None || !vertex.isSmooth) {
+        if (role == LineVertexRole::None || !lineVertexIsSmooth(vertex)) {
             continue;
         }
 
@@ -1250,7 +1250,6 @@ bool insertLineVertexByDeCasteljau(QVector<MapGeometryFeature::TH2LineVertex> *l
     inserted.anchorSourceVertexIndex = -1;
     inserted.incomingSourceVertexIndex = -1;
     inserted.outgoingSourceVertexIndex = -1;
-    inserted.isSmooth = true;
 
     if (!segmentIsCubic) {
         inserted.anchor = lerp(p0, p3);

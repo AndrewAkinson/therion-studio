@@ -753,6 +753,8 @@ set(THERION_MAP_EDITOR_SOURCES
     src/app/text_editor/map_editor/MapEditorCanvasEditContext.h
     src/app/text_editor/map_editor/MapEditorCanvasEditController.cpp
     src/app/text_editor/map_editor/MapEditorCanvasEditController.h
+    src/app/text_editor/map_editor/MapEditorLineVertexHandles.cpp
+    src/app/text_editor/map_editor/MapEditorLineVertexHandles.h
     src/app/text_editor/map_editor/MapEditorLogicalSourceContext.h
     src/app/text_editor/map_editor/MapEditorInspectorBackgroundController.cpp
     src/app/text_editor/map_editor/MapEditorInspectorBackgroundController.h
@@ -1335,6 +1337,9 @@ qt_add_resources(MapGeometryFeatureParsingTest MapGeometryFeatureParsingResource
 
 qt_add_executable(MapEditorSourceReferenceResolverTest
     tests/MapEditorSourceReferenceResolverTest.cpp
+    tests/MapEditorLinePointSmoothTest.cpp
+    src/app/text_editor/map_editor/MapEditorLineVertexHandles.cpp
+    src/app/text_editor/map_editor/MapEditorLineVertexHandles.h
     src/app/text_editor/map_editor/MapEditorSourceReferenceResolver.cpp
     src/app/text_editor/map_editor/MapEditorSourceReferenceResolver.h
     src/app/text_editor/map_editor/MapEditorObjectStyleCatalog.cpp
@@ -1354,7 +1359,7 @@ qt_add_executable(MapEditorSourceReferenceResolverTest
     src/app/text_editor/map_editor/MapEditorSceneRenderer.cpp
     src/app/text_editor/map_editor/MapEditorSceneSupport.h)
 
-target_link_libraries(MapEditorSourceReferenceResolverTest PRIVATE therion_core Qt6::Widgets)
+target_link_libraries(MapEditorSourceReferenceResolverTest PRIVATE therion_core Qt6::Widgets Qt6::Test)
 
 therion_add_core_unit_test(DocumentFileEncodingTest
     tests/DocumentFileEncodingTest.cpp)
