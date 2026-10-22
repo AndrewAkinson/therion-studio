@@ -29,6 +29,8 @@ public:
 
 private:
     void alignSecondToFirst();
+    // Centres the second editor on the point matching `firstCentre`.
+    void alignSecondTo(const QPointF &firstCentre);
     void alignFirstToSecond();
 
     QPointer<MapEditorTab> first_;

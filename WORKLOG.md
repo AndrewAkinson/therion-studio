@@ -322,6 +322,9 @@ Active planning only. Completed history belongs in archive files. Stable archite
   after 2026.7.2 unless the maintainers decide otherwise.
 - Next: review and the PR. Left for later (see the plan): re-placing joins opened during a Therion run, rows without
   a shared station in extended elevations, and chaining legs through undrawn stations.
+- Opening a join centres the second view from the requested point, not from the first view's pixel-rounded centre,
+  so only one view's rounding separates them. Found when combining with PR 38, whose view changes pushed the double
+  rounding past `MapEditorJoinTest`'s 3 pixel tolerance.
 
 ### Raster Background Placement (issue #30)
 
