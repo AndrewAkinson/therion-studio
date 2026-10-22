@@ -9,8 +9,8 @@ Join view that opens the two `.th2` drawings containing the equated stations sid
 through the centreline, each fully editable and saved independently, with a faded read-only outline of the partner
 drawing in each pane.
 
-Status: phase 1 implemented (slices 1–6 below). Phase 2 (options) agreed in outline on 2026-10-14; open questions are
-listed in that section. Specification, architecture, user manual, worklog and translations are updated in the same
+Status: phase 1 implemented (slices 1–6 below). Phase 2 (options A-C and fixes D1-D5) implemented by 2026-10-22,
+pending review and the PR; items left for later are noted in their sections. Specification, architecture, user manual, worklog and translations are updated in the same
 changes that implement each slice. Not archived until phase 2 is done.
 
 ## Current State
@@ -245,9 +245,9 @@ Staged implementation:
 
 ### D. Fixes found in use (2026-10-21)
 
-Reported while testing on a real project. Status: D1 fixed (below) and replaced by D5; D5 done; D3 reduced to
-its stale-check part (revised 2026-10-22, done), then D4 (done), then D2 (done). D1 came first because it might have
-explained D3, and its result changed D2-D4.
+Reported while testing on a real project. Status: all done (2026-10-22). D1 was fixed and then replaced by D5, D3 was
+reduced to its stale-check part, then D4 and D2 followed. D1 came first because it might have explained D3, and its
+result changed D2-D4.
 
 - **D1 Alignment is wrong even with a shared point.** Equate rows, where both drawings draw the shared station, do not
   line up correctly. Investigate before changing anything else. Measure where the shared station point lands in each
