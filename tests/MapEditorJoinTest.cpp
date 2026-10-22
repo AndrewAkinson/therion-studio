@@ -316,6 +316,28 @@ private slots:
         const QPointF partnerJoin = second_->mapSourceToSceneTransform().map(kSecondJoin);
         const QPointF expected = first_->mapSourceToSceneTransform().map(kFirstJoin + QPointF(0, 2 * 78.74));
         QVERIFY(near(outline->item()->mapToScene(partnerJoin), expected, 1e-3));
+        // Centred halfway between the two stations.
+        QVERIFY(centredOn(first_, kFirstJoin + QPointF(0, 78.74)));
+    }
+
+    void centresAJoinOnlyRowBetweenTheClosestStations()
+    {
+        // Lines inside each scrap, no join station: the closest computed pair is 3@a and 1@b, 2 m apart.
+        MapEditorJoinPlacement placement;
+        placement.firstStationKeysByLine = {
+            {3, QStringLiteral("1@a")}, {4, QStringLiteral("2@a")}, {5, QStringLiteral("3@a")}};
+        placement.secondStationKeysByLine = {
+            {3, QStringLiteral("1@b")}, {4, QStringLiteral("2@b")}, {5, QStringLiteral("3@b")}};
+        placement.projection = QStringLiteral("plan");
+        const QHash<QString, Th2StationPosition> positions = {{QStringLiteral("1@a"), {0.0, 0.0, 0.0}},
+                                                             {QStringLiteral("2@a"), {10.0, 0.0, 0.0}},
+                                                             {QStringLiteral("3@a"), {10.0, 5.0, 0.0}},
+                                                             {QStringLiteral("1@b"), {12.0, 5.0, 0.0}},
+                                                             {QStringLiteral("2@b"), {22.0, 5.0, 0.0}},
+                                                             {QStringLiteral("3@b"), {22.0, 10.0, 0.0}}};
+        placement.positions = &positions;
+        QVERIFY(openMapEditorJoinPair(first_, kSecondWallLine, second_, kSecondWallLine, false, placement).opened());
+        QVERIFY(centredOn(first_, kFirstJoin + QPointF(78.74, 0)));
     }
 
 private:

@@ -311,7 +311,7 @@ Active planning only. Completed history belongs in archive files. Stable archite
 - Phase 2 section D (planned, 2026-10-21): fixes found in use. D1 done (wrong `-scale` fallback; `-scale` now only for scraps
   with fewer than two stations, computed and XVI fits mixed at the join station); D2 open rows whose station is not drawn in the view; D3 join-only rows opening
   unaligned while positions are stale or a run is going (reduced 2026-10-22 to drawing saves no longer starting a
-  run, done; the rest a known problem); D4 centre on the closest station pair (next, then D2); D5 (done,
+  run, done; the rest a known problem); D4 centre on the closest station pair (done 2026-10-22; D2 next); D5 (done,
   replaces the D1 fix) place drawings as drawn from measured leg vectors, XVI fallback, no `-scale`.
 - Found during C1 (pre-existing, not from the join work): references such as `EntranceSP2@Entrance` to objects in a
   `-namespace off` survey resolve in Therion but not in the project index, so Validation reports false
