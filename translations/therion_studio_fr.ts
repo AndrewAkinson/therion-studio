@@ -7103,6 +7103,39 @@ Supprimer le sommet malgré tout ?</translation>
     </message>
 </context>
 <context>
+    <name>TherionStudio::TherionRepeatedStationPoints</name>
+    <message>
+        <location filename="../src/core/TherionRepeatedStationPoints.cpp" line="87"/>
+        <source>Remove repeated station point on line %1</source>
+        <translation>Supprimer le point de station répété à la ligne %1</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionRepeatedStationPoints.cpp" line="134"/>
+        <source>Station drawn twice in a scrap</source>
+        <translation>Station dessinée deux fois dans un scrap</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionRepeatedStationPoints.cpp" line="135"/>
+        <source>Station `%1` is already drawn at the same place in this scrap, on line %2.</source>
+        <translation>La station `%1` est déjà dessinée au même endroit dans ce scrap, à la ligne %2.</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionRepeatedStationPoints.cpp" line="136"/>
+        <source>Station `%1` is already drawn at a different place in this scrap, on line %2.</source>
+        <translation>La station `%1` est déjà dessinée à un autre endroit dans ce scrap, à la ligne %2.</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionRepeatedStationPoints.cpp" line="162"/>
+        <source>Station in several scraps</source>
+        <translation>Station dans plusieurs scraps</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionRepeatedStationPoints.cpp" line="163"/>
+        <source>Station `%1` is also drawn in scrap `%2` of the same projection, on line %3.</source>
+        <translation>La station `%1` est aussi dessinée dans le scrap `%2` de la même projection, à la ligne %3.</translation>
+    </message>
+</context>
+<context>
     <name>TherionStudio::TherionSourceValidator</name>
     <message>
         <location filename="../src/core/TherionSourceValidator.cpp" line="145"/>

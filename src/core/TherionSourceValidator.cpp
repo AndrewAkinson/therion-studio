@@ -4,6 +4,7 @@
 #include "TherionCommandSyntax.h"
 #include "TherionDocumentEditor.h"
 #include "TherionDocumentParser.h"
+#include "TherionRepeatedStationPoints.h"
 #include "TherionSourceDocument.h"
 #include "TherionSourceLogicalDocument.h"
 #include "TherionSourceReferenceResolver.h"
@@ -1481,6 +1482,7 @@ TherionSourceValidationResult validateSourceDocuments(const TherionSourceDocumen
     TherionSourceValidationResult result;
     appendEmptyScrapObjectDiagnostics(&result, sourceDocument);
     appendDuplicateLinePointSmoothOffDiagnostics(&result, sourceDocument);
+    appendRepeatedStationPointDiagnostics(&result.diagnostics, sourceDocument, logicalDocument);
 
     QHash<QString, QSet<QString>> lineIdsByScrapScope;
     for (const TherionSourceLogicalCommand &command : logicalDocument.commands()) {

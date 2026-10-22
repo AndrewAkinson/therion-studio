@@ -41,6 +41,7 @@ Therion Studio is an editor and early-feedback tool. The Therion compiler remain
 - Station names are scoped by survey/centerline namespace. Repeated station names in different surveys are valid.
 - Centreline station names share the survey namespace with drawing object IDs, so a `point`, `line` or `area` `-id` equal to a station name in the same survey fails in Therion (`object already exist`).
 - Therion compares names case-sensitively, so `wall` and `Wall` are different IDs.
+- Therion accepts a station point repeated in a scrap, at the same place or elsewhere, and a station drawn in several scraps, without an error or a warning (checked with Therion 6.4.0). A station point is a morphing control point, so a repeat at a different place in one scrap is very likely a mistake, while a station shared by two scraps of the same projection is how scraps join.
 - Duplicate diagnostics should point at the later repeated identifier token, not the whole line, when the source range is available.
 - Cross-file duplicate checks must respect the effective Therion namespace, not only the physical file path.
 

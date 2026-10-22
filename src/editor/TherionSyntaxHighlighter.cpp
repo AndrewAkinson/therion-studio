@@ -658,6 +658,7 @@ void TherionSyntaxHighlighter::applyValidatorInvalidTokenFormats(const QString &
             && code != QStringLiteral("invalid-command-context")
             && code != QStringLiteral("invalid-document-type")
             && code != QStringLiteral("duplicate-object-id")
+            && code != QStringLiteral("repeated-station-point")
             && code != QStringLiteral("unclosed-block")
             && code != QStringLiteral("unknown-command")
             && code != QStringLiteral("unknown-area-line-reference")) {

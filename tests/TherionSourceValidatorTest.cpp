@@ -269,6 +269,70 @@ void reportsDuplicateNamespaceObjectNamesInSameParentScope()
             "Duplicate survey names should be reported against the repeated namespace token.");
 }
 
+void reportsRepeatedStationPointsInOneFile()
+{
+    const QString contents = QStringLiteral("scrap a -projection plan\n"            // 1
+                                            "point 0 0 station -name 1\n"           // 2
+                                            "point 5 0 station -name 1\n"           // 3 different place
+                                            "point 0 0 station -name 1\n"           // 4 same place as line 2
+                                            "point 9 9 station -name 1@sub\n"       // 5 another station
+                                            "endscrap\n"
+                                            "scrap b -projection plan\n"            // 7
+                                            "point 1 1 station -name 1\n"           // 8 also in scrap a
+                                            "point 2 2 station -name 1\n"           // 9 different place in b
+                                            "endscrap\n"
+                                            "scrap c -projection extended\n"
+                                            "point 1 1 station -name 1\n"           // 12 another projection
+                                            "endscrap\n"
+                                            "scrap x1 -projection none\n"
+                                            "point 0 0 station -name 1\n"           // 15 cross sections not compared
+                                            "endscrap\n"
+                                            "scrap x2 -projection none\n"
+                                            "point 0 0 station -name 1\n"           // 18
+                                            "point 3 0 station -name 1\n"           // 19 repeated in a cross section
+                                            "endscrap\n"
+                                            "scrap t -station-names pre []\n"
+                                            "point 0 0 station -name 1\n"           // 22 station pre1
+                                            "endscrap\n"
+                                            "scrap u\n"
+                                            "point 0 0 station -name pre1\n"        // 25 also in scrap t
+                                            "endscrap\n");
+    const TherionSourceValidationResult result = TherionSourceValidator::validate(contents);
+
+    QStringList findings;
+    const TherionSourceDiagnostic *samePlace = nullptr;
+    for (const TherionSourceDiagnostic &diagnostic : result.diagnostics) {
+        if (diagnostic.code != QStringLiteral("repeated-station-point")
+            && diagnostic.code != QStringLiteral("station-in-several-scraps")) {
+            continue;
+        }
+        findings.append(QStringLiteral("%1:%2:%3")
+                            .arg(diagnostic.lineNumber)
+                            .arg(diagnostic.severity == TherionSourceDiagnosticSeverity::Warning
+                                     ? QStringLiteral("warning")
+                                     : QStringLiteral("information"),
+                                 diagnostic.hasFix ? QStringLiteral("fix") : QStringLiteral("no fix")));
+        if (diagnostic.lineNumber == 4) {
+            samePlace = &diagnostic;
+        }
+    }
+    require(findings == QStringList({QStringLiteral("3:warning:no fix"),
+                                     QStringLiteral("4:warning:fix"),
+                                     QStringLiteral("8:information:no fix"),
+                                     QStringLiteral("9:warning:no fix"),
+                                     QStringLiteral("19:warning:no fix"),
+                                     QStringLiteral("25:information:no fix")}),
+            qPrintable(QStringLiteral("Repeated station points should be found in a scrap and across scraps of one "
+                                      "projection, but not across projections or cross sections: %1")
+                           .arg(findings.join(QStringLiteral(", ")))));
+    QStringList withoutLineFour = contents.split(QLatin1Char('\n'));
+    withoutLineFour.removeAt(3);
+    require(samePlace != nullptr
+                && TherionSourceValidator::applyFixes(contents, {samePlace->fix})
+                       == withoutLineFour.join(QLatin1Char('\n')),
+            "The same-place fix should remove only the repeated point line.");
+}
+
 void reportsUnknownAreaLineReferencesInCurrentScrap()
 {
     const QString contents = QStringLiteral("scrap test\n"
@@ -1023,6 +1087,7 @@ int main(int argc, char **argv)
     reportsDuplicateObjectIdsAcrossScrapsOfOneSurvey();
     reportsDuplicateNamespaceObjectNamesInSameParentScope();
     scopesObjectIdsBySurveyNamespace();
+    reportsRepeatedStationPointsInOneFile();
     reportsUnknownAreaLineReferencesInCurrentScrap();
     reportsUnknownCommandWithoutSafeFix();
     reportsUnknownOptionAndMissingOptionValue();

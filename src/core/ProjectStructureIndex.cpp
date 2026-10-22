@@ -578,33 +578,6 @@ bool stationReferenceShouldReportMissing(const QString &referenceName)
     return referenceName.contains(QLatin1Char('@'));
 }
 
-std::optional<TherionSourceLogicalArgumentRange> pointStationNameReferenceRange(
-    const TherionSourceLogicalCommand &command)
-{
-    if (command.metadata.commandName != QStringLiteral("point")
-        || command.positionalArgumentRanges.size() < 3) {
-        return std::nullopt;
-    }
-
-    const QString pointType = command.positionalArgumentRanges.at(2).text.trimmed().section(QLatin1Char(':'), 0, 0);
-    if (pointType.compare(QStringLiteral("station"), Qt::CaseInsensitive) != 0) {
-        return std::nullopt;
-    }
-
-    for (const TherionSourceLogicalOptionEntryRange &optionEntry : command.optionEntryRanges) {
-        if (normalizedCommandOptionName(optionEntry.key) != QStringLiteral("name")) {
-            continue;
-        }
-        for (const TherionSourceLogicalArgumentRange &valueRange : optionEntry.valueRanges) {
-            if (!valueRange.text.trimmed().isEmpty()) {
-                return valueRange;
-            }
-        }
-    }
-
-    return std::nullopt;
-}
-
 void appendStationReferenceDiagnosticsForRange(QVector<ProjectIndexDiagnostic> *diagnostics,
                                                const StationReferenceIndex &stationIndex,
                                                const ProjectStructureEntry &ownerEntry,
@@ -2040,7 +2013,7 @@ QVector<ProjectIndexDiagnostic> scanStationReferences(const QVector<ProjectStruc
                 return diagnostics;
             }
             if (const std::optional<TherionSourceLogicalArgumentRange> stationPointReference =
-                    pointStationNameReferenceRange(command)) {
+                    therionPointStationNameRange(command)) {
                 const ProjectStructureEntry ownerEntry =
                     nearestNamespaceEntryForLine(namespaceEntries, sourceFile, command.startLineNumber);
                 appendStationReferenceDiagnosticsForRange(&diagnostics,

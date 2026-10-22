@@ -2,7 +2,7 @@
 
 Date: 2026-10-15
 
-Status: V1a, V1b, V2a, V2b, V3, V4, V4b, V5, V5b, and V6 done; V6b planned (2026-10-22). Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
+Status: V1a, V1b, V2a, V2b, V3, V4, V4b, V5, V5b, V6, and V6b done. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
 values, Therion's line splitting (`thsplit_args`) first in two parts (V1a, V1b), code blocks as a potential slice,
 and slices renumbered.
 
@@ -375,6 +375,9 @@ consumer that does not know this, because it parses each line on its own.
 
 Goal: find a `point ... station -name` that repeats a station already drawn in the same `.th2` file, which Therion
 accepts silently.
+
+Done (2026-10-22), in `TherionRepeatedStationPoints.cpp`, called from the Raw editor check. On the measured project it
+reports the counts below exactly (6 warnings, 11 information findings).
 
 Therion 6.4.0 compiles all three cases below without an error or a warning (checked on small projects), so by the
 severity policy none of them is an error. A station point is a morphing control point, so two of the same station in
