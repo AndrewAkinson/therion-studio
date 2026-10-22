@@ -245,7 +245,8 @@ Staged implementation:
 
 ### D. Fixes found in use (2026-10-21)
 
-Reported while testing on a real project. Status: D1 fixed (below), to be replaced by D5; D2-D5 not started. D1 comes
+Reported while testing on a real project. Status: D1 fixed (below) and replaced by D5; D5 done;
+D2-D4 not started. D1 comes
 first because it may explain D3, and its result may change D2-D4.
 
 - **D1 Alignment is wrong even with a shared point.** Equate rows, where both drawings draw the shared station, do not
@@ -310,8 +311,8 @@ first because it may explain D3, and its result may change D2-D4.
   2 m). They open centred on the first drawing's station, so they can look misaligned at first. Centre them halfway
   between the two stations too.
 
-- **D5 Place drawings as drawn, from measured legs (replaces the D1 fix).** Agreed in review on 2026-10-22, not
-  started. The D1 fix still places by Therion's computed station positions, which are loop closed for the whole
+- **D5 Place drawings as drawn, from measured legs (replaces the D1 fix).** Agreed in review on 2026-10-22, done
+  (results at the end of this item). The D1 fix still places by Therion's computed station positions, which are loop closed for the whole
   project, while the drawings were made on unclosed or differently closed data. In the test project the two frames
   agree within 2.2 degrees and 4 percent, but a cave with large misclosures could be much worse. `-scale` is also
   still used for scraps with fewer than two stations, and it is unreliable because it can differ in every scrap.
@@ -367,6 +368,32 @@ first because it may explain D3, and its result may change D2-D4.
   and dropped per scrap, and leg fit against XVI grid per scrap. QTests for the leg fit (plan, elevation, extended,
   short and end-on legs dropped, splays left out), the XVI grid fallback, and the offset for rows without a shared
   station.
+
+  Done (2026-10-22). Changes from the plan found while measuring:
+  - A station drawn twice in one scrap took the fit 15 percent off (1.1 m RMS), so the legs of a station drawn
+    more than once are left out. Legs more than 0.5 m, and more than three times the median, off the median of the
+    legs' own scale and rotation are also left out as misdrawn; a least-squares first fit was pulled by the bad leg
+    and did not catch it.
+  - The XVI fallback keeps the fit to matching XVI stations when there are two or more, and uses the grid alone
+    otherwise.
+  - The XVI check compares scale only. Rotation differs by the declination when a drawing was made without it.
+  - Legs keep the weighting of a plain least-squares fit of the vectors, so longer legs count more.
+  - Therion also lists `nosurvey` legs in `SHOT`, with the vector computed from the network, and nothing marks
+    them. They are not left out; they rarely join two stations of one scrap, and their vector is still close.
+  - D3 is unchanged, so legs, like positions, are not used while a run is going; joins opened then use the XVI.
+
+  Results on the test project with the scratch tool (every available row, 23 plan, 20 elevation 315, 9 elevation 0,
+  5 elevation 90, 19 extended):
+  - Every row is placed by measured legs on both sides; none needs the XVI and none fails. The 5 extended rows that
+    D1 could not place are placed.
+  - Leg fits agree with fits to computed positions within 1.5 degrees and 3.8 percent, and with the XVI within 1.9
+    degrees and, except one drawing, 1 percent. That drawing's XVI is at a quarter of the legs' scale and of the
+    computed positions' scale, and the status bar now says so.
+  - Compared with the D1 placement from computed positions, the partner moves at most 0.47 m at 10 m from the join;
+    the shared station, up to 0.23 m apart before, now coincides.
+  - Angle error of single legs against the computed fit: up to 22 degrees under 1 m, up to 3.2 degrees from 1 to
+    2 m, under 1.5 degrees for most longer legs (one 4.6). This supports leaving out legs under 1 m.
+  - Join-only rows find a closest station pair 3.5 to 15.5 m apart.
 
 Each slice is a separate commit on `JoinViewer` with tests, doc and translation updates, measured on the test project
 before and after, and checked in the app.

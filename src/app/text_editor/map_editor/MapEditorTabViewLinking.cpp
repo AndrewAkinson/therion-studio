@@ -121,35 +121,27 @@ std::optional<QPointF> MapEditorTab::stationPointSourcePosition(int lineNumber) 
     return point.has_value() ? std::optional<QPointF>(point->position) : std::nullopt;
 }
 
-Th2CentrelineFit MapEditorTab::stationPositionFitForSourceLine(int lineNumber,
-                                                              const QHash<int, QString> &stationKeysByLine,
-                                                              const QHash<QString, Th2StationPosition> &positionsByStationKey,
-                                                              const QString &projection) const
+Th2CentrelineFit MapEditorTab::measuredLegFitForSourceLine(int lineNumber,
+                                                          const QHash<int, QString> &stationKeysByLine,
+                                                          const QVector<Th2MeasuredLeg> &legs,
+                                                          const QString &projection) const
 {
     const MapEditorSourceProjectionSnapshotPtr snapshot = sourceProjectionSnapshotForCurrentDocument();
     if (snapshot == nullptr) {
         return Th2CentrelineFit();
     }
-    return fitTh2ScrapToStationPositions(
-        snapshot->logicalCommands, lineNumber, stationKeysByLine, positionsByStationKey, projection);
+    return fitTh2ScrapToMeasuredLegs(snapshot->logicalCommands, lineNumber, stationKeysByLine, legs, projection);
 }
 
-std::optional<QPointF> MapEditorTab::scrapStationCentroidForSourceLine(int lineNumber) const
+QVector<Th2ScrapStationPoint> MapEditorTab::scrapStationPointsForSourceLine(int lineNumber) const
 {
     const MapEditorSourceProjectionSnapshotPtr snapshot = sourceProjectionSnapshotForCurrentDocument();
     if (snapshot == nullptr) {
-        return std::nullopt;
+        return {};
     }
     const int scrapStartLine = th2ScrapStartLineContaining(snapshot->logicalCommands, lineNumber);
-    const QVector<Th2ScrapStationPoint> points = th2ScrapStationPoints(snapshot->logicalCommands, scrapStartLine);
-    if (points.isEmpty()) {
-        return std::nullopt;
-    }
-    QPointF sum;
-    for (const Th2ScrapStationPoint &point : points) {
-        sum += point.position;
-    }
-    return sum / points.size();
+    return scrapStartLine > 0 ? th2ScrapStationPoints(snapshot->logicalCommands, scrapStartLine)
+                              : QVector<Th2ScrapStationPoint>();
 }
 
 QPainterPath MapEditorTab::mapOutlineScenePath() const

@@ -310,8 +310,8 @@ Active planning only. Completed history belongs in archive files. Stable archite
   planned). Phase 2 is complete pending review and the PR.
 - Phase 2 section D (planned, 2026-10-21): fixes found in use. D1 done (wrong `-scale` fallback; `-scale` now only for scraps
   with fewer than two stations, computed and XVI fits mixed at the join station); D2 open rows whose station is not drawn in the view; D3 join-only rows opening
-  unaligned while positions are stale or a run is going; D4 centre on the closest station pair; D5 (planned
-  2026-10-22, replaces the D1 fix) place drawings as drawn from measured leg vectors, XVI grid fallback, no `-scale`.
+  unaligned while positions are stale or a run is going; D4 centre on the closest station pair; D5 (done,
+  replaces the D1 fix) place drawings as drawn from measured leg vectors, XVI fallback, no `-scale`.
 - Found during C1 (pre-existing, not from the join work): references such as `EntranceSP2@Entrance` to objects in a
   `-namespace off` survey resolve in Therion but not in the project index, so Validation reports false
   `unknown join reference` warnings and C2 would leave those joins uncoloured. Proposed as its own fix branch.

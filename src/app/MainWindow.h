@@ -65,6 +65,8 @@ class ProjectJoinsPanel;
 struct ProjectJoinPair;
 struct ProjectJoinGroup;
 struct MapEditorJoinPlacement;
+struct MapEditorJoinResult;
+enum class MapEditorJoinFailure;
 class ProjectStationPositionService;
 }
 
@@ -239,14 +241,20 @@ private:
                                  const QString &secondFile,
                                  int secondLine,
                                  bool separateWindow,
-                                 const TherionStudio::MapEditorJoinPlacement &placement,
-                                 const QString &failureMessage);
+                                 const TherionStudio::MapEditorJoinPlacement &placement);
+    [[nodiscard]] QString joinFailureMessage(TherionStudio::MapEditorJoinFailure failure, const QString &projection) const;
+    // Says which drawings are placed by their XVI rather than measured legs, or do not match their XVI.
+    [[nodiscard]] QString joinPlacementNotes(const TherionStudio::MapEditorJoinResult &result,
+                                             const QString &firstFile,
+                                             const QString &secondFile) const;
     void setupJoinStationPositions();
-    // Asks Therion for computed station positions when they are missing or older than the project sources.
+    // Asks Therion for measured legs and computed station positions when they are missing or older than the
+    // project sources.
     void requestJoinStationPositions();
     [[nodiscard]] TherionStudio::MapEditorJoinPlacement joinPlacement(const QString &firstScrapObjectId,
                                                                       const QString &secondScrapObjectId,
-                                                                      const QString &projection) const;
+                                                                      const QString &projection,
+                                                                      bool sameStation) const;
     void handleStructureItemActivated(const QModelIndex &index, QTreeView *sourceTree);
     bool confirmCloseTab(int index);
     bool closeOpenDocumentForFilePath(const QString &filePath);

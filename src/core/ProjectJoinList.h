@@ -44,6 +44,8 @@ struct ProjectJoinPair
 {
     ProjectJoinSide first;
     ProjectJoinSide second;
+    // A `nosurvey` pair draws two stations apart; an equate pair draws one station.
+    ProjectStationLinkKind linkKind = ProjectStationLinkKind::Equate;
     ProjectJoinConnection connection = ProjectJoinConnection::None;
     QVector<ProjectJoinCommand> joins;
     // Broken join rules among `joins`; the row shows a warning marker.
