@@ -128,6 +128,9 @@ Active planning only. Completed history belongs in archive files. Stable archite
 
 ### Validation And Catalog Metadata
 
+- Duplicate `point`/`line`/`area` `-id` diagnostics are still keyed by scrap (`duplicateIdentityLookupKey` in
+  `src/core/ProjectStructureIndex.cpp`). Therion keys them by survey, so duplicates in different scraps of one survey
+  go unreported. `docs/THERION_COMPATIBILITY.md` now states the survey rule.
 - Validation accuracy: a measured run on a real multi-survey project showed most project-validation findings were false
   (catalog aliases missing, a quoted-continuation parser bug, per-station errors in drawings the target config does not
   read). The fix sequence and severity policy are planned (Therion referee test as potential) in
