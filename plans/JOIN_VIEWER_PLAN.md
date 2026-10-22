@@ -246,7 +246,7 @@ Staged implementation:
 ### D. Fixes found in use (2026-10-21)
 
 Reported while testing on a real project. Status: D1 fixed (below) and replaced by D5; D5 done; D3 reduced to
-its stale-check part (revised 2026-10-22, done), then D4, then D2. D1 came first because it might have
+its stale-check part (revised 2026-10-22, done), then D4 (done), then D2. D1 came first because it might have
 explained D3, and its result changed D2-D4.
 
 - **D1 Alignment is wrong even with a shared point.** Equate rows, where both drawings draw the shared station, do not
@@ -310,6 +310,8 @@ explained D3, and its result changed D2-D4.
   one in each scrap, using their computed positions (the user's suggestion). D5 already finds this pair for the
   offset, so D4 reuses it. Rows whose two stations are linked by a `nosurvey` leg are centred halfway between those
   two stations. Placement itself stays on each drawing's fit (D5).
+  Done (2026-10-22): every row is centred halfway between the two stations that place it, which for an equate is
+  the join station.
 
 - **D5 Place drawings as drawn, from measured legs (replaces the D1 fix).** Agreed in review on 2026-10-22, done
   (results at the end of this item). The D1 fix still places by Therion's computed station positions, which are loop closed for the whole

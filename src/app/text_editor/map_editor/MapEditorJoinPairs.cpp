@@ -44,18 +44,6 @@ Th2CentrelineFit drawingFit(MapEditorTab *tab,
     return xviFit;
 }
 
-std::optional<QPointF> stationCentroid(const QVector<Th2ScrapStationPoint> &points)
-{
-    if (points.isEmpty()) {
-        return std::nullopt;
-    }
-    QPointF sum;
-    for (const Th2ScrapStationPoint &point : points) {
-        sum += point.position;
-    }
-    return sum / points.size();
-}
-
 // Where the two drawings are linked, or nothing when they share no station and no offset is known.
 std::optional<Th2JoinAnchor> joinAnchor(MapEditorTab *first,
                                         int firstJoinLine,
@@ -116,14 +104,8 @@ MapEditorJoinResult openMapEditorJoinPair(MapEditorTab *first,
     }
     const Th2SimilarityTransform secondToFirst = joinPartnerToThisTransform(
         result.firstFit, anchor->thisPoint, result.secondFit, anchor->partnerPoint, anchor->partnerOffsetMetres);
-    // With no join station, look at the middle of the two scraps' station points.
-    std::optional<QPointF> viewCentre = first->stationPointSourcePosition(firstJoinLine);
-    if (!viewCentre.has_value()) {
-        const std::optional<QPointF> firstMiddle = stationCentroid(first->scrapStationPointsForSourceLine(firstJoinLine));
-        const std::optional<QPointF> secondMiddle =
-            stationCentroid(second->scrapStationPointsForSourceLine(secondJoinLine));
-        viewCentre = (*firstMiddle + secondToFirst.map(*secondMiddle)) / 2.0;
-    }
+    // Look at where the drawings meet: halfway between the two anchor stations (one point for an equate).
+    const QPointF viewCentre = (anchor->thisPoint + secondToFirst.map(anchor->partnerPoint)) / 2.0;
 
     closeMapEditorJoinPair(first, second);
     // Separate before aligning; the link follows any viewport resize while the window is laid out.
@@ -137,7 +119,7 @@ MapEditorJoinResult openMapEditorJoinPair(MapEditorTab *first,
     QObject::connect(second, &QObject::destroyed, link, &QObject::deleteLater);
     const qreal firstUnitsAcross = kJoinViewWidthMetres / result.firstFit.drawingToMetres.scale();
     const int viewWidthPixels = qMax(1, first->mapViewportPixelWidth());
-    link->showFirstAt(*viewCentre, viewWidthPixels / firstUnitsAcross);
+    link->showFirstAt(viewCentre, viewWidthPixels / firstUnitsAcross);
     return result;
 }
 

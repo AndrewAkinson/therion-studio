@@ -60,10 +60,10 @@ struct MapEditorJoinResult
 // join. `firstJoinLine` and `secondJoinLine` are the join-station points, or for a join with no shared station
 // any line inside each joined scrap. Each drawing is scaled and turned as drawn (see MapEditorJoinPlacement). The
 // join station points are put at the same point, or apart by their computed offset when they are two stations;
-// without join station points, the closest pair of station points by computed position is used and the view is
-// centred between the scraps. With `separateSecondMap`, the second drawing's map is shown in its separate map
-// window. Replaces any existing join between the same two editors. Changes nothing when the drawings cannot be
-// placed.
+// without join station points, the closest pair of station points by computed position is used. The views are
+// centred halfway between the two stations used. With `separateSecondMap`, the second drawing's map is shown in its
+// separate map window. Replaces any existing join between the same two editors. Changes nothing when the drawings
+// cannot be placed.
 MapEditorJoinResult openMapEditorJoinPair(MapEditorTab *first,
                                           int firstJoinLine,
                                           MapEditorTab *second,
