@@ -100,6 +100,22 @@ private slots:
         service.request(request);
         QVERIFY(!service.isRunning());
 
+        // A newer drawing does not make them stale; a newer .th does.
+        const QDateTime later = QDateTime::currentDateTime().addSecs(60);
+        QFile drawing(QDir(project.path()).filePath(QStringLiteral("cave.th2")));
+        QVERIFY(drawing.open(QIODevice::WriteOnly));
+        QVERIFY(drawing.setFileTime(later, QFileDevice::FileModificationTime));
+        ProjectStationPositionRequest withDrawing = request;
+        withDrawing.sourceFiles.append(drawing.fileName());
+        service.request(withDrawing);
+        QVERIFY(!service.isRunning());
+        QFile source(request.sourceFiles.first());
+        QVERIFY(source.open(QIODevice::ReadWrite));
+        QVERIFY(source.setFileTime(later, QFileDevice::FileModificationTime));
+        service.request(withDrawing);
+        QVERIFY(service.isRunning());
+        QVERIFY(ready.wait(10000));
+
         service.clear();
         QVERIFY(service.positions().isEmpty());
         QVERIFY(service.legs().isEmpty());

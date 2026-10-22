@@ -23,7 +23,7 @@ struct ProjectStationPositionRequest
 {
     QString executableInput;
     QString configPath;
-    // Project source files; the export is redone when any of them is newer than it.
+    // Project source files; the export is redone when any of them is newer than it, drawings (.th2) apart.
     QStringList sourceFiles;
 };
 
@@ -40,7 +40,8 @@ public:
     explicit ProjectStationPositionService(const QString &temporaryBasePath, QObject *parent = nullptr);
     ~ProjectStationPositionService() override;
 
-    // Starts an export when there are no positions for this config yet or a source file is newer than them.
+    // Starts an export when there are no positions for this config yet or a source file other than a drawing is
+    // newer than them.
     void request(const ProjectStationPositionRequest &request);
     // Forgets positions and stops a run, for example when the project closes.
     void clear();
