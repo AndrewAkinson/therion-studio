@@ -68,6 +68,7 @@ struct MapEditorJoinPlacement;
 struct MapEditorJoinResult;
 enum class MapEditorJoinFailure;
 class ProjectStationPositionService;
+struct Th2StationPosition;
 }
 
 class MainWindow final : public QMainWindow
@@ -251,6 +252,8 @@ private:
     // Asks Therion for measured legs and computed station positions when they are missing or older than the
     // project sources.
     void requestJoinStationPositions();
+    // Computed station positions, or none while Therion is running or before it has run.
+    [[nodiscard]] const QHash<QString, TherionStudio::Th2StationPosition> *currentStationPositions() const;
     [[nodiscard]] TherionStudio::MapEditorJoinPlacement joinPlacement(const QString &firstScrapObjectId,
                                                                       const QString &secondScrapObjectId,
                                                                       const QString &projection,

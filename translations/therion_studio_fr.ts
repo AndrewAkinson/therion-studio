@@ -1484,6 +1484,16 @@ Si le fichier est ouvert, il sera d&apos;abord fermé.</translation>
         <translation>Ces dessins n’ont aucune station commune, et des dessins en coupe développée ne peuvent être alignés que sur une station commune.</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="126"/>
+        <source>%1 has no station point in this view; open the join again once Therion has computed the station positions, which choose its survey&apos;s nearest drawing.</source>
+        <translation>%1 n’a pas de point de station dans cette vue ; rouvrez la jonction une fois que Therion aura calculé les positions des stations, qui choisissent le dessin le plus proche de sa topographie.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="129"/>
+        <source>%1 has no station point in this view, and Therion has computed no position to choose its survey&apos;s nearest drawing.</source>
+        <translation>%1 n’a pas de point de station dans cette vue, et Therion n’a calculé aucune position pour choisir le dessin le plus proche de sa topographie.</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindowJoinPlacement.cpp" line="141"/>
         <source>%1 has too few measured legs between its station points, so it is placed by its XVI background, which may be turned by the declination.</source>
         <translation>Le dessin %1 a trop peu de visées mesurées entre ses points de station, il est donc placé par son fond XVI, qui peut être tourné de la déclinaison.</translation>
@@ -6552,6 +6562,16 @@ Supprimer le sommet malgré tout ?</translation>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="187"/>
         <source>%1: not drawn in the %2 view</source>
         <translation>%1 : non dessinée dans la vue %2</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="405"/>
+        <source>%1: no station point in its survey&apos;s %2 drawings, and an extended elevation can only be aligned at a shared station</source>
+        <translation>%1 : aucun point de station dans les dessins %2 de sa topographie, et une coupe développée ne peut être alignée que sur une station commune</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="408"/>
+        <source>%1: no station point in its survey&apos;s %2 drawings, so the drawing nearest the station opens</source>
+        <translation>%1 : aucun point de station dans les dessins %2 de sa topographie, le dessin le plus proche de la station s’ouvre donc</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="453"/>

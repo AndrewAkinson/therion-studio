@@ -297,7 +297,7 @@ QStandardItem *ProjectJoinsPanel::pairItem(const ProjectJoinPair &pair,
     toolTip += connectionDescription(pair.connection, pair.joins);
     applyConnectionStyle(item, pair.connection, true);
     applyRuleWarning(item, pair.ruleViolations, &toolTip);
-    if (!pair.isAvailable()) {
+    if (!pair.canOpen()) {
         item->setForeground(palette().brush(QPalette::Disabled, QPalette::Text));
     }
     item->setToolTip(toolTip.join(QLatin1Char('\n')));
@@ -400,12 +400,25 @@ QString ProjectJoinsPanel::sideDescription(const ProjectJoinSide &side) const
         return tr("%1: no station point in a drawing that Therion reads").arg(side.station.reference);
     case ProjectJoinSideStatus::NotDrawnInProjection:
         return tr("%1: not drawn in the %2 view").arg(side.station.reference, projectionCombo_->currentText());
+    case ProjectJoinSideStatus::SurveyDrawnWithoutStation:
+        return projectionCombo_->currentText() == QStringLiteral("extended")
+            ? tr("%1: no station point in its survey's %2 drawings, and an extended elevation can only be aligned at a "
+                 "shared station")
+                  .arg(side.station.reference, projectionCombo_->currentText())
+            : tr("%1: no station point in its survey's %2 drawings, so the drawing nearest the station opens")
+                  .arg(side.station.reference, projectionCombo_->currentText());
     }
     return QString();
 }
 
 QString ProjectJoinsPanel::unavailableReason(const ProjectJoinPair &pair) const
 {
+    // A side that cannot be placed at all comes first; otherwise the extended view stops a side without its station.
+    for (const ProjectJoinSide *side : {&pair.first, &pair.second}) {
+        if (side->status != ProjectJoinSideStatus::Drawn && side->status != ProjectJoinSideStatus::SurveyDrawnWithoutStation) {
+            return sideDescription(*side);
+        }
+    }
     return pair.first.status != ProjectJoinSideStatus::Drawn ? sideDescription(pair.first)
                                                              : sideDescription(pair.second);
 }
@@ -445,7 +458,7 @@ void ProjectJoinsPanel::activateRow(const QModelIndex &proxyIndex)
         tree_->setExpanded(proxyIndex, !tree_->isExpanded(proxyIndex));
         return;
     }
-    if (!pair->isAvailable()) {
+    if (!pair->canOpen()) {
         emit statusMessageRequested(unavailableReason(*pair));
         return;
     }
@@ -489,8 +502,8 @@ void ProjectJoinsPanel::showContextMenu(const QPoint &position)
         const bool separate = activationOpensSeparateWindow_;
         QAction *openJoin = menu.addAction(tr("Open Join"));
         QAction *openOther = menu.addAction(separate ? tr("Open Join in Tabs") : tr("Open Join with Separate Window"));
-        openJoin->setEnabled(pair->isAvailable());
-        openOther->setEnabled(pair->isAvailable());
+        openJoin->setEnabled(pair->canOpen());
+        openOther->setEnabled(pair->canOpen());
         connect(openJoin, &QAction::triggered, this, [this, pair, separate]() { emit joinRequested(*pair, separate); });
         connect(openOther, &QAction::triggered, this, [this, pair, separate]() { emit joinRequested(*pair, !separate); });
     }

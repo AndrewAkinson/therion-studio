@@ -70,6 +70,46 @@ private slots:
         QCOMPARE(groups.at(1).pairs.at(0).second.status, ProjectJoinSideStatus::Unresolved);
     }
 
+    void standsInTheNearestScrapOfTheSurvey()
+    {
+        // 1@a is not drawn in plan, but survey a has two plan scraps; b draws 2@b.
+        const ProjectEquateStation a = station(QStringLiteral("1@a"), QStringLiteral("a"));
+        const ProjectEquateStation b = station(QStringLiteral("2@b"), QStringLiteral("b"));
+        ProjectIndexSnapshot snapshot;
+        snapshot.equateLinks.append(ProjectEquateLink{QStringLiteral("root.th"), 3, {a, b}});
+        snapshot.stationDrawingPointsByStationKey[b.stationKey] = {drawing(b, QStringLiteral("b.th2"), QStringLiteral("plan"))};
+        for (const QString &scrap : {QStringLiteral("far"), QStringLiteral("near"), QStringLiteral("elevation")}) {
+            ProjectStructureEntry entry;
+            entry.kind = ProjectStructureEntryKind::Scrap;
+            entry.objectId = scrap;
+            entry.namespacePath = QStringLiteral("A");
+            entry.sourceFile = QStringLiteral("a.th2");
+            snapshot.entries.append(entry);
+            snapshot.scrapProjectionByObjectId.insert(scrap, scrap == QStringLiteral("elevation") ? QStringLiteral("extended")
+                                                                                             : QStringLiteral("plan"));
+            snapshot.stationPointsByScrapObjectId[scrap] = {ProjectScrapStationPoint{4, scrap + QStringLiteral("@a")}};
+        }
+
+        const ProjectJoinPair plan = projectJoinGroups(snapshot, QStringLiteral("plan")).at(0).pairs.at(0);
+        QCOMPARE(plan.first.status, ProjectJoinSideStatus::SurveyDrawnWithoutStation);
+        QCOMPARE(plan.first.surveyScraps.size(), 2);
+        QVERIFY(!plan.isAvailable());
+        QVERIFY(plan.canOpen());
+        // No offset in extended, so such rows do not open there.
+        snapshot.stationDrawingPointsByStationKey[b.stationKey] = {drawing(b, QStringLiteral("b-ee.th2"), QStringLiteral("extended"))};
+        const ProjectJoinPair extended = projectJoinGroups(snapshot, QStringLiteral("extended")).at(0).pairs.at(0);
+        QCOMPARE(extended.first.status, ProjectJoinSideStatus::SurveyDrawnWithoutStation);
+        QVERIFY(!extended.canOpen());
+
+        QHash<QString, Th2StationPosition> positions = {{a.stationKey, {0.0, 0.0, 0.0}},
+                                                        {QStringLiteral("far@a"), {0.0, 9.0, 0.0}},
+                                                        {QStringLiteral("near@a"), {0.0, 0.0, 3.0}}};
+        QCOMPARE(nearestSurveyScrap(snapshot, plan.first, positions).value_or(ProjectStructureEntry()).objectId,
+                 QStringLiteral("near"));
+        positions.remove(a.stationKey);
+        QVERIFY(!nearestSurveyScrap(snapshot, plan.first, positions).has_value());
+    }
+
     void classifiesPairsByJoinAndListsJoinOnlyConnections()
     {
         const ProjectEquateStation a = station(QStringLiteral("1@a"), QStringLiteral("a"));

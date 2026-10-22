@@ -22,6 +22,29 @@ QHash<int, QString> stationKeysByLine(const TherionStudio::ProjectIndexSnapshot 
     }
     return keys;
 }
+
+struct JoinDrawing
+{
+    QString sourceFile;
+    int lineNumber = 0;
+    QString scrapObjectId;
+};
+
+// The side's join-station point, or the scrap of its survey nearest the station; none without computed positions.
+std::optional<JoinDrawing> joinDrawing(const TherionStudio::ProjectIndexSnapshot &snapshot,
+                                       const TherionStudio::ProjectJoinSide &side,
+                                       const QHash<QString, TherionStudio::Th2StationPosition> *positions)
+{
+    if (side.drawing.has_value()) {
+        return JoinDrawing{side.drawing->sourceFile, side.drawing->lineNumber, side.drawing->scrapObjectId};
+    }
+    if (positions == nullptr) {
+        return std::nullopt;
+    }
+    const std::optional<TherionStudio::ProjectStructureEntry> scrap = nearestSurveyScrap(snapshot, side, *positions);
+    return scrap.has_value() ? std::optional<JoinDrawing>(JoinDrawing{scrap->sourceFile, scrap->lineNumber, scrap->objectId})
+                             : std::nullopt;
+}
 }
 
 void MainWindow::setupJoinStationPositions()
@@ -71,29 +94,52 @@ TherionStudio::MapEditorJoinPlacement MainWindow::joinPlacement(const QString &f
     placement.secondStationKeysByLine = stationKeysByLine(lastStructureSidebarProjectIndex_, secondScrapObjectId);
     placement.projection = projection;
     placement.sameStation = sameStation;
-    if (stationPositionService_ != nullptr && !stationPositionService_->isRunning()
-        && !stationPositionService_->positions().isEmpty()) {
+    placement.positions = currentStationPositions();
+    if (placement.positions != nullptr) {
         placement.legs = &stationPositionService_->legs();
-        placement.positions = &stationPositionService_->positions();
     }
     return placement;
 }
 
+const QHash<QString, TherionStudio::Th2StationPosition> *MainWindow::currentStationPositions() const
+{
+    return stationPositionService_ != nullptr && !stationPositionService_->isRunning()
+            && !stationPositionService_->positions().isEmpty()
+        ? &stationPositionService_->positions()
+        : nullptr;
+}
+
 void MainWindow::openProjectJoin(const TherionStudio::ProjectJoinPair &pair, bool separateWindow)
 {
-    if (!pair.isAvailable()) {
+    if (!pair.canOpen()) {
         return;
     }
     requestJoinStationPositions();
-    // Each drawing opens centred on its join-station point.
-    openProjectJoinDrawings(pair.first.drawing->sourceFile,
-                            pair.first.drawing->lineNumber,
-                            pair.second.drawing->sourceFile,
-                            pair.second.drawing->lineNumber,
+    // Each drawing opens at its join-station point, or at the scrap of its survey that stands in for it.
+    const QHash<QString, TherionStudio::Th2StationPosition> *positions = currentStationPositions();
+    const std::optional<JoinDrawing> first = joinDrawing(lastStructureSidebarProjectIndex_, pair.first, positions);
+    const std::optional<JoinDrawing> second = joinDrawing(lastStructureSidebarProjectIndex_, pair.second, positions);
+    if (!first.has_value() || !second.has_value()) {
+        const QString station = (first.has_value() ? pair.second : pair.first).station.reference;
+        statusBar()->showMessage(
+            stationPositionService_ != nullptr && stationPositionService_->isRunning()
+                ? tr("%1 has no station point in this view; open the join again once Therion has computed the "
+                     "station positions, which choose its survey's nearest drawing.")
+                      .arg(station)
+                : tr("%1 has no station point in this view, and Therion has computed no position to choose its "
+                     "survey's nearest drawing.")
+                      .arg(station),
+            8000);
+        return;
+    }
+    openProjectJoinDrawings(first->sourceFile,
+                            first->lineNumber,
+                            second->sourceFile,
+                            second->lineNumber,
                             separateWindow,
-                            joinPlacement(pair.first.drawing->scrapObjectId,
-                                          pair.second.drawing->scrapObjectId,
-                                          pair.first.drawing->projection,
+                            joinPlacement(first->scrapObjectId,
+                                          second->scrapObjectId,
+                                          pair.projection,
                                           pair.linkKind == TherionStudio::ProjectStationLinkKind::Equate));
 }
 

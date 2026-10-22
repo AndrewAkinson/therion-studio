@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ProjectStructureIndex.h"
+#include "Th2CentrelineAlignment.h"
 
 #include <QStringList>
 #include <QVector>
@@ -15,6 +16,9 @@ enum class ProjectJoinSideStatus
     Unresolved,
     NotDrawn,
     NotDrawnInProjection,
+    // The station has no point in this projection, but its survey has scraps there; with computed station positions
+    // the nearest of them stands in (see nearestSurveyScrap).
+    SurveyDrawnWithoutStation,
 };
 
 struct ProjectJoinSide
@@ -22,6 +26,8 @@ struct ProjectJoinSide
     ProjectEquateStation station;
     ProjectJoinSideStatus status = ProjectJoinSideStatus::NotDrawn;
     std::optional<ProjectStationDrawingPoint> drawing;
+    // For SurveyDrawnWithoutStation: the survey's scraps in this projection that have station points.
+    QVector<ProjectStructureEntry> surveyScraps;
 };
 
 // How Therion `join` commands connect the drawings of two surveys in one projection.
@@ -44,6 +50,7 @@ struct ProjectJoinPair
 {
     ProjectJoinSide first;
     ProjectJoinSide second;
+    QString projection;
     // A `nosurvey` pair draws two stations apart; an equate pair draws one station.
     ProjectStationLinkKind linkKind = ProjectStationLinkKind::Equate;
     ProjectJoinConnection connection = ProjectJoinConnection::None;
@@ -54,6 +61,17 @@ struct ProjectJoinPair
     [[nodiscard]] bool isAvailable() const
     {
         return first.status == ProjectJoinSideStatus::Drawn && second.status == ProjectJoinSideStatus::Drawn;
+    }
+    // Available, or a side's station is not drawn but its survey's nearest scrap can stand in. Rows without a shared
+    // station point cannot be aligned in extended, so those are not openable there.
+    [[nodiscard]] bool canOpen() const
+    {
+        const auto placeable = [](const ProjectJoinSide &side) {
+            return side.status == ProjectJoinSideStatus::Drawn
+                || side.status == ProjectJoinSideStatus::SurveyDrawnWithoutStation;
+        };
+        return isAvailable()
+            || (placeable(first) && placeable(second) && projection != QStringLiteral("extended"));
     }
 };
 
@@ -76,4 +94,10 @@ struct ProjectJoinGroup
 // connection in `projection`.
 [[nodiscard]] QVector<ProjectJoinGroup> projectJoinGroups(const ProjectIndexSnapshot &snapshot,
                                                           const QString &projection);
+
+// Of a SurveyDrawnWithoutStation side's scraps, the one with a station point nearest its station by computed
+// position; none when the positions do not cover them.
+[[nodiscard]] std::optional<ProjectStructureEntry> nearestSurveyScrap(const ProjectIndexSnapshot &snapshot,
+                                                                      const ProjectJoinSide &side,
+                                                                      const QHash<QString, Th2StationPosition> &positions);
 }
