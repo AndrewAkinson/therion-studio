@@ -245,9 +245,9 @@ Staged implementation:
 
 ### D. Fixes found in use (2026-10-21)
 
-Reported while testing on a real project. Status: D1 fixed (below) and replaced by D5; D5 done;
-D2-D4 not started. D1 comes
-first because it may explain D3, and its result may change D2-D4.
+Reported while testing on a real project. Status: D1 fixed (below) and replaced by D5; D5 done; D3 reduced to
+its stale-check part (revised 2026-10-22), then D4, then D2; none started. D1 came first because it might have
+explained D3, and its result changed D2-D4.
 
 - **D1 Alignment is wrong even with a shared point.** Equate rows, where both drawings draw the shared station, do not
   line up correctly. Investigate before changing anything else. Measure where the shared station point lands in each
@@ -289,27 +289,26 @@ first because it may explain D3, and its result may change D2-D4.
   misaligned).
 - **D2 Station not drawn in the view.** Some rows of the form `<station>@<survey> = <station>@<other survey>` are
   dimmed with "not drawn in plan view", although the survey has a drawing in that view. Only the join station's point
-  is missing. This happens in both plan and elevation views. The point is needed only for the XVI anchor. With
-  computed positions, open the survey's drawing in that view whose scrap lies nearest the station's computed position,
-  place both drawings by their fits and centre both views on the station's computed position. Without computed
-  positions keep the dimmed row but word the reason exactly, e.g. "<station>@<survey> has no station point in
-  <survey>'s plan drawing". Rows where the survey reads no drawing at all stay as they are.
-- **D3 Join-only rows open unaligned.** Probable cause, still to be confirmed in the app because the test harness has
-  no such timing:
-  - the positions count as out of date when any source is newer, `.th2` drawings included, so every drawing save
-    starts a new Therion run;
-  - while a run is going the placement ignores the previous positions, so a join-only row opens unaligned. The same
-    happens when a join is opened within about a second of the Joins page appearing.
-
-  Fix: only `.th` files and the config make positions stale; keep using the previous positions while a run is going;
-  when fresh positions arrive, re-place joins that opened without them (only those).
+  is missing. This happens in both plan and elevation views.
+  Revised after D5 (2026-10-22). Such a row has no shared station point, so it is placed like a join-only row. Of the
+  survey's scraps in that view, open the one whose station points lie nearest the station's computed position. Each
+  drawing is placed by its own fit (D5) and offset by the closest pair of computed station points, and the views are
+  centred as in D4. In extended there is no offset, so the row is not openable and says why, as for join-only rows.
+  Without computed positions keep the dimmed row but word the reason exactly, e.g. "<station>@<survey> has no
+  station point in <survey>'s plan drawing". Rows where the survey reads no drawing at all stay as they are.
+- **D3 Joins opened during a Therion run use the XVI.** While a run is going the placement ignores the previous
+  legs and positions, so joins opened then fall back to the XVI, and join-only rows open unaligned. Since D5 this
+  affects equated rows too, because the legs come from the same run. Every drawing save starts a run, because the
+  results count as out of date when any source is newer, `.th2` drawings included.
+  Revised 2026-10-22. Only `.th` files and the config make the results out of date, since the SQL export does not
+  depend on the drawings. The rest is dropped and kept as a known problem: a join opened during a run after a `.th`
+  or config change uses the XVI, or opens unaligned, until it is opened again. If that proves a nuisance, keep the
+  previous results while a run is going and re-place joins that opened without them.
 - **D4 Centre on where the drawings meet.** Join-only rows are centred between the middles of the two scraps, which can
-  be well away from where they meet. Instead find the closest pair of station points, one in each scrap, using their
-  computed positions, and centre both views halfway between them (the user's suggestion). Placement itself stays on
-  the fit to all station points, which also gets rotation and scale right.
-  Rows whose two stations are linked by a `nosurvey` leg have stations apart, as Therion places them (for example
-  2 m). They open centred on the first drawing's station, so they can look misaligned at first. Centre them halfway
-  between the two stations too.
+  be well away from where they meet. Instead centre both views halfway between the closest pair of station points,
+  one in each scrap, using their computed positions (the user's suggestion). D5 already finds this pair for the
+  offset, so D4 reuses it. Rows whose two stations are linked by a `nosurvey` leg are centred halfway between those
+  two stations. Placement itself stays on each drawing's fit (D5).
 
 - **D5 Place drawings as drawn, from measured legs (replaces the D1 fix).** Agreed in review on 2026-10-22, done
   (results at the end of this item). The D1 fix still places by Therion's computed station positions, which are loop closed for the whole
@@ -357,7 +356,7 @@ first because it may explain D3, and its result may change D2-D4.
 
   Order for each drawing: leg fit, then XVI grid, then no outlines with a message. The shared frame of computed
   positions from the D1 fix is removed. D2 and D3 change with this, since computed positions are then needed only
-  for rows without a shared station, so revisit both after D5.
+  for rows without a shared station, so revisit both after D5 (done, see D2 and D3).
 
   Considered and not used. Running Therion on the single survey would close loops inside it and could unroll
   extended differently from the drawing. Therion cannot export without a config file either (`therion -s file.th`
