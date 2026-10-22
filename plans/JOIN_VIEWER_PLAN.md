@@ -245,8 +245,8 @@ Staged implementation:
 
 ### D. Fixes found in use (2026-10-21)
 
-Reported while testing on a real project. Status: D1 fixed (below); D2-D4 not started. D1 comes first because it may
-explain D3, and its result may change D2-D4.
+Reported while testing on a real project. Status: D1 fixed (below), to be replaced by D5; D2-D5 not started. D1 comes
+first because it may explain D3, and its result may change D2-D4.
 
 - **D1 Alignment is wrong even with a shared point.** Equate rows, where both drawings draw the shared station, do not
   line up correctly. Investigate before changing anything else. Measure where the shared station point lands in each
@@ -310,6 +310,64 @@ explain D3, and its result may change D2-D4.
   2 m). They open centred on the first drawing's station, so they can look misaligned at first. Centre them halfway
   between the two stations too.
 
+- **D5 Place drawings as drawn, from measured legs (replaces the D1 fix).** Agreed in review on 2026-10-22, not
+  started. The D1 fix still places by Therion's computed station positions, which are loop closed for the whole
+  project, while the drawings were made on unclosed or differently closed data. In the test project the two frames
+  agree within 2.2 degrees and 4 percent, but a cave with large misclosures could be much worse. `-scale` is also
+  still used for scraps with fewer than two stations, and it is unreliable because it can differ in every scrap.
+  The join view should show the drawings as drawn.
+
+  Scale and rotation of each drawing:
+  - Fit the measured leg vectors to the drawing. Therion's SQL export, already read by the app, has a `SHOT` table
+    with measured `LENGTH`, `BEARING` and `GRADIENT` beside the loop closed `ADJ_*` values. Checked with Therion
+    6.4.0 that `BEARING` includes declination and that loop closure only changes `ADJ_*`. Units, calibration and
+    data formats are then Therion's, not reimplemented. Splays and duplicates are left out using `SHOT_FLAG`.
+  - Use every leg with both ends drawn as station points in the scrap. Project the measured vector into the view
+    (plan, or elevation at its angle) and fit scale and rotation from measured to drawn vectors, weighting each leg by
+    its projected length. Drop legs whose projected length is very short (threshold to be set from test data, for
+    example under 1 m or a small fraction of the longest), since a drawing error of 0.1 m turns a 1 m leg by about 6
+    degrees. This also drops legs that run nearly along the view direction in an elevation, and vertical legs in plan.
+  - Extended has no rotation. Fit the scale only, from each leg's horizontal length along x and its vertical change
+    along y. The left or right direction is taken from the drawing, so Therion's extend rules need not be copied.
+  - Legs between drawn stations that pass through stations not drawn in the scrap are not chained for now. Add
+    chaining only if real drawings need it.
+  - If a scrap has too few usable legs, use its XVI grid (`XVIgrids` metres per `XVIgrid` vector) for scale and
+    orientation. Where both are available, compare them and say when they disagree, which means the drawing does not
+    sit on its background.
+  - `-scale` is not used at all.
+
+  Declination. Drawings may not be corrected for declination. SexyTopo has no declination setting, PocketTopo had one
+  but it may have been approximate and may not be stored, and TopoDroid is unknown. Assume drawings are uncorrected
+  unless found otherwise. The leg fit is not affected, because the fitted rotation absorbs it in plan, and extended
+  has no rotation. Two cases are affected.
+  - The XVI grid fallback in plan takes the drawing's north as true, so it may be turned by the declination. The
+    message or tooltip says when a drawing was placed by its XVI grid.
+  - An elevation drawn on uncorrected data is projected at a slightly different angle, a small change of shape that
+    no rotation can remove. To be measured on test data; no correction planned.
+
+  Placement of the two drawings:
+  - Equated rows. Put the shared station at the same point in both drawings.
+  - Rows without a shared station (join-only rows, and `nosurvey` legs) in plan and elevation. Take one station point
+    from each drawing and offset by the projected difference of their computed positions. Use the closest such pair,
+    so that loop closure has least effect, or for a `nosurvey` leg its two stations. Computed positions are used only
+    for this one vector, never for scale or rotation. D4 still decides where the views are centred.
+  - Rows without a shared station in extended. Computed positions are 3D and give no extended offset, so these rows
+    are not openable for now, with a message saying why. To be revisited later.
+
+  Order for each drawing: leg fit, then XVI grid, then no outlines with a message. The shared frame of computed
+  positions from the D1 fix is removed. D2 and D3 change with this, since computed positions are then needed only
+  for rows without a shared station, so revisit both after D5.
+
+  Considered and not used. Running Therion on the single survey would close loops inside it and could unroll
+  extended differently from the drawing. Therion cannot export without a config file either (`therion -s file.th`
+  processes the data but writes nothing), though a temporary config would do.
+
+  Verification. Measure with the scratch tool on the test project before and after, in plan, elevations and
+  extended: the gap at the shared station, the error 10 m from the join compared with the XVI placement, legs used
+  and dropped per scrap, and leg fit against XVI grid per scrap. QTests for the leg fit (plan, elevation, extended,
+  short and end-on legs dropped, splays left out), the XVI grid fallback, and the offset for rows without a shared
+  station.
+
 Each slice is a separate commit on `JoinViewer` with tests, doc and translation updates, measured on the test project
 before and after, and checked in the app.
 
@@ -331,7 +389,8 @@ Answered (2026-10-14):
 
 Still open:
 
-1. Check during C4 whether `export database` can leave out the shot tables; only the station table is read either way.
+1. Check during C4 whether `export database` can leave out the shot tables. No longer wanted once D5 is done, since
+   it reads the `SHOT` table.
 
 ## Risks
 
