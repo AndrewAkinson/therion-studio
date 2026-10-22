@@ -338,6 +338,8 @@ For lines and area borders:
 - `Smooth (-smooth)` is ticked when Therion treats the point as smooth: a point without a `smooth` row is smooth when its two handles are in line (within 5 degrees), as in Therion. Therion Studio keeps the `smooth` rows a file has and adds none of its own. Unticking it keeps both handles where they are and writes `smooth off`, so each handle can then be moved on its own; ticking it again lines them up, keeping their lengths
 - drag Bezier handles directly on the canvas to reshape the curve
 
+When one line point is selected, the handles of the points either side that face it are also shown, in a lighter colour. Dragging one of these changes only its length, not its direction, as in xTherion. Select that neighbouring point itself to edit its handles freely.
+
 When a map drag moves a point, vertex, or Bezier handle from integer coordinates to a fractional position, Therion Studio writes the new fractional coordinates with additional decimal precision so repeated edits and smooth Bezier tangents do not visibly degrade.
 
 If a line is used as an area border, some destructive line actions are blocked; select or edit the owning area instead. Deleting an area removes only the `area ... endarea` block and keeps referenced border lines in the source.

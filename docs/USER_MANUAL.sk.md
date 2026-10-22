@@ -299,6 +299,8 @@ Pre čiary a hranice plôch:
 - `Smooth (-smooth)` je začiarknuté, keď Therion považuje bod za hladký: bod bez riadku `smooth` je hladký, ak jeho dva kontrolné body ležia v priamke (do 5 stupňov), rovnako ako v Therione. Therion Studio ponecháva riadky `smooth` zo súboru a žiadne vlastné nepridáva. Zrušenie začiarknutia ponechá oba kontrolné body na mieste a zapíše `smooth off`, takže každý možno potom posunúť samostatne; opätovné začiarknutie ich zarovná do priamky a zachová ich dĺžky,
 - Bezier kontrolný bod možno priamo ťahať na mapovom plátne.
 
+Keď je vybraný jeden bod čiary, zobrazia sa svetlejšou farbou aj kontrolné body susedných bodov, ktoré k nemu smerujú. Ich ťahaním sa mení iba dĺžka, nie smer, rovnako ako v xTherione. Na voľnú úpravu ich kontrolných bodov vyberte priamo daný susedný bod.
+
 Ak čiara slúži ako hranica plochy, niektoré deštruktívne akcie sú zablokované; vyberte alebo upravte vlastnú plochu. Zmazanie plochy odstráni iba blok `area ... endarea` a ponechá referencované hraničné čiary v zdroji.
 
 ### 6.8 Editácia vlastností objektov

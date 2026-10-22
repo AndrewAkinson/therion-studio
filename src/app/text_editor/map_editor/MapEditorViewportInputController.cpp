@@ -571,7 +571,7 @@ void describePendingClickSelection(MapEditorViewportInputContext &context, QGrap
     if (auto *vertexItem = dynamic_cast<MapEditableGeometryVertexItem *>(item)) {
         if (subtype == kMapSceneSelectionSubtypeLineControl
             || subtype == kMapSceneSelectionSubtypeLineControlConnector) {
-            const int ownerVertexIndex = item->data(kMapSceneOwnerVertexRole).toInt();
+            const int ownerVertexIndex = mapSceneSelectionOwnerVertex(item);
             (*context.pendingClickSourceVertexIndex) = ownerVertexIndex >= 0
                 ? ownerVertexIndex
                 : vertexItem->vertexIndex();

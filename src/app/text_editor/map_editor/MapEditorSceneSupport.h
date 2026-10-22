@@ -73,6 +73,25 @@ QGraphicsItem *nearestDirectVertexLikeMapItem(const QGraphicsScene *scene,
                                               bool requireSelected,
                                               bool requireVisible);
 
+// Anchor at the other end of a line control's segment.
+constexpr int kMapSceneSegmentNeighbourVertexRole = Qt::UserRole + 133;
+// Set while a line control is shown for that neighbour anchor, which allows length changes only.
+constexpr int kMapSceneNeighbourControlRole = Qt::UserRole + 134;
+
+inline int mapSceneSegmentNeighbourVertex(const QGraphicsItem *item)
+{
+    const QVariant value = item->data(kMapSceneSegmentNeighbourVertexRole);
+    return value.isValid() ? value.toInt() : -1;
+}
+
+// A neighbour control picked for the selected line point keeps that point selected.
+inline int mapSceneSelectionOwnerVertex(const QGraphicsItem *item)
+{
+    return item->data(kMapSceneNeighbourControlRole).toBool()
+        ? mapSceneSegmentNeighbourVertex(item)
+        : item->data(kMapSceneOwnerVertexRole).toInt();
+}
+
 constexpr qreal kMapEditorCanvasFrameInset = 24.0;
 constexpr qreal kMapEditorCanvasPreviewInset = 20.0;
 
