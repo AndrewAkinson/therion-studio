@@ -16,6 +16,7 @@ int runTherionSourceFormatterTest(int argc, char **argv);
 int runTherionSourceLogicalDocumentTest(int argc, char **argv);
 int runTherionSourceSnapshotCacheTest(int argc, char **argv);
 int runTherionTokenRulesTest(int argc, char **argv);
+int runTherionCodeBlockRulesTest(int argc, char **argv);
 int runTherionDocumentEditorDraftInsertionTest(int argc, char **argv);
 int runTherionSourceValidatorFixTest(int argc, char **argv);
 int runTherionSourceValidatorProjectionTest(int argc, char **argv);
@@ -31,6 +32,7 @@ int runThreeDViewerSceneStatisticsTest(int argc, char **argv);
 int runTherionFileTypesTest(int argc, char **argv);
 int runTherionBackgroundMetadataTest(int argc, char **argv);
 int runTherionDocumentParserTest(int argc, char **argv);
+int runTherionLineSplittingTest(int argc, char **argv);
 int runTherionXviParserTest(int argc, char **argv);
 int runTherionXviPassageTest(int argc, char **argv);
 int runTherionXviAreaAdjustTest(int argc, char **argv);
@@ -48,6 +50,7 @@ int main(int argc, char **argv)
         {"TherionFileTypesTest", runTherionFileTypesTest},
         {"TherionBackgroundMetadataTest", runTherionBackgroundMetadataTest},
         {"TherionDocumentParserTest", runTherionDocumentParserTest},
+        {"TherionLineSplittingTest", runTherionLineSplittingTest},
         {"TherionXviParserTest", runTherionXviParserTest},
         {"TherionXviPassageTest", runTherionXviPassageTest},
         {"TherionXviAreaAdjustTest", runTherionXviAreaAdjustTest},
@@ -68,5 +71,6 @@ int main(int argc, char **argv)
         {"ProjectJoinListTest", runProjectJoinListTest},
         {"ProjectJoinRulesTest", runProjectJoinRulesTest},
         {"TherionStationPositionExportTest", runTherionStationPositionExportTest},
-        {"TherionTokenRulesTest", runTherionTokenRulesTest}});
+        {"TherionTokenRulesTest", runTherionTokenRulesTest},
+        {"TherionCodeBlockRulesTest", runTherionCodeBlockRulesTest}});
 }

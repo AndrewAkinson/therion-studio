@@ -25,6 +25,7 @@
 
 #include "../../../core/TherionDocumentParser.h"
 #include "../../../core/TherionCommandLineModel.h"
+#include "../../../core/TherionCommandSyntax.h"
 #include "../../../core/Th2GeometryProjection.h"
 #include "../../../core/TherionSourceLogicalDocument.h"
 #include "../../../core/TherionTokenRules.h"
@@ -2608,7 +2609,7 @@ void renderMapWorkspaceScene(QGraphicsScene *scene,
 
         MapPathLabelItem *lineLabelItem = nullptr;
         if (lineStyle.labelField.has_value()) {
-            const QString labelText = optionValueForFieldName(feature.optionValues, lineStyle.labelField.value());
+            const QString labelText = therionValueText(optionValueForFieldName(feature.optionValues, lineStyle.labelField.value()));
             if (!labelText.isEmpty()) {
                 QFont labelFont(QStringLiteral("Menlo"), 10);
                 lineLabelItem = new MapPathLabelItem(lineLabelPathText(labelText),
@@ -3094,7 +3095,7 @@ void renderMapWorkspaceScene(QGraphicsScene *scene,
                 }
 
                 if (pointStyle.labelField.has_value()) {
-                    const QString labelText = optionValueForFieldName(feature.optionValues, pointStyle.labelField.value());
+                    const QString labelText = therionValueText(optionValueForFieldName(feature.optionValues, pointStyle.labelField.value()));
                     if (!labelText.isEmpty()) {
                         const bool labelTextField = normalizedCommandOptionName(pointStyle.labelField.value()) == QStringLiteral("text");
                         QFont labelFont(QStringLiteral("Menlo"));

@@ -150,6 +150,10 @@ set(THERION_CORE_SOURCES
     src/core/TherionStationNameRules.h
     src/core/TherionStationPositionExport.cpp
     src/core/TherionStationPositionExport.h
+    src/core/TherionCodeBlockRules.cpp
+    src/core/TherionCodeBlockRules.h
+    src/core/TherionRepeatedStationPoints.cpp
+    src/core/TherionRepeatedStationPoints.h
     src/core/TherionDocumentParser.cpp
     src/core/TherionDocumentParser.h
     src/core/SessionStore.cpp
@@ -200,6 +204,7 @@ set(THERION_CORE_QTEST_SUITES
     TherionFileTypesTest
     TherionBackgroundMetadataTest
     TherionDocumentParserTest
+    TherionLineSplittingTest
     TherionXviParserTest
     TherionXviPassageTest
     TherionXviAreaAdjustTest
@@ -217,7 +222,8 @@ set(THERION_CORE_QTEST_SUITES
     TherionSourceValidatorFixTest
     TherionSourceValidatorProjectionTest
     ProjectStructureIndexQTest
-    TherionTokenRulesTest)
+    TherionTokenRulesTest
+    TherionCodeBlockRulesTest)
 
 set(THERION_MAIN_WINDOW_QTEST_SUITES
     MainWindowHelpDocumentTest
@@ -233,6 +239,7 @@ set(THERION_MAIN_WINDOW_QTEST_SUITES
     ProjectFileWatchDeltaTest
     ProjectOutputsScannerTest
     ProjectValidationScannerQTest
+    ValidationSummaryTextTest
     ProjectStructureScannerTest
     MainWindowSessionDocumentServiceTest
     MainWindowSessionProjectServiceTest
@@ -444,6 +451,8 @@ set(THERION_APP_SOURCES
     src/app/ProjectValidationScanner.h
     src/app/ValidationResultsMarkdownExporter.cpp
     src/app/ValidationResultsMarkdownExporter.h
+    src/app/ValidationSummaryText.cpp
+    src/app/ValidationSummaryText.h
     src/app/ProjectStructureScanner.cpp
     src/app/ProjectStructureScanner.h
     src/app/TherionExecutableSelectionController.cpp
@@ -1283,6 +1292,7 @@ therion_add_core_qtest_runner(TherionCoreQTests
     tests/core/TherionFileTypesTest.cpp
     tests/core/TherionBackgroundMetadataTest.cpp
     tests/core/TherionDocumentParserTest.cpp
+    tests/core/TherionLineSplittingTest.cpp
     tests/core/TherionXviParserTest.cpp
     tests/core/TherionXviPassageTest.cpp
     tests/core/TherionXviAreaAdjustTest.cpp
@@ -1303,7 +1313,8 @@ therion_add_core_qtest_runner(TherionCoreQTests
     tests/core/ProjectJoinRulesTest.cpp
     tests/core/TherionStationPositionExportTest.cpp
     tests/core/TherionSourceTextTest.cpp
-    tests/core/TherionTokenRulesTest.cpp)
+    tests/core/TherionTokenRulesTest.cpp
+    tests/core/TherionCodeBlockRulesTest.cpp)
 
 target_compile_definitions(TherionCoreQTests PRIVATE
     THERION_STUDIO_TEST_FIXTURE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures")
@@ -1543,6 +1554,14 @@ therion_add_app_unit_test(ProjectValidationScannerTest
     src/app/text_editor/block_editor/BlockEditorDirectiveRules.cpp
     src/app/text_editor/block_editor/BlockEditorSourceText.cpp)
 
+therion_add_app_unit_test(TherionCatalogOptionTablesTest
+    tests/TherionCatalogOptionTablesTest.cpp
+    src/app/text_editor/TextEditorValidationCatalog.cpp
+    src/app/text_editor/raw_editor/RawEditorCommandMetadataLoader.cpp
+    src/app/text_editor/block_editor/BlockEditorDirectiveRules.cpp
+    src/app/text_editor/block_editor/BlockEditorSourceText.cpp)
+target_link_libraries(TherionCatalogOptionTablesTest PRIVATE Qt6::Test)
+
 therion_add_app_unit_test(ProjectValidationControllerTest
     tests/ProjectValidationControllerTest.cpp)
 
@@ -1603,6 +1622,7 @@ qt_add_executable(MainWindowServiceQTests
     tests/ProjectFileWatchDeltaTest.cpp
     tests/ProjectOutputsScannerTest.cpp
     tests/ProjectValidationScannerQTest.cpp
+    tests/ValidationSummaryTextTest.cpp
     tests/ProjectStructureScannerTest.cpp
     tests/MainWindowSessionDocumentServiceTest.cpp
     tests/MainWindowSessionProjectServiceTest.cpp
@@ -1990,6 +2010,7 @@ set(THERION_UNIT_TEST_TARGETS
     ProjectSourceSnapshotTest
     ProjectSearchScannerTest
     ProjectValidationScannerTest
+    TherionCatalogOptionTablesTest
     ProjectValidationControllerTest
     ValidationResultsMarkdownExporterTest
     SessionStoreTest

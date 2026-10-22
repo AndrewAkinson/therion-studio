@@ -129,7 +129,7 @@ QString documentValidationCacheKey(const ProjectSourceDocument &document,
     QStringList parts;
     parts.reserve(7);
     parts.append(QStringLiteral("path=%1").arg(document.normalizedPath));
-    parts.append(QStringLiteral("type=%1").arg(static_cast<int>(therionSourceDocumentTypeForFilePath(document.normalizedPath))));
+    parts.append(QStringLiteral("type=%1").arg(static_cast<int>(projectSourceDocumentType(document))));
     parts.append(QStringLiteral("loaded=%1").arg(document.textLoaded ? 1 : 0));
     parts.append(QStringLiteral("origin=%1").arg(static_cast<int>(document.origin)));
     parts.append(QStringLiteral("hash=%1").arg(QString::fromLatin1(projectSourceContentHash(document.text).toHex())));
@@ -261,6 +261,12 @@ TherionSourceDiagnostic diagnosticForProjectIndexDiagnostic(const ProjectIndexDi
         diagnostic.message = QObject::tr("Scraps `%1` are joined by only one point or line join; a passage usually needs both walls joined.")
                                  .arg(indexDiagnostic.referencedName);
         break;
+    case ProjectIndexDiagnosticKind::ObjectIdMatchesStation:
+        diagnostic.code = QStringLiteral("duplicate-object-id");
+        diagnostic.title = QObject::tr("Duplicate object id");
+        diagnostic.message = QObject::tr("Object id `%1` is also the name of a station in this survey.")
+                                 .arg(indexDiagnostic.referencedName);
+        break;
     }
 
     return diagnostic;
@@ -290,32 +296,6 @@ QString normalizedOptionName(QString optionName)
     return optionName;
 }
 
-const TherionSourceLogicalArgumentRange *pointStationNameRange(const TherionSourceLogicalCommand &command)
-{
-    if (command.metadata.commandName != QStringLiteral("point")
-        || command.positionalArgumentRanges.size() < 3) {
-        return nullptr;
-    }
-
-    const QString pointType = command.positionalArgumentRanges.at(2).text.trimmed().section(QLatin1Char(':'), 0, 0);
-    if (pointType.compare(QStringLiteral("station"), Qt::CaseInsensitive) != 0) {
-        return nullptr;
-    }
-
-    for (const TherionSourceLogicalOptionEntryRange &optionEntry : command.optionEntryRanges) {
-        if (normalizedOptionName(optionEntry.key) != QStringLiteral("name")) {
-            continue;
-        }
-        for (const TherionSourceLogicalArgumentRange &valueRange : optionEntry.valueRanges) {
-            if (!valueRange.text.trimmed().isEmpty()) {
-                return &valueRange;
-            }
-        }
-    }
-
-    return nullptr;
-}
-
 QSet<QString> indexedProjectSourceFiles(const ProjectIndexSnapshot &snapshot)
 {
     QSet<QString> sourceFiles;
@@ -328,57 +308,28 @@ QSet<QString> indexedProjectSourceFiles(const ProjectIndexSnapshot &snapshot)
     return sourceFiles;
 }
 
-void appendUnindexedTh2StationNameFindings(ProjectValidationScanner::Result *result,
-                                           const ProjectSourceDocument &document,
-                                           const ProjectIndexSnapshot &,
-                                           ProjectSourceProjectionCache &projectionCache)
+// A drawing no config reads gets one note instead of an error per station point: its stations cannot be checked
+// against the centreline, and it is not part of what Therion compiles.
+void appendUnreadDrawingFinding(ProjectValidationScanner::Result *result, const ProjectSourceDocument &document)
 {
     if (result == nullptr
         || result->limitReached
-        || therionSourceDocumentTypeForFilePath(document.normalizedPath) != TherionSourceDocumentType::TherionMap) {
+        || projectSourceDocumentType(document) != TherionSourceDocumentType::TherionMap) {
         return;
     }
 
-    const TherionSourceLogicalDocument &logicalDocument =
-        projectionCache.logicalDocument(document);
-    const QHash<int, TherionStationNameTransform> scrapStationNameTransforms =
-        therionScrapStationNameTransformsByStartLine(logicalDocument);
-    for (const TherionSourceLogicalCommand &command : logicalDocument.commands()) {
-        const TherionSourceLogicalArgumentRange *nameRange = pointStationNameRange(command);
-        if (nameRange == nullptr) {
-            continue;
-        }
-        const QString referenceName = nameRange->text.trimmed();
-        const std::optional<TherionStationNameTransform> scrapStationNameTransform =
-            therionActiveScrapStationNameTransform(command, scrapStationNameTransforms);
-        const QString effectiveReferenceName = scrapStationNameTransform.has_value()
-            ? therionStationReferenceWithScrapNameTransform(referenceName,
-                                                             scrapStationNameTransform.value())
-            : referenceName;
-
-        const bool hasNamespace = effectiveReferenceName.contains(QLatin1Char('@'));
-        if (hasNamespace) {
-            continue;
-        }
-
-        TherionSourceDiagnostic diagnostic;
-        diagnostic.severity = TherionSourceDiagnosticSeverity::Error;
-        diagnostic.lineNumber = nameRange->physicalRange.lineNumber;
-        diagnostic.columnNumber = qMax(1, nameRange->physicalRange.columnNumber);
-        diagnostic.columnLength = qMax(1, nameRange->physicalRange.columnLength);
-        diagnostic.code = QStringLiteral("unknown-station-reference");
-        diagnostic.title = QObject::tr("Unknown station reference");
-        diagnostic.message = QObject::tr("Station reference `%1` cannot be resolved because this file is not included in the project source graph.")
-                                 .arg(referenceName);
-        diagnostic.currentText = nameRange->physicalRange.lineText;
-
-        if (!containsEquivalentFinding(result->findings, document.normalizedPath, diagnostic)) {
-            result->findings.append({document.normalizedPath, diagnostic});
-        }
-        if (result->findings.size() >= kMaximumProjectValidationFindings) {
-            result->limitReached = true;
-            return;
-        }
+    TherionSourceDiagnostic diagnostic;
+    diagnostic.code = QStringLiteral("drawing-not-read");
+    diagnostic.severity = TherionSourceDiagnosticSeverity::Information;
+    diagnostic.lineNumber = 1;
+    diagnostic.columnNumber = 1;
+    diagnostic.columnLength = 1;
+    diagnostic.title = QObject::tr("Drawing not read by the config");
+    diagnostic.message = QObject::tr("This drawing is not read through the project's Therion config, so Therion does not "
+                                     "compile it and its station references are not checked.");
+    result->findings.append({document.normalizedPath, diagnostic});
+    if (result->findings.size() >= kMaximumProjectValidationFindings) {
+        result->limitReached = true;
     }
 }
 
@@ -387,8 +338,7 @@ void appendProjectIndexFindings(ProjectValidationScanner::Result *result,
                                 const ProjectIndexSnapshot &snapshot,
                                 const QString &indexErrorMessage,
                                 const QHash<QString, QString> &searchedTextByPath,
-                                const QHash<QString, ProjectSourceDocument> &searchedDocumentByPath,
-                                ProjectSourceProjectionCache &projectionCache)
+                                const QHash<QString, ProjectSourceDocument> &searchedDocumentByPath)
 {
     if (result == nullptr || result->limitReached) {
         return;
@@ -442,10 +392,7 @@ void appendProjectIndexFindings(ProjectValidationScanner::Result *result,
         if (documentIt == searchedDocumentByPath.constEnd()) {
             continue;
         }
-        appendUnindexedTh2StationNameFindings(result,
-                                              documentIt.value(),
-                                              snapshot,
-                                              projectionCache);
+        appendUnreadDrawingFinding(result, documentIt.value());
         if (result->limitReached) {
             return;
         }
@@ -491,7 +438,8 @@ void appendFindingsForDocument(ProjectValidationScanner::Result *result,
     ProjectValidationScanner::DocumentValidationCacheEntry builtEntry;
     const TherionSourceValidationResult validation =
         TherionSourceValidator::validate(sourceDocument, logicalDocument, validationCatalog);
-    const bool suppressUnknownCommandWarnings = isTherionConfigFilePath(document.normalizedPath);
+    const bool suppressUnknownCommandWarnings =
+        projectSourceDocumentType(document) == TherionSourceDocumentType::TherionConfig;
     for (const TherionSourceDiagnostic &diagnostic : validation.diagnostics) {
         if (suppressUnknownCommandWarnings && diagnostic.code == QStringLiteral("unknown-command")) {
             continue;
@@ -649,6 +597,9 @@ ProjectValidationScanner::Result performProjectValidation(const QString &project
     for (const ProjectSourceDocument &document : std::as_const(projectSourceSnapshot.documents)) {
         knownProjectFilePaths.insert(document.normalizedPath);
         projectSourceDocumentByPath.insert(document.normalizedPath, document);
+        if (document.readAsType != TherionSourceDocumentType::Unknown) {
+            result.readAsTypes.insert(document.normalizedPath, document.readAsType);
+        }
     }
     const QString knownProjectFilesSignature = knownProjectFilePathsSignature(knownProjectFilePaths);
 
@@ -720,8 +671,7 @@ ProjectValidationScanner::Result performProjectValidation(const QString &project
                                    projectIndexSnapshot,
                                    indexErrorMessage,
                                    searchedTextByPath,
-                                   projectSourceDocumentByPath,
-                                   projectionCache);
+                                   projectSourceDocumentByPath);
         projectIndexMs = projectIndexTimer.elapsed();
     }
     if (isSuperseded()) {

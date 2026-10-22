@@ -2062,6 +2062,15 @@ Ak je súbor otvorený, najprv sa zavrie.</translation>
         <source>Showing the first %1 problem(s).</source>
         <translation>Zobrazuje sa prvých %1 problémov.</translation>
     </message>
+    <message numerus="yes">
+        <location filename="../src/app/MainWindowValidationSidebar.cpp" line="1120"/>
+        <source>Showing the first %n findings.</source>
+        <translation>
+            <numerusform>Zobrazuje sa prvý %n nález.</numerusform>
+            <numerusform>Zobrazujú sa prvé %n nálezy.</numerusform>
+            <numerusform>Zobrazuje sa prvých %n nálezov.</numerusform>
+        </translation>
+    </message>
     <message>
         <location filename="../src/app/MainWindowValidationSidebar.cpp" line="1175"/>
         <source>Line %1: %2</source>
@@ -2865,6 +2874,20 @@ Line-point options: %1</translation>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="261"/>
         <source>Scraps `%1` are joined by only one point or line join; a passage usually needs both walls joined.</source>
         <translation>Scrapy `%1` spája iba jedno spojenie bodov alebo čiar; chodba zvyčajne potrebuje spojiť obe steny.</translation>
+    </message>
+    <message>
+        <source>Object id `%1` is also the name of a station in this survey.</source>
+        <translation>ID objektu `%1` je zároveň menom stanice v tomto survey.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="318"/>
+        <source>Drawing not read by the config</source>
+        <translation>Kresba nie je načítaná konfiguráciou</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="319"/>
+        <source>This drawing is not read through the project&apos;s Therion config, so Therion does not compile it and its station references are not checked.</source>
+        <translation>Táto kresba nie je načítaná konfiguráciou Therionu v projekte, takže ju Therion neprekladá a jej odkazy na body sa nekontrolujú.</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="368"/>
@@ -3765,6 +3788,11 @@ Line-point options: %1</translation>
         <location filename="../src/app/MainWindowValidationSidebar.cpp" line="238"/>
         <source>Warning</source>
         <translation>Varovanie</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowValidationSidebar.cpp" line="250"/>
+        <source>Information</source>
+        <translation>Informácia</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowValidationSidebar.cpp" line="249"/>
@@ -6973,6 +7001,11 @@ subtype blocks</translation>
         <translation>Chyba</translation>
     </message>
     <message>
+        <location filename="../src/app/text_editor/TextEditorContextHelpController.cpp" line="435"/>
+        <source>Information</source>
+        <translation>Informácia</translation>
+    </message>
+    <message>
         <location filename="../src/app/text_editor/TextEditorContextHelpController.cpp" line="433"/>
         <location filename="../src/app/text_editor/TextEditorContextHelpController.cpp" line="457"/>
         <source>Warning</source>
@@ -7285,6 +7318,11 @@ subtype blocks</translation>
         <location filename="../src/app/text_editor/TextEditorTabValidation.cpp" line="90"/>
         <source>Validation fixes skipped: document changed.</source>
         <translation>Validačné opravy preskočené: dokument sa zmenil.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/raw_editor/RawEditorCommandMetadataLoader.cpp" line="280"/>
+        <source>Not described in the Therion book.</source>
+        <translation>V knihe o Therione nie je opísané.</translation>
     </message>
 </context>
 <context>
@@ -7783,6 +7821,39 @@ subtype blocks</translation>
     </message>
 </context>
 <context>
+    <name>TherionStudio::TherionRepeatedStationPoints</name>
+    <message>
+        <location filename="../src/core/TherionRepeatedStationPoints.cpp" line="87"/>
+        <source>Remove repeated station point on line %1</source>
+        <translation>Odstrániť opakovaný bod stanice na riadku %1</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionRepeatedStationPoints.cpp" line="134"/>
+        <source>Station drawn twice in a scrap</source>
+        <translation>Stanica nakreslená v scrape dvakrát</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionRepeatedStationPoints.cpp" line="135"/>
+        <source>Station `%1` is already drawn at the same place in this scrap, on line %2.</source>
+        <translation>Stanica `%1` je v tomto scrape už nakreslená na rovnakom mieste, na riadku %2.</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionRepeatedStationPoints.cpp" line="136"/>
+        <source>Station `%1` is already drawn at a different place in this scrap, on line %2.</source>
+        <translation>Stanica `%1` je v tomto scrape už nakreslená na inom mieste, na riadku %2.</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionRepeatedStationPoints.cpp" line="162"/>
+        <source>Station in several scraps</source>
+        <translation>Stanica v niekoľkých scrapoch</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionRepeatedStationPoints.cpp" line="163"/>
+        <source>Station `%1` is also drawn in scrap `%2` of the same projection, on line %3.</source>
+        <translation>Stanica `%1` je nakreslená aj v scrape `%2` rovnakej projekcie, na riadku %3.</translation>
+    </message>
+</context>
+<context>
     <name>TherionStudio::TherionSourceValidator</name>
     <message>
         <location filename="../src/core/TherionSourceValidator.cpp" line="604"/>
@@ -7843,6 +7914,11 @@ subtype blocks</translation>
         <location filename="../src/core/TherionSourceValidator.cpp" line="921"/>
         <source>This command contains an option-like token or duplicate option/value pair that Therion may reject.</source>
         <translation>Tento príkaz obsahuje token vyzerajúci ako voľba alebo duplicitnú dvojicu voľba/hodnota, ktorú môže Therion odmietnuť.</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="939"/>
+        <source>This command repeats an option with the same value; Therion accepts it, and the repeat can be removed.</source>
+        <translation>Tento príkaz opakuje voľbu s rovnakou hodnotou; Therion to prijme a opakovanie možno odstrániť.</translation>
     </message>
     <message>
         <location filename="../src/core/TherionSourceValidator.cpp" line="928"/>
@@ -7967,6 +8043,16 @@ subtype blocks</translation>
         <translation>Nezodpovedajúce uzavretie bloku</translation>
     </message>
     <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="1263"/>
+        <source>`endcode` has no open `code` block; Therion ignores it.</source>
+        <translation>`endcode` nemá otvorený blok `code`; Therion ho ignoruje.</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="1271"/>
+        <source>Remove line %1</source>
+        <translation>Odstrániť riadok %1</translation>
+    </message>
+    <message>
         <location filename="../src/core/TherionSourceValidator.cpp" line="1240"/>
         <source>Closing directive `%1` does not match the currently open block.</source>
         <translation>Uzatváracia direktíva `%1` nezodpovedá aktuálne otvorenému bloku.</translation>
@@ -7976,6 +8062,26 @@ subtype blocks</translation>
         <location filename="../src/core/TherionSourceValidator.cpp" line="1298"/>
         <source>Unclosed block</source>
         <translation>Neuzavretý blok</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="1351"/>
+        <source>Code line joins endcode</source>
+        <translation>Riadok kódu spojí endcode</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="1352"/>
+        <source>This line ends in `\`, so Therion joins the `endcode` on line %1 to it and passes `endcode` to TeX or MetaPost as text.</source>
+        <translation>Tento riadok končí `\`, takže k nemu Therion pripojí `endcode` z riadku %1 a odovzdá `endcode` TeXu alebo MetaPostu ako text.</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="1332"/>
+        <source>Block `code` has no `endcode` before `%1` on line %2; Therion reads `%1` as a `%3` command.</source>
+        <translation>Blok `code` nemá pred `%1` na riadku %2 `endcode`; Therion číta `%1` ako príkaz bloku `%3`.</translation>
+    </message>
+    <message>
+        <location filename="../src/core/TherionSourceValidator.cpp" line="1340"/>
+        <source>Block `%1` has no `%2`; Therion ends it at `%3` on line %4.</source>
+        <translation>Blok `%1` nemá `%2`; Therion ho ukončí príkazom `%3` na riadku %4.</translation>
     </message>
     <message>
         <location filename="../src/core/TherionSourceValidator.cpp" line="1253"/>
@@ -8709,6 +8815,12 @@ subtype blocks</translation>
         <translation>Chyba</translation>
     </message>
     <message>
+        <location filename="../src/app/ValidationResultsMarkdownExporter.cpp" line="20"/>
+        <location filename="../src/app/ValidationResultsMarkdownExporter.cpp" line="171"/>
+        <source>Information</source>
+        <translation>Informácia</translation>
+    </message>
+    <message>
         <location filename="../src/app/ValidationResultsMarkdownExporter.cpp" line="26"/>
         <source>Untitled document</source>
         <translation>Nepomenovaný dokument</translation>
@@ -8782,6 +8894,75 @@ subtype blocks</translation>
         <location filename="../src/app/ValidationResultsMarkdownExporter.cpp" line="202"/>
         <source>Automatic fix preview</source>
         <translation>Náhľad automatickej opravy</translation>
+    </message>
+</context>
+<context>
+    <name>TherionStudio::ValidationSummaryText</name>
+    <message>
+        <location filename="../src/app/ValidationSummaryText.cpp" line="36"/>
+        <source>No problems</source>
+        <translation>Žiadne problémy</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ValidationSummaryText.cpp" line="40"/>
+        <source>1 error</source>
+        <translation>1 chyba</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/app/ValidationSummaryText.cpp" line="40"/>
+        <source>%n errors</source>
+        <translation>
+            <numerusform>%n chyba</numerusform>
+            <numerusform>%n chyby</numerusform>
+            <numerusform>%n chýb</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/app/ValidationSummaryText.cpp" line="44"/>
+        <source>1 warning</source>
+        <translation>1 varovanie</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/app/ValidationSummaryText.cpp" line="44"/>
+        <source>%n warnings</source>
+        <translation>
+            <numerusform>%n varovanie</numerusform>
+            <numerusform>%n varovania</numerusform>
+            <numerusform>%n varovaní</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/app/ValidationSummaryText.cpp" line="48"/>
+        <source>1 note</source>
+        <translation>1 poznámka</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/app/ValidationSummaryText.cpp" line="48"/>
+        <source>%n notes</source>
+        <translation>
+            <numerusform>%n poznámka</numerusform>
+            <numerusform>%n poznámky</numerusform>
+            <numerusform>%n poznámok</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/app/ValidationSummaryText.cpp" line="57"/>
+        <source>1 file searched</source>
+        <translation>1 prehľadaný súbor</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/app/ValidationSummaryText.cpp" line="57"/>
+        <source>%n files searched</source>
+        <translation>
+            <numerusform>%n prehľadaný súbor</numerusform>
+            <numerusform>%n prehľadané súbory</numerusform>
+            <numerusform>%n prehľadaných súborov</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/app/ValidationSummaryText.cpp" line="62"/>
+        <source>in %1</source>
+        <translation>v %1</translation>
     </message>
 </context>
 <context>

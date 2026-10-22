@@ -4,6 +4,7 @@
 #include "MapEditorSceneSupport.h"
 #include "../../../core/ProjectStructureIndex.h"
 #include "../../../core/TherionCommandLineModel.h"
+#include "../../../core/TherionCommandSyntax.h"
 #include "../../../core/TherionDocumentParser.h"
 #include "../../../core/TherionSourceLogicalDocument.h"
 #include "../../../core/TherionTokenRules.h"
@@ -72,38 +73,6 @@ bool inspectorTokenLooksNumeric(const QString &token)
     bool ok = false;
     token.toDouble(&ok);
     return ok;
-}
-
-QString inspectorBracketedOptionValue(const QStringList &tokens, const QString &option)
-{
-    for (int index = 0; index < tokens.size(); ++index) {
-        if (!commandOptionNameMatches(tokens.at(index), option)) {
-            continue;
-        }
-
-        const int nextOptionIndex = nextCommandOptionIndex(tokens, index);
-        if (nextOptionIndex <= index + 1) {
-            return QString();
-        }
-
-        const QString firstValue = tokens.at(index + 1);
-        if (!firstValue.contains(QLatin1Char('[')) || firstValue.contains(QLatin1Char(']'))) {
-            return firstValue;
-        }
-
-        QStringList valueTokens;
-        valueTokens.append(firstValue);
-        for (int valueIndex = index + 2; valueIndex < nextOptionIndex; ++valueIndex) {
-            const QString token = tokens.at(valueIndex);
-            valueTokens.append(token);
-            if (token.contains(QLatin1Char(']'))) {
-                break;
-            }
-        }
-        return valueTokens.join(QLatin1Char(' '));
-    }
-
-    return QString();
 }
 
 QString inspectorPointTypeToken(const TherionParsedLine &parsedLine)
@@ -379,25 +348,13 @@ QString xtherionDefaultScrapScaleOption(const QRectF &sourceBounds)
              formatTherionScaleNumber(realLengthMeters));
 }
 
-QString cleanedScaleToken(QString token)
-{
-    token = token.trimmed();
-    while (token.startsWith(QLatin1Char('['))) {
-        token.remove(0, 1);
-    }
-    while (token.endsWith(QLatin1Char(']'))) {
-        token.chop(1);
-    }
-    return token.trimmed();
-}
-
 bool parseInspectorScaleNumber(const QString &token, qreal *value)
 {
     if (value == nullptr) {
         return false;
     }
 
-    const QString cleaned = cleanedScaleToken(token);
+    const QString cleaned = token.trimmed();
     if (cleaned.isEmpty()) {
         return false;
     }
@@ -414,7 +371,7 @@ bool parseInspectorScaleNumber(const QString &token, qreal *value)
 
 QString normalizedInspectorScaleUnit(QString token)
 {
-    token = cleanedScaleToken(token).toLower();
+    token = token.trimmed().toLower();
     if (token == QStringLiteral("meter") || token == QStringLiteral("meters") || token == QStringLiteral("metre") || token == QStringLiteral("metres")) {
         return QStringLiteral("m");
     }
@@ -438,30 +395,15 @@ QString normalizedInspectorScaleUnit(QString token)
 
 std::optional<InspectorScrapScale> inspectorScrapScaleFromTokens(const QStringList &tokens)
 {
-    const int scaleOptionIndex = tokens.indexOf(QStringLiteral("-scale"));
-    if (scaleOptionIndex < 0 || scaleOptionIndex + 1 >= tokens.size()) {
-        return std::nullopt;
-    }
-
     QVector<qreal> numbers;
     numbers.reserve(8);
     QString unitToken = QStringLiteral("m");
-    const bool bracketed = tokens.at(scaleOptionIndex + 1).contains(QLatin1Char('['));
-    for (int index = scaleOptionIndex + 1; index < tokens.size(); ++index) {
-        const QString token = tokens.at(index);
-        if (!bracketed && token.startsWith(QLatin1Char('-')) && !inspectorTokenLooksNumeric(token)) {
-            break;
-        }
-
+    for (const QString &token : scrapScaleValueTokens(tokens)) {
         qreal parsedNumber = 0.0;
         if (parseInspectorScaleNumber(token, &parsedNumber)) {
             numbers.append(parsedNumber);
         } else {
             unitToken = normalizedInspectorScaleUnit(token);
-        }
-
-        if (!bracketed || token.contains(QLatin1Char(']'))) {
-            break;
         }
     }
 
@@ -828,7 +770,7 @@ std::optional<InspectorObjectQuickFields> inspectorObjectQuickFieldsFromParsedLi
         InspectorObjectQuickFields fields;
         fields.commandKind = parsedLine.directive;
         fields.identifier = parsedLine.tokens.at(1);
-        fields.projection = inspectorBracketedOptionValue(parsedLine.tokens, QStringLiteral("-projection"));
+        fields.projection = commandOptionValue(parsedLine, QStringLiteral("-projection"));
         fields.typeEditable = false;
         return fields;
     }
@@ -842,8 +784,8 @@ std::optional<InspectorObjectQuickFields> inspectorObjectQuickFieldsFromParsedLi
         const bool station = fields.type.compare(QStringLiteral("station"), Qt::CaseInsensitive) == 0;
         fields.identifier = commandOptionValue(parsedLine, QStringLiteral("-id"));
         fields.name = commandOptionValue(parsedLine, QStringLiteral("-name"));
-        fields.text = commandOptionValue(parsedLine, QStringLiteral("-text"));
-        fields.value = inspectorBracketedOptionValue(parsedLine.tokens, QStringLiteral("-value"));
+        fields.text = therionValueText(commandOptionValue(parsedLine, QStringLiteral("-text")));
+        fields.value = commandOptionValue(parsedLine, QStringLiteral("-value"));
         if (fields.name.isEmpty() && station) {
             fields.name = inspectorStationNameToken(parsedLine);
         }
@@ -864,7 +806,7 @@ std::optional<InspectorObjectQuickFields> inspectorObjectQuickFieldsFromParsedLi
         fields.type = inspectorTypePart(typeToken);
         fields.subtype = inspectorObjectSubtype(parsedLine, typeToken);
         fields.identifier = commandOptionValue(parsedLine, QStringLiteral("-id"));
-        fields.text = commandOptionValue(parsedLine, QStringLiteral("-text"));
+        fields.text = therionValueText(commandOptionValue(parsedLine, QStringLiteral("-text")));
         fields.textVisible = inspectorObjectUsesTextField(fields.commandKind, fields.type, fields.text);
         return fields;
     }

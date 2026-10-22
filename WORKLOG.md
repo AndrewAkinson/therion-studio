@@ -151,6 +151,15 @@ Active planning only. Completed history belongs in archive files. Stable archite
 
 ### Validation And Catalog Metadata
 
+- Validation accuracy: a measured run on a real multi-survey project showed most project-validation findings were false
+  (catalog aliases missing, a quoted-continuation parser bug, per-station errors in drawings the target config does not
+  read). The fix sequence and severity policy are planned (Therion referee test as potential) in
+  `plans/VALIDATION_ACCURACY_PLAN.md`. GitHub issues #49 (bracketed label text) and #50 (`-scale` rejected for
+  labels) are planned there as V1 (line splitting matches Therion) and V2 (catalog from Therion's option tables).
+- V1 and V2 done on `ValidationAccuracy`: line splitting follows Therion's `thsplit_args`, and command options
+  (object commands, `layout`, `export`) follow Therion v6.4.0's option tables; book differences in
+  `docs/THERION_BOOK_DIFFERENCES.md`. V3 done: continuation lines never open or close blocks; a layout's code block ends like Therion ends it, with one warning. V4 done: unread drawings get one `Information` note; Information is a new severity. V4b done: files a config inputs are checked as config. V5 done: severity policy written and every error class checked against Therion. V5b done: drawing object IDs are checked across the whole survey (scraps are not namespaces), case-sensitively, and against the survey's station names. V6 done: lines inside `code ... endcode` are coloured as TeX or MetaPost, with their own `%` comment rules. V6b done: a station point repeated in one scrap is a warning (with a fix when at the same place), and one shared by two scraps of the same projection in a file is information. Remaining slices are potential (V7, V8). The Validation panel summary now lists errors, warnings, and notes in their colours with the files searched.
+
 - Treat full-project validation as an explicit/manual workflow by default; use the Settings toggle only when projects are
   small enough or the user wants live full-project diagnostics.
 - Project index scans now log per-phase timings (`project-structure-scan`, and `project_index_phase_ms` on

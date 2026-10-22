@@ -44,6 +44,7 @@ enum class ProjectIndexDiagnosticKind
     MixedJoinKinds,
     RepeatedScrapJoin,
     SinglePointLineJoin,
+    ObjectIdMatchesStation,
 };
 
 enum class ProjectStationReferenceResolutionState

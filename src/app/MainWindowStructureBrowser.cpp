@@ -237,6 +237,7 @@ bool isStructureRelationshipDiagnostic(const TherionStudio::ProjectIndexDiagnost
     case TherionStudio::ProjectIndexDiagnosticKind::MixedJoinKinds:
     case TherionStudio::ProjectIndexDiagnosticKind::RepeatedScrapJoin:
     case TherionStudio::ProjectIndexDiagnosticKind::SinglePointLineJoin:
+    case TherionStudio::ProjectIndexDiagnosticKind::ObjectIdMatchesStation:
         return false;
     }
     return false;
@@ -264,6 +265,7 @@ QString diagnosticStructureItemText(const TherionStudio::ProjectIndexDiagnostic 
     case TherionStudio::ProjectIndexDiagnosticKind::MixedJoinKinds:
     case TherionStudio::ProjectIndexDiagnosticKind::RepeatedScrapJoin:
     case TherionStudio::ProjectIndexDiagnosticKind::SinglePointLineJoin:
+    case TherionStudio::ProjectIndexDiagnosticKind::ObjectIdMatchesStation:
         break;
     }
 
