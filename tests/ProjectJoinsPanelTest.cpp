@@ -86,6 +86,45 @@ private slots:
         QCOMPARE(joinSpy.takeFirst().at(1).toBool(), true);
     }
 
+    void opensARowWhoseSurveyDrawsTheViewWithoutItsStation()
+    {
+        // side has plan and extended scraps but draws 3@side in neither; upper only draws 1@upper in plan.
+        ProjectIndexSnapshot snapshot = joinSnapshot();
+        snapshot.stationDrawingPointsByStationKey.remove(station(QStringLiteral("3@side"), QStringLiteral("side")).stationKey);
+        for (const QString &projection : {QStringLiteral("plan"), QStringLiteral("extended")}) {
+            ProjectStructureEntry scrap;
+            scrap.kind = ProjectStructureEntryKind::Scrap;
+            scrap.objectId = QStringLiteral("side-") + projection;
+            scrap.namespacePath = QStringLiteral("side");
+            snapshot.entries.append(scrap);
+            snapshot.scrapProjectionByObjectId.insert(scrap.objectId, projection);
+            snapshot.stationPointsByScrapObjectId[scrap.objectId] = {ProjectScrapStationPoint{4, QStringLiteral("4@side")}};
+        }
+        ProjectJoinsPanel panel;
+        panel.setProjectIndex(snapshot);
+        auto *combo = panel.findChild<QComboBox *>();
+        auto *tree = panel.findChild<QTreeView *>();
+        QAbstractItemModel *model = tree->model();
+        QSignalSpy joinSpy(&panel, &ProjectJoinsPanel::joinRequested);
+        QSignalSpy statusSpy(&panel, &ProjectJoinsPanel::statusMessageRequested);
+
+        // 1@upper = 3@side in plan opens; the nearest side scrap is chosen when the join opens.
+        const QModelIndex planRow = model->index(1, 0, model->index(1, 0));
+        QVERIFY(planRow.data(Qt::ToolTipRole).toString().contains(QStringLiteral("nearest")));
+        emit tree->activated(planRow);
+        QCOMPARE(joinSpy.count(), 1);
+        QCOMPARE(joinSpy.takeFirst().at(0).value<ProjectJoinPair>().second.status,
+                 ProjectJoinSideStatus::SurveyDrawnWithoutStation);
+
+        // 2@lower = 3@side in extended does not, and says why.
+        combo->setCurrentText(QStringLiteral("extended"));
+        const QModelIndex extendedRow = model->index(2, 0, model->index(1, 0));
+        QCOMPARE(extendedRow.data().toString(), QStringLiteral("2@lower = 3@side"));
+        emit tree->activated(extendedRow);
+        QCOMPARE(joinSpy.count(), 0);
+        QVERIFY(statusSpy.takeFirst().at(0).toString().contains(QStringLiteral("extended elevation")));
+    }
+
     void keyboardContextMenuTargetsTheCurrentRow()
     {
         ProjectJoinsPanel panel;

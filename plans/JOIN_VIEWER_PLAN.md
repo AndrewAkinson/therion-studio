@@ -246,7 +246,7 @@ Staged implementation:
 ### D. Fixes found in use (2026-10-21)
 
 Reported while testing on a real project. Status: D1 fixed (below) and replaced by D5; D5 done; D3 reduced to
-its stale-check part (revised 2026-10-22, done), then D4 (done), then D2. D1 came first because it might have
+its stale-check part (revised 2026-10-22, done), then D4 (done), then D2 (done). D1 came first because it might have
 explained D3, and its result changed D2-D4.
 
 - **D1 Alignment is wrong even with a shared point.** Equate rows, where both drawings draw the shared station, do not
@@ -296,6 +296,11 @@ explained D3, and its result changed D2-D4.
   centred as in D4. In extended there is no offset, so the row is not openable and says why, as for join-only rows.
   Without computed positions keep the dimmed row but word the reason exactly, e.g. "<station>@<survey> has no
   station point in <survey>'s plan drawing". Rows where the survey reads no drawing at all stay as they are.
+  Done (2026-10-22). Changes from the plan: the row is not dimmed without computed positions, because the panel
+  does not know about them; instead opening it says so in the status bar and opens nothing. A station that no
+  drawing draws at all is treated the same when its survey has scraps in the view. The nearest scrap is the one
+  with a station point nearest the station in 3D. On the test project this opens rows in plan and elevation views, and
+  the scrap chosen matches the scraps named by hand in the project's `join` commands where both exist.
 - **D3 Joins opened during a Therion run use the XVI.** While a run is going the placement ignores the previous
   legs and positions, so joins opened then fall back to the XVI, and join-only rows open unaligned. Since D5 this
   affects equated rows too, because the legs come from the same run. Every drawing save starts a run, because the

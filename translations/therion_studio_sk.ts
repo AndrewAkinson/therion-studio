@@ -1524,6 +1524,16 @@ Ak je súbor otvorený, najprv sa zavrie.</translation>
         <translation>Tieto kresby nemajú spoločnú stanicu a kresby v rozvinutom reze možno zarovnať iba na spoločnej stanici.</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="126"/>
+        <source>%1 has no station point in this view; open the join again once Therion has computed the station positions, which choose its survey&apos;s nearest drawing.</source>
+        <translation>%1 nemá v tomto pohľade bod stanice; otvorte spojenie znova, keď Therion vypočíta polohy staníc, podľa ktorých sa vyberie najbližšia kresba jej merania.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="129"/>
+        <source>%1 has no station point in this view, and Therion has computed no position to choose its survey&apos;s nearest drawing.</source>
+        <translation>%1 nemá v tomto pohľade bod stanice a Therion nevypočítal žiadnu polohu, podľa ktorej by sa vybrala najbližšia kresba jej merania.</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindowJoinPlacement.cpp" line="141"/>
         <source>%1 has too few measured legs between its station points, so it is placed by its XVI background, which may be turned by the declination.</source>
         <translation>Kresba %1 má príliš málo nameraných ťahov medzi bodmi staníc, preto je umiestnená podľa podkladu XVI, ktorý môže byť natočený o deklináciu.</translation>
@@ -6717,6 +6727,16 @@ subtype blocks</translation>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="187"/>
         <source>%1: not drawn in the %2 view</source>
         <translation>%1: nie je nakreslená v pohľade %2</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="405"/>
+        <source>%1: no station point in its survey&apos;s %2 drawings, and an extended elevation can only be aligned at a shared station</source>
+        <translation>%1: žiadny bod stanice v kresbách %2 jej merania, a rozvinutý rez možno zarovnať len na spoločnej stanici</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="408"/>
+        <source>%1: no station point in its survey&apos;s %2 drawings, so the drawing nearest the station opens</source>
+        <translation>%1: žiadny bod stanice v kresbách %2 jej merania, preto sa otvorí kresba najbližšia k stanici</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="453"/>
