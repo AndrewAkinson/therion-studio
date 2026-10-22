@@ -3,6 +3,7 @@
 #include "TherionRunnerService.h"
 #include "reports/TherionSqlReportDatabase.h"
 
+#include "../core/TherionFileTypes.h"
 #include "../core/TherionStationPositionExport.h"
 
 #include <QDir>
@@ -94,7 +95,9 @@ bool ProjectStationPositionService::isCurrent(const ProjectStationPositionReques
         return false;
     }
     for (const QString &sourceFile : request.sourceFiles) {
-        if (QFileInfo(sourceFile).lastModified() > attemptStartedAt_) {
+        // Legs and positions do not depend on drawings, so saving one does not start a run.
+        if (therionSourceDocumentTypeForFilePath(sourceFile) != TherionSourceDocumentType::TherionMap
+            && QFileInfo(sourceFile).lastModified() > attemptStartedAt_) {
             return false;
         }
     }

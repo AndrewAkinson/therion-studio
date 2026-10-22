@@ -246,7 +246,7 @@ Staged implementation:
 ### D. Fixes found in use (2026-10-21)
 
 Reported while testing on a real project. Status: D1 fixed (below) and replaced by D5; D5 done; D3 reduced to
-its stale-check part (revised 2026-10-22), then D4, then D2; none started. D1 came first because it might have
+its stale-check part (revised 2026-10-22, done), then D4, then D2. D1 came first because it might have
 explained D3, and its result changed D2-D4.
 
 - **D1 Alignment is wrong even with a shared point.** Equate rows, where both drawings draw the shared station, do not
@@ -304,6 +304,7 @@ explained D3, and its result changed D2-D4.
   depend on the drawings. The rest is dropped and kept as a known problem: a join opened during a run after a `.th`
   or config change uses the XVI, or opens unaligned, until it is opened again. If that proves a nuisance, keep the
   previous results while a run is going and re-place joins that opened without them.
+  Done (2026-10-22): drawings are left out of the stale check.
 - **D4 Centre on where the drawings meet.** Join-only rows are centred between the middles of the two scraps, which can
   be well away from where they meet. Instead centre both views halfway between the closest pair of station points,
   one in each scrap, using their computed positions (the user's suggestion). D5 already finds this pair for the
