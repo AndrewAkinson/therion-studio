@@ -281,7 +281,8 @@ set(THERION_MAP_EDITOR_BACKGROUND_UI_QTEST_SUITES
     MapEditorAltitudeUnderlayTest
     MapEditorBackgroundRoundTripTest
     MapEditorSceneLifecycleTest
-    MapEditorLinePreviewTest)
+    MapEditorLinePreviewTest
+    MapEditorRawValidationDeferralTest)
 
 set(THERION_TEXT_EDITOR_DOCUMENT_QTEST_SUITES
     TextEditorDocumentIoServiceTest
@@ -1855,7 +1856,8 @@ qt_add_executable(MapEditorBackgroundUiQTests
     tests/MapEditorBackgroundUiQTestMain.cpp
     tests/MapEditorBackgroundRoundTripTest.cpp
     tests/MapEditorSceneLifecycleTest.cpp
-    tests/MapEditorLinePreviewTest.cpp)
+    tests/MapEditorLinePreviewTest.cpp
+    tests/MapEditorRawValidationDeferralTest.cpp)
 
 target_link_libraries(MapEditorBackgroundUiQTests PRIVATE
     therion_map_editor_ui_test_support

@@ -15,6 +15,7 @@ int runMapEditorScrapStationHighlightTest(int argc, char **argv);
 int runMapEditorInteractionPerformanceTest(int argc, char **argv);
 int runMapEditorSpatialIndexRepaintTest(int argc, char **argv);
 int runMapEditorBulkVisibilityTest(int argc, char **argv);
+int runMapEditorRawValidationDeferralTest(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
@@ -33,5 +34,6 @@ int main(int argc, char **argv)
         {"MapEditorBulkVisibilityTest", runMapEditorBulkVisibilityTest},
         {"MapEditorBackgroundRoundTripTest", runMapEditorBackgroundRoundTripTest},
         {"MapEditorSceneLifecycleTest", runMapEditorSceneLifecycleTest},
-        {"MapEditorLinePreviewTest", runMapEditorLinePreviewTest}});
+        {"MapEditorLinePreviewTest", runMapEditorLinePreviewTest},
+        {"MapEditorRawValidationDeferralTest", runMapEditorRawValidationDeferralTest}});
 }
