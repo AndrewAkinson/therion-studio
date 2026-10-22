@@ -107,6 +107,11 @@ bool lineInsideCodeBlockIsRawContent(const QString &currentBlockDirective,
         && normalizedDirective != QStringLiteral("endcode");
 }
 
+bool TherionSourceDocumentLine::isRawCodeContent() const
+{
+    return lineInsideCodeBlockIsRawContent(currentBlockDirective, normalizedDirective);
+}
+
 TherionSourceDocument TherionSourceDocument::fromText(
     const QString &contents,
     const TherionSourceDocumentMetadata &metadata)

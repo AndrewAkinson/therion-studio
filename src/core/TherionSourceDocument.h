@@ -72,6 +72,8 @@ struct TherionSourceDocumentLine
 
     [[nodiscard]] bool shouldValidateCommandCatalog() const;
     [[nodiscard]] bool hasUnmatchedClose() const;
+    // Inside `code ... endcode`: TeX or MetaPost text, not a Therion command.
+    [[nodiscard]] bool isRawCodeContent() const;
 };
 
 class TherionSourceDocument final

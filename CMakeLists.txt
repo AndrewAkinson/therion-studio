@@ -139,6 +139,8 @@ set(THERION_CORE_SOURCES
     src/core/ProjectStructureIndex.h
     src/core/TherionStationNameRules.cpp
     src/core/TherionStationNameRules.h
+    src/core/TherionCodeBlockRules.cpp
+    src/core/TherionCodeBlockRules.h
     src/core/TherionDocumentParser.cpp
     src/core/TherionDocumentParser.h
     src/core/SessionStore.cpp
@@ -200,7 +202,8 @@ set(THERION_CORE_QTEST_SUITES
     TherionSourceValidatorFixTest
     TherionSourceValidatorProjectionTest
     ProjectStructureIndexQTest
-    TherionTokenRulesTest)
+    TherionTokenRulesTest
+    TherionCodeBlockRulesTest)
 
 set(THERION_MAIN_WINDOW_QTEST_SUITES
     MainWindowHelpDocumentTest
@@ -1227,7 +1230,8 @@ therion_add_core_qtest_runner(TherionCoreQTests
     tests/core/TherionSourceValidatorProjectionTest.cpp
     tests/core/ProjectStructureIndexQTest.cpp
     tests/core/TherionSourceTextTest.cpp
-    tests/core/TherionTokenRulesTest.cpp)
+    tests/core/TherionTokenRulesTest.cpp
+    tests/core/TherionCodeBlockRulesTest.cpp)
 
 target_compile_definitions(TherionCoreQTests PRIVATE
     THERION_STUDIO_TEST_FIXTURE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures")

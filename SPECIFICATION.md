@@ -349,6 +349,7 @@ The rules below define the expected day-to-day interaction model. If a later req
 - When an open document changes on disk while the in-memory document is dirty, the application shall prompt before discarding in-memory edits and shall allow the user to keep the in-memory version.
 - The editor shall preserve caret position, selection, and folding state per document where possible.
 - Therion syntax highlighting shall reflect the current token type, not only the file extension.
+- Lines inside `code ... endcode` shall be highlighted by the rules of the block's language instead of as Therion tokens: TeX for `tex-map` and `tex-atlas` (a `%` not escaped by `\` starts a comment), MetaPost for `metapost` and `mpost` (a `%` outside a `"..."` string starts a comment), and no language colouring for another type. A code line whose first non-blank character is `#` shall be highlighted as a comment in any language, as Therion drops it before writing the code out. Which lines are code shall come from the shared source document, so the highlighter follows the same block rules as validation, and editing a `code` or `endcode` line shall recolour the lines after it. Validator underlines still apply to code lines.
 - Completion suggestions shall be context-sensitive and based on the current Therion syntax position.
 - Search and replace shall support the current document and, where practical, the broader project.
 - Find and Replace commands shall reveal an inline search bar in the editor area rather than requiring a separate modal dialog.

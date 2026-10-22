@@ -13,6 +13,7 @@ int runTherionSourceFormatterTest(int argc, char **argv);
 int runTherionSourceLogicalDocumentTest(int argc, char **argv);
 int runTherionSourceSnapshotCacheTest(int argc, char **argv);
 int runTherionTokenRulesTest(int argc, char **argv);
+int runTherionCodeBlockRulesTest(int argc, char **argv);
 int runTherionDocumentEditorDraftInsertionTest(int argc, char **argv);
 int runTherionSourceValidatorFixTest(int argc, char **argv);
 int runTherionSourceValidatorProjectionTest(int argc, char **argv);
@@ -59,5 +60,6 @@ int main(int argc, char **argv)
         {"TherionSourceValidatorFixTest", runTherionSourceValidatorFixTest},
         {"TherionSourceValidatorProjectionTest", runTherionSourceValidatorProjectionTest},
         {"ProjectStructureIndexQTest", runProjectStructureIndexQTest},
-        {"TherionTokenRulesTest", runTherionTokenRulesTest}});
+        {"TherionTokenRulesTest", runTherionTokenRulesTest},
+        {"TherionCodeBlockRulesTest", runTherionCodeBlockRulesTest}});
 }

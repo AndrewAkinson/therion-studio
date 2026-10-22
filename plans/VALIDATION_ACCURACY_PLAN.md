@@ -2,7 +2,7 @@
 
 Date: 2026-10-15
 
-Status: V1a, V1b, V2a, V2b, V3, V4, V4b, V5, and V5b done. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
+Status: V1a, V1b, V2a, V2b, V3, V4, V4b, V5, V5b, and V6 done; V6b planned (2026-10-22). Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
 values, Therion's line splitting (`thsplit_args`) first in two parts (V1a, V1b), code blocks as a potential slice,
 and slices renumbered.
 
@@ -341,14 +341,72 @@ Not in this slice
 - The map editor makes new IDs (line split) unique only in the open file, so it can still create a duplicate with
   another file of the survey. The validator would now report it; making the editor avoid it is a separate change.
 
-## V6 (potential) - Code Blocks Split By Their Own Rules
+## V6 - Code Blocks Highlighted By Their Own Rules
 
-Potential, not scheduled. Studio already understands blocks: `TherionSourceDocument` builds the block stack (`survey`,
-`scrap`, `line`, `area`, `map`, `centreline`, `layout`, `code`, ...) and validation uses it for command context. But
-the tokenizer splits each line on its own, before the block is known, so splitting cannot depend on the block. Make
-lines inside `code ... endcode` use the rules of their language instead of Therion's (TeX and MetaPost `%` comments,
-no Therion quoting or brackets), for example by splitting raw code lines again once the block stack is known.
-Restores comment colouring in code blocks after V1b. Revisit after V1.
+Goal: lines inside `code ... endcode` are coloured as TeX or MetaPost, not as Therion commands.
+
+Done (2026-10-22, was potential). Only highlighting is affected. Therion itself reads code lines with its own
+rules (it joins a final `\` and ends the block at `endcode`), and the source model already follows them (V3) and
+already marks code lines as raw block content that validation does not check as commands. The highlighter is the one
+consumer that does not know this, because it parses each line on its own.
+
+- Method: no change to the shared tokenizer or source model. The highlighter already keeps a whole-document source
+  snapshot per revision for its validation underlines; in the same refresh it records, for each line, whether it is
+  raw code and in which language, from the enclosing `code <type>` line. This reuses the model's block rules
+  (continuation, `endlayout` closing an open code block) instead of a second copy. Block state carries the language
+  so that typing `code` or `endcode` recolours the lines after it.
+- Languages from Therion's code types (`thlayout.h`): `metapost` and `mpost` are MetaPost, `tex-map` and `tex-atlas`
+  are TeX. A missing or unknown type gets no language colouring.
+- Rules, in a small core file with unit tests: TeX, a `%` not escaped by `\` starts a comment (`\%` is a literal
+  percent, `\\%` a line break then a comment); MetaPost, a `%` outside a `"..."` string starts a comment. Code lines
+  get no Therion keyword, option, identifier, number, or string colouring, so `#1` and Therion words in TeX or
+  MetaPost are plain text. Validation underlines still apply.
+- A code line whose first non-blank character is `#` is coloured as a comment in any language. Therion drops it
+  before writing the code out (`thinput.cxx`; checked with Therion 6.4.0, a `#` line with an undefined macro in a
+  `tex-map` block builds, while the same line without `#` stops TeX). No finding, as it is valid Therion and the
+  cleaner way to comment out code.
+- Tests: core QTest for the language and comment rules; a highlighter test with a layout code block in each
+  language (comment coloured, Therion keyword inside code not coloured, `endcode` and the following Therion line
+  coloured as Therion again).
+- Documentation: `SPECIFICATION.md` (editor highlighting of code blocks); `docs/THERION_COMPATIBILITY.md` (code block
+  lines follow TeX or MetaPost comment rules for display only); the four manuals where highlighting is described.
+
+## V6b - Station Points Repeated In A Drawing
+
+Goal: find a `point ... station -name` that repeats a station already drawn in the same `.th2` file, which Therion
+accepts silently.
+
+Therion 6.4.0 compiles all three cases below without an error or a warning (checked on small projects), so by the
+severity policy none of them is an error. A station point is a morphing control point, so two of the same station in
+one scrap at different places pull the drawing towards both, which is very likely a mistake. Measured on the real
+project used for the findings table: 4 repeats in one scrap at different places (one is station 17 in
+`ConnectionSP1`, about 4 m apart), 2 repeats in one scrap at the same place, and 11 stations shared by two scraps of
+the same projection in one file, mostly neighbouring scraps where they join (for example `NorthRiftSP2` and
+`NorthRiftSP3`), which is how Therion joins scraps, hence information only.
+
+| Case | Finding | Fix |
+| --- | --- | --- |
+| Same station twice in one scrap, different places | warning | none, the user decides which is right |
+| Same station twice in one scrap, same place | warning | `Apply Fix` removes the later point |
+| Same station in two scraps of the same projection in one file | information | none |
+
+- Same file only: drawings in other files are not compared, so `16` in two caves' drawings is never reported.
+- Same station: the `-name` value compared case-sensitively after the scrap's `-station-names` transform, so
+  `17` and `17@sub` are different.
+- Same place: identical coordinates as written. In the measured project every same-place repeat is exact and the
+  nearest different-place repeat is 4.4 drawing units apart, so no tolerance is needed yet.
+- Where: all three are single-file checks in `TherionSourceValidator` (Raw editor and Validation panel), reported
+  at the later point's `-name` value and naming the line of the first; the cross-scrap case once per later scrap.
+- Projections: only scraps of the same projection are compared (`plan` with `plan`, `extended` with `extended`, each
+  `[elevation <angle>]` with the same angle); `-projection none` cross sections are skipped, as every station
+  normally appears in plan, extended and elevation drawings.
+- Tests: each case in one file; transformed names (`-station-names`); the same name in two files not reported;
+  different projections and cross sections not compared; the fix removes only the later point.
+- Documentation: `SPECIFICATION.md` validation list, the four manuals, `docs/THERION_COMPATIBILITY.md` (Therion
+  accepts repeated station points), translations for the new messages.
+
+Answered (2026-10-22): warning for the different-place repeat (Therion compiles it, so not an error under V5); same
+file only; no scrap naming convention, as names do not reliably say which scraps are neighbours.
 
 ## V7 (potential) - Validate Each Drawing Against The Config That Reads It
 
@@ -377,7 +435,8 @@ WORKLOG backlog item "Compiler-confirmed project-index comparison". Revisit afte
 | V4b | Document type from how Therion reads a file | |
 | V5 | Severity policy | |
 | V5b | Drawing object IDs unique in the survey, not the scrap | |
-| V6 (p) | Code blocks split by their own rules (TeX and MetaPost) | |
+| V6 | Code blocks highlighted by their own rules (TeX and MetaPost) | |
+| V6b | Station points repeated in a drawing | |
 | V7 (p) | Validate each drawing against the config that reads it | |
 | V8 (p) | Therion referee test | |
 

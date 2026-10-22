@@ -207,6 +207,7 @@ void TherionSyntaxHighlighter::setSourceDocumentType(TherionSourceDocumentType s
 
     sourceDocumentType_ = sourceType;
     cachedValidationResult_ = {};
+    cachedCodeLanguagesByLine_.clear();
     cachedValidationRevision_ = -1;
     sourceSnapshotCache_.clear();
     rehighlight();
@@ -224,6 +225,7 @@ void TherionSyntaxHighlighter::loadPalette()
     closingDirectiveIdTokens_.clear();
     validationCatalog_ = {};
     cachedValidationResult_ = {};
+    cachedCodeLanguagesByLine_.clear();
     cachedValidationRevision_ = -1;
     sourceSnapshotCache_.clear();
 
@@ -306,6 +308,19 @@ void TherionSyntaxHighlighter::applyStyle(const QString &styleName, const QJsonO
 void TherionSyntaxHighlighter::highlightBlock(const QString &text)
 {
     setFormat(0, text.length(), baseTextFormat_);
+
+    // The state is the next line's code language, so typing `code` or `endcode` recolours the lines after it.
+    const int blockNumber = currentBlock().blockNumber();
+    setCurrentBlockState(static_cast<int>(cachedCodeLanguageAt(blockNumber + 1)));
+    const TherionCodeLanguage codeLanguage = cachedCodeLanguageAt(blockNumber);
+    if (codeLanguage != TherionCodeLanguage::None) {
+        const int commentStart = therionCodeCommentStart(text, codeLanguage);
+        if (commentStart >= 0) {
+            setFormat(commentStart, text.length() - commentStart, commentFormat_);
+        }
+        applyValidatorInvalidTokenFormats(text);
+        return;
+    }
 
     const TherionSourceDocument sourceDocument = TherionSourceDocument::fromText(text);
     const TherionParsedLine parsedLine = sourceDocument.lines().isEmpty()
@@ -677,11 +692,14 @@ const QTextCharFormat &TherionSyntaxHighlighter::validationFormatForSeverity(
     return validationWarningFormat_;
 }
 
-const TherionSourceValidationResult &TherionSyntaxHighlighter::cachedValidationResult()
+void TherionSyntaxHighlighter::refreshCachedDocumentState()
 {
-    if (document() == nullptr) {
-        static const TherionSourceValidationResult emptyResult;
-        return emptyResult;
+    // setPlainText empties and refills the document under one revision, so an empty document is never cached.
+    if (document() == nullptr || document()->isEmpty()) {
+        cachedValidationResult_ = {};
+        cachedCodeLanguagesByLine_.clear();
+        cachedValidationRevision_ = -1;
+        return;
     }
 
     const int revision = document()->revision();
@@ -700,8 +718,20 @@ const TherionSourceValidationResult &TherionSyntaxHighlighter::cachedValidationR
         cachedValidationResult_ = TherionSourceValidator::validate(sourceDocument,
                                                                    logicalDocument,
                                                                    validationCatalog_);
+        cachedCodeLanguagesByLine_ = therionCodeLanguagesByLine(sourceDocument);
         cachedValidationRevision_ = revision;
     }
+}
+
+const TherionSourceValidationResult &TherionSyntaxHighlighter::cachedValidationResult()
+{
+    refreshCachedDocumentState();
     return cachedValidationResult_;
+}
+
+TherionCodeLanguage TherionSyntaxHighlighter::cachedCodeLanguageAt(int blockNumber)
+{
+    refreshCachedDocumentState();
+    return cachedCodeLanguagesByLine_.value(blockNumber, TherionCodeLanguage::None);
 }
 }
