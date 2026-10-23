@@ -60,6 +60,7 @@ class MapEditorTab;
 class ThreeDViewerTab;
 class TherionSqlReportTab;
 class TherionRunnerService;
+class TherionCompileResultRecorder;
 class ProjectScanCacheService;
 }
 
@@ -455,6 +456,7 @@ private:
     QString projectFileWatcherInventoryRootPath_;
     QStringList projectFileWatcherFailedPaths_;
     TherionStudio::TherionRunnerService *therionRunnerService_ = nullptr;
+    TherionStudio::TherionCompileResultRecorder *compileResultRecorder_ = nullptr;
     TherionStudio::MainWindowTherionConsoleController therionConsoleController_;
     QLabel *statusHintLabel_ = nullptr;
     QLabel *statusMapZoomLabel_ = nullptr;
