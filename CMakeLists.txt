@@ -137,6 +137,8 @@ set(THERION_CORE_SOURCES
     src/core/TherionSourceValidator.h
     src/core/ProjectStructureIndex.cpp
     src/core/ProjectStructureIndex.h
+    src/core/ProjectMapCompositionCheck.cpp
+    src/core/ProjectMapCompositionCheck.h
     src/core/TherionStationNameRules.cpp
     src/core/TherionStationNameRules.h
     src/core/TherionCodeBlockRules.cpp
@@ -145,6 +147,8 @@ set(THERION_CORE_SOURCES
     src/core/TherionRepeatedStationPoints.h
     src/core/TherionMapItemRules.cpp
     src/core/TherionMapItemRules.h
+    src/core/TherionProjectionRules.cpp
+    src/core/TherionProjectionRules.h
     src/core/TherionDocumentParser.cpp
     src/core/TherionDocumentParser.h
     src/core/SessionStore.cpp

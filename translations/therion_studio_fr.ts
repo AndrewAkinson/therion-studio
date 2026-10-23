@@ -2702,6 +2702,36 @@ Lignes de points : %1</translation>
         <translation>Topographie de map non valide</translation>
     </message>
     <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="232"/>
+        <source>Recursive map reference</source>
+        <translation>Référence de map récursive</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="233"/>
+        <source>Map `%1` contains, directly or through its own maps, the map that lists it.</source>
+        <translation>La map `%1` contient, directement ou par ses propres maps, la map qui la liste.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="238"/>
+        <source>Incompatible scrap projection</source>
+        <translation>Projection de scrap incompatible</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="239"/>
+        <source>Scrap `%1` has a different projection from the first item of this map, or from the map's `-projection`.</source>
+        <translation>Le scrap `%1` a une projection différente du premier élément de cette map, ou de l’option `-projection` de la map.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="244"/>
+        <source>Incompatible map projection</source>
+        <translation>Projection de map incompatible</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="245"/>
+        <source>Map `%1` has a different projection from the first item of this map, or from the map's `-projection`.</source>
+        <translation>La map `%1` a une projection différente du premier élément de cette map, ou de l’option `-projection` de la map.</translation>
+    </message>
+    <message>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="227"/>
         <source>`-survey %1` does not name a survey.</source>
         <translation>`-survey %1` ne désigne pas une topographie.</translation>

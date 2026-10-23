@@ -1,6 +1,6 @@
 #include "TherionRepeatedStationPoints.h"
 
-#include "TherionCommandLineModel.h"
+#include "TherionProjectionRules.h"
 #include "TherionSourceDocument.h"
 #include "TherionSourceLogicalDocument.h"
 #include "TherionStationNameRules.h"
@@ -19,25 +19,6 @@ struct StationPoint
     double x = 0.0;
     double y = 0.0;
 };
-
-// The scrap's projection as written, `plan` when it has none (Therion's default).
-QString scrapProjection(const TherionSourceLogicalCommand &scrapCommand)
-{
-    for (const TherionSourceLogicalOptionEntryRange &optionEntry : scrapCommand.optionEntryRanges) {
-        if (normalizedCommandOptionName(optionEntry.key) == QStringLiteral("projection")
-            && !optionEntry.valueRanges.isEmpty()) {
-            return optionEntry.valueRanges.constFirst().text.simplified();
-        }
-    }
-    return QStringLiteral("plan");
-}
-
-bool projectionIsCrossSection(const QString &projection)
-{
-    QString type = projection;
-    type.remove(QLatin1Char('['));
-    return type.section(QLatin1Char(' '), 0, 0) == QStringLiteral("none");
-}
 
 int enclosingScrapLineNumber(const TherionSourceLogicalCommand &command)
 {
@@ -105,7 +86,7 @@ void appendRepeatedStationPointDiagnostics(QVector<TherionSourceDiagnostic> *dia
     QHash<QString, StationPoint> firstInProjection;
     for (const TherionSourceLogicalCommand &command : logicalDocument.commands()) {
         if (command.metadata.commandName == QStringLiteral("scrap")) {
-            projectionByScrapLine.insert(command.startLineNumber, scrapProjection(command));
+            projectionByScrapLine.insert(command.startLineNumber, therionScrapProjection(command));
             nameByScrapLine.insert(command.startLineNumber, command.positionalArgumentRanges.value(0).text);
             continue;
         }
@@ -145,7 +126,7 @@ void appendRepeatedStationPointDiagnostics(QVector<TherionSourceDiagnostic> *dia
         firstInScrap.insert(scrapKey, point);
 
         const QString projection = projectionByScrapLine.value(scrapLineNumber);
-        if (projectionIsCrossSection(projection)) {
+        if (therionProjectionIsCrossSection(projection)) {
             continue;
         }
         const QString projectionKey = projection + QLatin1Char('\n') + station;

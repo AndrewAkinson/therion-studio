@@ -1,9 +1,12 @@
 #include "ProjectStructureIndex.h"
 
+#include "ProjectMapCompositionCheck.h"
+
 #include "DocumentFile.h"
 #include "TherionCommandLineModel.h"
 #include "TherionFileTypes.h"
 #include "TherionMapItemRules.h"
+#include "TherionProjectionRules.h"
 #include "TherionSourceLogicalDocument.h"
 #include "TherionSourceReferenceResolver.h"
 #include "TherionSourceSnapshotCache.h"
@@ -1640,6 +1643,44 @@ ReferenceKeyIndex drawingObjectIdKeysByReferenceName(const QVector<ProjectStruct
     return objectKeys;
 }
 
+// The written projection of each scrap a map lists.
+QHash<QString, QString> scrapProjectionsByKey(const QVector<ProjectStructureEntry> &entries,
+                                              const QHash<QString, ProjectMapComposition> &compositionsByMapKey,
+                                              ParsedFileCache *cache,
+                                              const QHash<QString, QString> &inMemoryFileContentsByPath)
+{
+    QSet<QString> listedScrapKeys;
+    for (const ProjectMapComposition &composition : compositionsByMapKey) {
+        for (const ProjectMapCompositionItem &item : composition.items) {
+            if (item.kind == ProjectMapCompositionItemKind::Scrap) {
+                listedScrapKeys.insert(item.key);
+            }
+        }
+    }
+
+    QHash<QString, QVector<ProjectStructureEntry>> scrapsByFile;
+    for (const ProjectStructureEntry &entry : entries) {
+        if (entry.kind == ProjectStructureEntryKind::Scrap
+            && listedScrapKeys.contains(ProjectStructureIndex::structureEntryNodeKey(entry))) {
+            scrapsByFile[normalizedFilePathKey(entry.sourceFile)].append(entry);
+        }
+    }
+
+    QHash<QString, QString> projectionsByKey;
+    for (auto fileIt = scrapsByFile.constBegin(); fileIt != scrapsByFile.constEnd(); ++fileIt) {
+        const QHash<int, TherionSourceLogicalCommand> commandsByStartLine =
+            logicalCommandsByStartLine(logicalDocumentForFile(fileIt.key(), cache, inMemoryFileContentsByPath));
+        for (const ProjectStructureEntry &entry : fileIt.value()) {
+            const auto commandIt = commandsByStartLine.constFind(entry.lineNumber);
+            if (commandIt != commandsByStartLine.constEnd()) {
+                projectionsByKey.insert(ProjectStructureIndex::structureEntryNodeKey(entry),
+                                        therionScrapProjection(commandIt.value()));
+            }
+        }
+    }
+    return projectionsByKey;
+}
+
 MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &entries,
                                          bool mapsOffset,
                                          ParsedFileCache *cache,
@@ -1653,6 +1694,7 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
     const ReferenceKeyIndex surveyKeysByName = surveyKeysByReferenceName(entries);
     // Only needed for a map item that is not a map, scrap or survey, so read on first use.
     std::optional<ReferenceKeyIndex> drawingObjectKeysByName;
+    QHash<QString, ProjectMapComposition> compositionsByMapKey;
 
     QHash<QString, QVector<ProjectStructureEntry>> mapsBySourceFile;
     for (const ProjectStructureEntry &entry : entries) {
@@ -1730,6 +1772,11 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
 
             int normalItemCount = 0;
             int previewItemCount = 0;
+            const QString mapKey = ProjectStructureIndex::structureEntryNodeKey(mapEntry);
+            ProjectMapComposition composition;
+            composition.sourceObjectId = mapEntry.objectId;
+            composition.sourceFile = fileIt.key();
+            composition.projection = therionCommandProjection(commands.at(mapLineIndex));
             int mapDepth = 0;
             for (int index = mapLineIndex; index < commands.size(); ++index) {
                 if (projectIndexScanShouldCancel(shouldCancel)) {
@@ -1799,10 +1846,19 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
 
                 const QString candidate = itemSyntax.name;
                 const TherionSourcePhysicalRange candidateRange = parsedLineTokenPhysicalRange(parsedLine, 0);
+                auto addCompositionItem = [&](ProjectMapCompositionItemKind kind, const QString &key) {
+                    composition.items.append({kind,
+                                              key,
+                                              candidate,
+                                              parsedLine.lineNumber,
+                                              candidateRange.columnNumber,
+                                              candidateRange.columnLength});
+                };
 
                 const ReferenceResolution childMapResolution = resolveReferenceKey(mapKeysByName, candidate, mapEntry.namespacePath);
                 if (childMapResolution.state == ReferenceResolutionState::Unique) {
                     registerContentKind(MapCompositionContentKind::Map, parsedLine, candidate);
+                    addCompositionItem(ProjectMapCompositionItemKind::Map, childMapResolution.key);
                     const QString owningMapKey = ProjectStructureIndex::structureEntryNodeKey(mapEntry);
                     if (childMapResolution.key != owningMapKey) {
                         childMapReferences.insert(childMapResolution.key);
@@ -1826,6 +1882,7 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
                 const ReferenceResolution scrapResolution = resolveReferenceKey(scrapKeysByName, candidate, mapEntry.namespacePath);
                 if (scrapResolution.state == ReferenceResolutionState::Unique) {
                     registerContentKind(MapCompositionContentKind::Scrap, parsedLine, candidate);
+                    addCompositionItem(ProjectMapCompositionItemKind::Scrap, scrapResolution.key);
                     scrapReferences.insert(scrapResolution.key);
                     continue;
                 }
@@ -1844,9 +1901,13 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
                 }
 
                 // Therion treats a survey item as a map of its centreline.
-                if (resolveReferenceKey(surveyKeysByName, candidate, mapEntry.namespacePath).state
-                    != ReferenceResolutionState::Missing) {
+                const ReferenceResolution surveyResolution =
+                    resolveReferenceKey(surveyKeysByName, candidate, mapEntry.namespacePath);
+                if (surveyResolution.state != ReferenceResolutionState::Missing) {
                     registerContentKind(MapCompositionContentKind::Map, parsedLine, candidate);
+                    if (surveyResolution.state == ReferenceResolutionState::Unique) {
+                        addCompositionItem(ProjectMapCompositionItemKind::Survey, surveyResolution.key);
+                    }
                     continue;
                 }
 
@@ -1887,6 +1948,7 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
                                              candidate);
             }
 
+            compositionsByMapKey.insert(mapKey, composition);
             if (normalItemCount == 0) {
                 const TherionParsedLine &mapLine = commands.at(mapLineIndex).parsed;
                 const TherionSourcePhysicalRange mapNameRange = parsedLineTokenPhysicalRange(mapLine, 1);
@@ -1912,6 +1974,9 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
         }
     }
 
+    result.diagnostics += checkMapCompositionProjections(
+        compositionsByMapKey,
+        scrapProjectionsByKey(entries, compositionsByMapKey, cache, inMemoryFileContentsByPath));
     return result;
 }
 

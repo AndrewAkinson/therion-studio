@@ -232,6 +232,9 @@ bool isStructureRelationshipDiagnostic(const TherionStudio::ProjectIndexDiagnost
     case TherionStudio::ProjectIndexDiagnosticKind::EmptyMap:
     case TherionStudio::ProjectIndexDiagnosticKind::MapWithOnlyPreviews:
     case TherionStudio::ProjectIndexDiagnosticKind::InvalidMapSurveyReference:
+    case TherionStudio::ProjectIndexDiagnosticKind::RecursiveMapReference:
+    case TherionStudio::ProjectIndexDiagnosticKind::IncompatibleScrapProjection:
+    case TherionStudio::ProjectIndexDiagnosticKind::IncompatibleMapProjection:
     case TherionStudio::ProjectIndexDiagnosticKind::UnknownJoinReference:
     case TherionStudio::ProjectIndexDiagnosticKind::UnknownJoinLinePointMark:
     case TherionStudio::ProjectIndexDiagnosticKind::AmbiguousJoinReference:
@@ -267,6 +270,9 @@ QString diagnosticStructureItemText(const TherionStudio::ProjectIndexDiagnostic 
     case TherionStudio::ProjectIndexDiagnosticKind::EmptyMap:
     case TherionStudio::ProjectIndexDiagnosticKind::MapWithOnlyPreviews:
     case TherionStudio::ProjectIndexDiagnosticKind::InvalidMapSurveyReference:
+    case TherionStudio::ProjectIndexDiagnosticKind::RecursiveMapReference:
+    case TherionStudio::ProjectIndexDiagnosticKind::IncompatibleScrapProjection:
+    case TherionStudio::ProjectIndexDiagnosticKind::IncompatibleMapProjection:
     case TherionStudio::ProjectIndexDiagnosticKind::UnknownJoinReference:
     case TherionStudio::ProjectIndexDiagnosticKind::UnknownJoinLinePointMark:
     case TherionStudio::ProjectIndexDiagnosticKind::AmbiguousJoinReference:

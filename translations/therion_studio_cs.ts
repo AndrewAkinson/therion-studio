@@ -2760,6 +2760,36 @@ Line-point options: %1</translation>
         <translation>Neplatný survey mapy</translation>
     </message>
     <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="232"/>
+        <source>Recursive map reference</source>
+        <translation>Rekurzivní odkaz na mapu</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="233"/>
+        <source>Map `%1` contains, directly or through its own maps, the map that lists it.</source>
+        <translation>Mapa `%1` obsahuje, přímo nebo přes své vlastní mapy, mapu, která ji uvádí.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="238"/>
+        <source>Incompatible scrap projection</source>
+        <translation>Nekompatibilní projekce scrapu</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="239"/>
+        <source>Scrap `%1` has a different projection from the first item of this map, or from the map's `-projection`.</source>
+        <translation>Scrap `%1` má jinou projekci než první položka této mapy nebo než `-projection` mapy.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="244"/>
+        <source>Incompatible map projection</source>
+        <translation>Nekompatibilní projekce mapy</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="245"/>
+        <source>Map `%1` has a different projection from the first item of this map, or from the map's `-projection`.</source>
+        <translation>Mapa `%1` má jinou projekci než první položka této mapy nebo než `-projection` mapy.</translation>
+    </message>
+    <message>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="227"/>
         <source>`-survey %1` does not name a survey.</source>
         <translation>`-survey %1` neuvádí žádný survey.</translation>

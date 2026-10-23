@@ -227,6 +227,24 @@ TherionSourceDiagnostic diagnosticForProjectIndexDiagnostic(const ProjectIndexDi
         diagnostic.message = QObject::tr("`-survey %1` does not name a survey.")
                                  .arg(indexDiagnostic.referencedName);
         break;
+    case ProjectIndexDiagnosticKind::RecursiveMapReference:
+        diagnostic.code = QStringLiteral("recursive-map-reference");
+        diagnostic.title = QObject::tr("Recursive map reference");
+        diagnostic.message = QObject::tr("Map `%1` contains, directly or through its own maps, the map that lists it.")
+                                 .arg(indexDiagnostic.referencedName);
+        break;
+    case ProjectIndexDiagnosticKind::IncompatibleScrapProjection:
+        diagnostic.code = QStringLiteral("incompatible-scrap-projection");
+        diagnostic.title = QObject::tr("Incompatible scrap projection");
+        diagnostic.message = QObject::tr("Scrap `%1` has a different projection from the first item of this map, or from the map's `-projection`.")
+                                 .arg(indexDiagnostic.referencedName);
+        break;
+    case ProjectIndexDiagnosticKind::IncompatibleMapProjection:
+        diagnostic.code = QStringLiteral("incompatible-map-projection");
+        diagnostic.title = QObject::tr("Incompatible map projection");
+        diagnostic.message = QObject::tr("Map `%1` has a different projection from the first item of this map, or from the map's `-projection`.")
+                                 .arg(indexDiagnostic.referencedName);
+        break;
     case ProjectIndexDiagnosticKind::AmbiguousMapScrapReference:
         diagnostic.code = QStringLiteral("ambiguous-map-scrap-reference");
         diagnostic.title = QObject::tr("Ambiguous map scrap reference");

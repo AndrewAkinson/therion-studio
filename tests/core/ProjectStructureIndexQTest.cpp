@@ -236,6 +236,101 @@ private slots:
         QCOMPARE(diagnosticSummaries(snapshot.diagnostics), QStringList({QStringLiteral("invalid-item:plan1:5")}));
     }
 
+    void reportsMapProjectionsAndRecursionTherionRejects()
+    {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        QDir projectDir(tempDir.path());
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("root.th")),
+                              QStringLiteral(
+                                  "survey top\n"
+                                  "  input map.th2\n"
+                                  "  map mP\n"
+                                  "    sP\n"
+                                  "  endmap\n"
+                                  "  map mE\n"
+                                  "    sE\n"
+                                  "  endmap\n"
+                                  "  map scraps\n"
+                                  "    sP\n"
+                                  "    sE\n"
+                                  "  endmap\n"
+                                  "  map explicit -projection extended\n"
+                                  "    sP\n"
+                                  "  endmap\n"
+                                  "  map maps\n"
+                                  "    mP\n"
+                                  "    mE\n"
+                                  "  endmap\n"
+                                  "  map self\n"
+                                  "    self\n"
+                                  "  endmap\n"
+                                  "  map loopA\n"
+                                  "    loopB\n"
+                                  "  endmap\n"
+                                  "  map loopB\n"
+                                  "    loopA\n"
+                                  "  endmap\n"
+                                  "  map angles\n"
+                                  "    sV\n"
+                                  "    sV2\n"
+                                  "  endmap\n"
+                                  "  map indexed\n"
+                                  "    sP\n"
+                                  "    sA\n"
+                                  "  endmap\n"
+                                  "  map alias -proj plan\n"
+                                  "    sP\n"
+                                  "    sDefault\n"
+                                  "  endmap\n"
+                                  "  map units -projection [elevation 315 deg]\n"
+                                  "    sV\n"
+                                  "  endmap\n"
+                                  "  map mixed\n"
+                                  "    sP\n"
+                                  "    mE\n"
+                                  "  endmap\n"
+                                  "endsurvey top\n")));
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("map.th2")),
+                              QStringLiteral(
+                                  "scrap sP -projection plan\n"
+                                  "endscrap\n"
+                                  "scrap sDefault\n"
+                                  "endscrap\n"
+                                  "scrap sE -proj extended\n"
+                                  "endscrap\n"
+                                  "scrap sV -projection [elevation 315]\n"
+                                  "endscrap\n"
+                                  "scrap sV2 -projection [elevation 315.0]\n"
+                                  "endscrap\n"
+                                  "scrap sA -projection plan:a\n"
+                                  "endscrap\n")));
+
+        QString errorMessage;
+        const ProjectIndexSnapshot snapshot =
+            ProjectStructureIndex::scanProjectIndex(projectDir.path(), &errorMessage);
+        QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage));
+
+        QStringList findings = diagnosticSummaries(snapshot.diagnostics);
+        // Which map of the loop is reported depends on where the walk starts; it is reported once.
+        const int loopFindings = findings.removeAll(QStringLiteral("recursive:loopA:27"))
+            + findings.removeAll(QStringLiteral("recursive:loopB:24"));
+        QCOMPARE(loopFindings, 1);
+        findings.sort();
+        QStringList expected = {
+            QStringLiteral("scrap-projection:sE:11"),
+            QStringLiteral("scrap-projection:sP:14"),
+            QStringLiteral("map-projection:mE:18"),
+            QStringLiteral("recursive:self:21"),
+            QStringLiteral("scrap-projection:sV2:31"),
+            QStringLiteral("scrap-projection:sA:35"),
+            QStringLiteral("mixed:mE:46"),
+        };
+        expected.sort();
+        QCOMPARE(findings, expected);
+    }
+
 private:
     static QStringList diagnosticSummaries(const QVector<ProjectIndexDiagnostic> &diagnostics)
     {
@@ -248,6 +343,9 @@ private:
             {ProjectIndexDiagnosticKind::InvalidMapShift, QStringLiteral("invalid-shift")},
             {ProjectIndexDiagnosticKind::UnsupportedMapPreviewType, QStringLiteral("preview-type")},
             {ProjectIndexDiagnosticKind::InvalidMapSurveyReference, QStringLiteral("survey")},
+            {ProjectIndexDiagnosticKind::RecursiveMapReference, QStringLiteral("recursive")},
+            {ProjectIndexDiagnosticKind::IncompatibleScrapProjection, QStringLiteral("scrap-projection")},
+            {ProjectIndexDiagnosticKind::IncompatibleMapProjection, QStringLiteral("map-projection")},
         };
         QStringList summaries;
         for (const ProjectIndexDiagnostic &diagnostic : diagnostics) {

@@ -2,7 +2,7 @@
 
 Date: 2026-10-15
 
-Status: V1a, V1b, V2a, V2b, V3, V4, V4b, V5, V5b, V6, and V6b done; V6c done; V6d group 1 (checks 1, 3, 4, 9, 10) written, the rest planned (2026-10-23). Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
+Status: V1a, V1b, V2a, V2b, V3, V4, V4b, V5, V5b, V6, and V6b done; V6c done; V6d groups 1 and 2 (checks 1, 2, 3, 4, 5, 9, 10) done, checks 6, 7, 8 planned (2026-10-23). Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
 values, Therion's line splitting (`thsplit_args`) first in two parts (V1a, V1b), code blocks as a potential slice,
 and slices renumbered.
 
@@ -445,8 +445,12 @@ got the error.
 Goal: report the other map errors Therion stops on, so a project the Validation panel passes also passes Therion's
 map processing.
 
-Group 1 (checks 1, 3, 4, 9, 10) written (2026-10-23): item and preview syntax in `TherionMapItemRules.cpp`, the
-rest in `scanMapReferences`, and each message checked against Therion 6.4.0. Checks 2, 5, 6, 7, 8 planned.
+Group 1 (checks 1, 3, 4, 9, 10) done (2026-10-23): item and preview syntax in `TherionMapItemRules.cpp`, the rest
+in `scanMapReferences`. Group 2 (checks 5 and 2) done (2026-10-23) in `ProjectMapCompositionCheck.cpp`, with
+projection reading and identity shared with V6b in `TherionProjectionRules.cpp` (which also makes V6b read `-proj`).
+Each message checked against Therion 6.4.0. Therion reports a loop of two or more maps as `recursive map reference`
+without a line, and a map that lists itself as `map cannot contain only previews`; the validator reports both as a
+recursive map reference at the item. Checks 6, 7, 8 planned.
 
 Therion checks every map in the files it reads, used or not, in
 `thdb2d::process_map_references` and `thdb2d::postprocess_map_references` (`src/therion-core/thdb2d.cxx`), and the
