@@ -275,5 +275,7 @@ public:
     // Station key of `name` in the survey namespace `namespacePath` (innermost first, as Therion writes
     // `survey.parent`), matching ProjectEquateStation::stationKey.
     static QString stationKey(const QString &name, const QString &namespacePath);
+    // Therion full name of a survey (child.parent), also for -namespace off surveys.
+    static QString surveyFullName(const ProjectStructureEntry &entry);
 };
 }

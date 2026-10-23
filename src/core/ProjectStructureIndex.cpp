@@ -2695,6 +2695,11 @@ QString ProjectStructureIndex::stationKey(const QString &name, const QString &na
         : normalizedStationReferenceToken(QStringLiteral("%1@%2").arg(name, namespacePath));
 }
 
+QString ProjectStructureIndex::surveyFullName(const ProjectStructureEntry &entry)
+{
+    return entry.createsNamespace ? entry.namespacePath : namespacePathWithChild(entry.namespacePath, entry.name);
+}
+
 QString ProjectStructureIndex::structureEntryNodeKey(const ProjectStructureEntry &entry)
 {
     if (!entry.objectId.isEmpty()) {

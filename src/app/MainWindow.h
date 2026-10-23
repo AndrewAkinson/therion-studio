@@ -25,6 +25,7 @@
 #include "../core/ProjectStructureIndex.h"
 #include "../core/QtFileSystem.h"
 #include "../core/TherionSourceValidator.h"
+#include "TherionDatabaseExportCompile.h"
 
 class QLabel;
 class QAction;
@@ -64,6 +65,7 @@ class ThreeDViewerTab;
 class TherionSqlReportTab;
 class TherionRunnerService;
 class TherionCompileResultRecorder;
+class TherionCompileFiguresLoader;
 class ProjectScanCacheService;
 class ProjectJoinsPanel;
 struct ProjectJoinPair;
@@ -119,6 +121,7 @@ private slots:
     void saveActiveDocument();
     void saveAllDocuments();
     void runTherion();
+    void runTherionWithDatabaseExport();
     void runTherionProjectConfig();
     void runTherionCurrentConfig();
     void stopTherion();
@@ -271,6 +274,10 @@ private:
                                                                       const QString &projection,
                                                                       bool sameStation) const;
     void handleStructureItemActivated(const QModelIndex &index, QTreeView *sourceTree);
+    const TherionStudio::ProjectStructureEntry *structureEntryForIndex(const QModelIndex &index) const;
+    const TherionStudio::ProjectStructureEntry *structureEntryForObjectId(const QString &objectId) const;
+    void refreshStructureInfoBox();
+    void updateCompileFiguresSourcesChanged();
     bool confirmCloseTab(int index);
     bool closeOpenDocumentForFilePath(const QString &filePath);
     bool confirmCloseDirtyDocuments();
@@ -405,6 +412,8 @@ private:
     QVBoxLayout *structureSurveyLayout_ = nullptr;
     QVBoxLayout *structureMapLayout_ = nullptr;
     QTreeView *structureTree_ = nullptr;
+    QSplitter *structureSplitter_ = nullptr;
+    QTextBrowser *structureInfoBox_ = nullptr;
     QTreeView *searchResultsTree_ = nullptr;
     QTreeView *validationResultsTree_ = nullptr;
     QTreeView *mapObjectsTree_ = nullptr;
@@ -505,6 +514,10 @@ private:
     QStringList projectFileWatcherFailedPaths_;
     TherionStudio::TherionRunnerService *therionRunnerService_ = nullptr;
     TherionStudio::TherionCompileResultRecorder *compileResultRecorder_ = nullptr;
+    TherionStudio::TherionCompileFiguresLoader *compileFiguresLoader_ = nullptr;
+    bool compileFiguresSourcesChanged_ = false;
+    TherionStudio::TherionDatabaseExportCompile databaseExportCompile_;
+    bool nextCompileAddsDatabaseExport_ = false;
     TherionStudio::MainWindowTherionConsoleController therionConsoleController_;
     QLabel *statusHintLabel_ = nullptr;
     QLabel *statusMapZoomLabel_ = nullptr;

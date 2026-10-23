@@ -363,6 +363,37 @@ private slots:
         QVERIFY(!caveMapKey.isEmpty() && !entranceMapKey.isEmpty());
         QVERIFY(snapshot.mapChildReferencesByMapKey.value(caveMapKey).contains(entranceMapKey));
     }
+
+    void surveyFullNameMatchesTherion()
+    {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+        QDir projectDir(tempDir.path());
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("root.th")),
+                              QStringLiteral(
+                                  "survey cave\n"
+                                  "  survey inner\n"
+                                  "  endsurvey\n"
+                                  "  survey flat -namespace off\n"
+                                  "  endsurvey\n"
+                                  "endsurvey\n")));
+
+        QString errorMessage;
+        const ProjectIndexSnapshot snapshot =
+            ProjectStructureIndex::scanProjectIndex(projectDir.path(), &errorMessage);
+        QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage));
+
+        // Therion's .xtherion.dat names a -namespace off survey child.parent as well.
+        QHash<QString, QString> fullNamesByName;
+        for (const ProjectStructureEntry &entry : snapshot.entries) {
+            if (entry.kind == ProjectStructureEntryKind::Survey) {
+                fullNamesByName.insert(entry.name, ProjectStructureIndex::surveyFullName(entry));
+            }
+        }
+        QCOMPARE(fullNamesByName.value(QStringLiteral("cave")), QStringLiteral("cave"));
+        QCOMPARE(fullNamesByName.value(QStringLiteral("inner")), QStringLiteral("inner.cave"));
+        QCOMPARE(fullNamesByName.value(QStringLiteral("flat")), QStringLiteral("flat.cave"));
+    }
 };
 
 int runProjectStructureIndexQTest(int argc, char **argv)

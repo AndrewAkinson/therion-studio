@@ -26,6 +26,9 @@ struct TherionCompileResult
 // Files Therion reports as written ("writing <file> ..."), resolved against the working directory.
 [[nodiscard]] QStringList therionWrittenFilePaths(const QString &standardOutput, const QString &workingDirectory);
 
+// Arguments of a user compile, with -x added once so Therion writes .xtherion.dat.
+[[nodiscard]] QStringList therionCompileArguments(const QStringList &runArguments);
+
 // True when Therion reports writing its xtherion file.
 [[nodiscard]] bool therionWroteXtherionData(const QString &standardOutput);
 

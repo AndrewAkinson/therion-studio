@@ -29,7 +29,23 @@ private slots:
     void abandonedRunKeepsTheLatestResult();
     void clearForgetsTheLatestResult();
     void sourceSavedAfterTheCompileStartedIsOutOfDate();
+    void compileArgumentsAddXtherionOptionOnce();
+    void detectsXtherionFileMessageAfterReadingDots();
 };
+
+void TherionCompileResultTest::detectsXtherionFileMessageAfterReadingDots()
+{
+    QVERIFY(therionWroteXtherionData(QStringLiteral("configuration file: thconfig\nreading ...writing xtherion file ... done\n")));
+}
+
+void TherionCompileResultTest::compileArgumentsAddXtherionOptionOnce()
+{
+    QCOMPARE(therionCompileArguments({QStringLiteral("thconfig")}),
+             QStringList({QStringLiteral("-x"), QStringLiteral("thconfig")}));
+    QCOMPARE(therionCompileArguments({}), QStringList{QStringLiteral("-x")});
+    const QStringList userArguments{QStringLiteral("-q"), QStringLiteral("-x"), QStringLiteral("thconfig")};
+    QCOMPARE(therionCompileArguments(userArguments), userArguments);
+}
 
 void TherionCompileResultTest::findsWrittenFilesInEachMessageForm()
 {

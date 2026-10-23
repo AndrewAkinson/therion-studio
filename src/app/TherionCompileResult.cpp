@@ -38,11 +38,20 @@ QStringList therionWrittenFilePaths(const QString &standardOutput, const QString
     return paths;
 }
 
+QStringList therionCompileArguments(const QStringList &runArguments)
+{
+    const QString xtherionOption = QStringLiteral("-x");
+    if (runArguments.contains(xtherionOption)) {
+        return runArguments;
+    }
+    return QStringList{xtherionOption} + runArguments;
+}
+
 bool therionWroteXtherionData(const QString &standardOutput)
 {
+    // When reading fails, Therion prints this straight after "reading ..." on the same line.
     static const QRegularExpression xtherionPattern(
-        QStringLiteral(R"(^writing xtherion file\b)"),
-        QRegularExpression::MultilineOption);
+        QStringLiteral(R"(writing xtherion file\b)"));
     return xtherionPattern.match(standardOutput).hasMatch();
 }
 
