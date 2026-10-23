@@ -1,5 +1,7 @@
 #include "ProjectJoinsPanel.h"
 
+#include "LucideIconFactory.h"
+
 #include <QComboBox>
 #include <QContextMenuEvent>
 #include <QFileInfo>
@@ -177,6 +179,16 @@ void ProjectJoinsPanel::setDataStatus(const QString &text)
     dataStatusLabel_->setText(text);
 }
 
+void ProjectJoinsPanel::setConnectionData(const std::optional<QSet<QString>> &fittedScraps, bool outOfDate)
+{
+    if (fittedScraps == fittedScraps_ && outOfDate == dataOutOfDate_) {
+        return;
+    }
+    fittedScraps_ = fittedScraps;
+    dataOutOfDate_ = outOfDate;
+    rebuildRows();
+}
+
 void ProjectJoinsPanel::setConnectionColors(const ConnectionColors &colors)
 {
     colors_ = colors;
@@ -217,6 +229,14 @@ void ProjectJoinsPanel::updateLegend()
     const int iconSize = style()->pixelMetric(QStyle::PM_SmallIconSize, nullptr, this);
     warning->setPixmap(ruleWarningIcon().pixmap(iconSize, iconSize));
     addEntry(tr("Joins not valid"), text, false, warning);
+    for (const ProjectConnectionNeed need : {ProjectConnectionNeed::Approximate, ProjectConnectionNeed::ComputedPositions}) {
+        auto *icon = new QLabel(legend_);
+        icon->setPixmap(connectionNeedIcon(need, false).pixmap(iconSize, iconSize));
+        addEntry(need == ProjectConnectionNeed::Approximate ? tr("Placed by its XVI only") : tr("Needs station positions"),
+                 text,
+                 false,
+                 icon);
+    }
     // Join-only rows are written `(A ~ B)`; the entry shows that form.
     addEntry(QStringLiteral("(A ~ B)  ") + tr("Join with no centreline tie"), text, false);
     legendBox_->setVisible(colors_.automaticScrapJoin.isValid());
@@ -236,6 +256,33 @@ void ProjectJoinsPanel::applyRuleWarning(QStandardItem *item,
     }
     item->setIcon(ruleWarningIcon());
     toolTip->append(tr("A join here breaks a join rule; see the Validation panel."));
+}
+
+QIcon ProjectJoinsPanel::connectionNeedIcon(ProjectConnectionNeed need, bool faded) const
+{
+    const QString name = need == ProjectConnectionNeed::Approximate ? QStringLiteral("circle-dashed")
+                                                                     : QStringLiteral("database");
+    const int extent = style()->pixelMetric(QStyle::PM_SmallIconSize, nullptr, this);
+    const QColor color = palette().color(faded ? QPalette::Disabled : QPalette::Active, QPalette::Text);
+    return QIcon(renderLucidePixmap(name, color, extent, devicePixelRatioF()));
+}
+
+void ProjectJoinsPanel::applyConnectionNeed(QStandardItem *item, ProjectConnectionNeed need, QStringList *toolTip) const
+{
+    if (need == ProjectConnectionNeed::None) {
+        return;
+    }
+    toolTip->append(need == ProjectConnectionNeed::Approximate
+                        ? tr("A drawing is placed by its XVI, as its scrap has too few measured legs between station "
+                             "points.")
+                        : tr("Lines up once there are station positions; compile with \"export database -fmt sql\" "
+                             "in the thconfig."));
+    if (dataOutOfDate_) {
+        toolTip->append(tr("The station positions are out of date."));
+    }
+    if (item->icon().isNull()) {
+        item->setIcon(connectionNeedIcon(need, dataOutOfDate_));
+    }
 }
 
 void ProjectJoinsPanel::rebuildRows()
@@ -270,6 +317,9 @@ void ProjectJoinsPanel::rebuildRows()
                 const ProjectJoinPair &pair = group.pairs.at(pairIndex);
                 if (!pair.ruleViolations.isEmpty() && groupItem->icon().isNull()) {
                     applyRuleWarning(groupItem, pair.ruleViolations, &toolTip);
+                }
+                if (groupItem->icon().isNull()) {
+                    applyConnectionNeed(groupItem, projectJoinPairNeed(pair, fittedScraps()), &toolTip);
                 }
                 groupItem->appendRow(pairItem(pair,
                                               stationReferences({pair.first.station, pair.second.station}),
@@ -308,6 +358,7 @@ QStandardItem *ProjectJoinsPanel::pairItem(const ProjectJoinPair &pair,
     toolTip += connectionDescription(pair.connection, pair.joins);
     applyConnectionStyle(item, pair.connection, true);
     applyRuleWarning(item, pair.ruleViolations, &toolTip);
+    applyConnectionNeed(item, projectJoinPairNeed(pair, fittedScraps()), &toolTip);
     if (!pair.canOpen()) {
         item->setForeground(palette().brush(QPalette::Disabled, QPalette::Text));
     }
@@ -323,6 +374,7 @@ QStandardItem *ProjectJoinsPanel::joinOnlyItem(const ProjectJoinGroup &group, in
     toolTip.append(tr("No equate or nosurvey leg links these surveys."));
     applyConnectionStyle(item, group.joinOnlyConnection, false);
     applyRuleWarning(item, group.joinOnlyRuleViolations, &toolTip);
+    applyConnectionNeed(item, projectJoinOnlyNeed(group, fittedScraps()), &toolTip);
     item->setToolTip(toolTip.join(QLatin1Char('\n')));
     return item;
 }

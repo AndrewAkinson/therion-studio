@@ -934,10 +934,12 @@ set(THERION_STUDIO_RESOURCE_FILES
     resources/project_templates/default/scraps/scrap1.th2
     resources/icons/lucide/LICENSE
     resources/icons/lucide/check.svg
+    resources/icons/lucide/circle-dashed.svg
     resources/icons/lucide/code.svg
     resources/icons/lucide/cog.svg
     resources/icons/lucide/compass.svg
     resources/icons/lucide/copy.svg
+    resources/icons/lucide/database.svg
     resources/icons/lucide/download.svg
     resources/icons/lucide/external-link.svg
     resources/icons/lucide/grip-vertical.svg
@@ -1769,6 +1771,11 @@ endfunction()
 qt_add_executable(ProjectJoinsPanelTest
     tests/ProjectJoinsPanelTest.cpp)
 target_link_libraries(ProjectJoinsPanelTest PRIVATE therion_app Qt6::Test)
+qt_add_resources(ProjectJoinsPanelTest ProjectJoinsPanelTestResources
+    PREFIX "/"
+    FILES
+        resources/icons/lucide/circle-dashed.svg
+        resources/icons/lucide/database.svg)
 
 therion_add_map_editor_ui_test(MapEditorJoinTest
     tests/MapEditorJoinTest.cpp

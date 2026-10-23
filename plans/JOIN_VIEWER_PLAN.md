@@ -475,6 +475,10 @@ per row for this.
 
 ### E4. Row symbols
 
+Status: implemented 2026-10-23, awaiting review. Approximate uses Lucide `circle-dashed`. Measured on the test project:
+the fit of every scrap takes about 11 ms (555 legs, 180 scraps), so it runs on the UI thread when the positions or
+the index change. Without positions no row is marked approximate (the status line already says there are none).
+
 At most one symbol per row, for what that connection needs now. Tooltips and the legend explain each.
 
 | Symbol | Meaning |

@@ -6701,6 +6701,16 @@ subtype blocks</translation>
         <translation>Neplatné spojenia</translation>
     </message>
     <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="235"/>
+        <source>Placed by its XVI only</source>
+        <translation>Umiestnené len podľa XVI</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="235"/>
+        <source>Needs station positions</source>
+        <translation>Potrebuje polohy staníc</translation>
+    </message>
+    <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="209"/>
         <source>Join with no centreline tie</source>
         <translation>Spojenie bez väzby na polygón</translation>
@@ -6709,6 +6719,21 @@ subtype blocks</translation>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="226"/>
         <source>A join here breaks a join rule; see the Validation panel.</source>
         <translation>Join tu porušuje pravidlo spojenia; pozri panel Validácia.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="276"/>
+        <source>A drawing is placed by its XVI, as its scrap has too few measured legs between station points.</source>
+        <translation>Kresba je umiestnená podľa svojho XVI, pretože jej scrap má príliš málo nameraných ťahov medzi bodmi staníc.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="278"/>
+        <source>Lines up once there are station positions; compile with &quot;export database -fmt sql&quot; in the thconfig.</source>
+        <translation>Zarovná sa, keď budú polohy staníc; skompilujte s "export database -fmt sql" v konfigurácii.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="281"/>
+        <source>The station positions are out of date.</source>
+        <translation>Polohy staníc sú zastarané.</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="301"/>

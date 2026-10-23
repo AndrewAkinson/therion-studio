@@ -182,6 +182,16 @@ std::optional<qreal> therionLengthUnitMetres(const QString &unit)
     return it == metresByUnit.constEnd() ? std::nullopt : std::optional<qreal>(it.value());
 }
 
+std::optional<QPointF> th2PointCommandPosition(const TherionSourceLogicalCommand &command)
+{
+    if (command.positionalArgumentRanges.size() < 2) {
+        return std::nullopt;
+    }
+    const std::optional<qreal> x = numberToken(command.positionalArgumentRanges.at(0).text);
+    const std::optional<qreal> y = numberToken(command.positionalArgumentRanges.at(1).text);
+    return x.has_value() && y.has_value() ? std::optional<QPointF>(QPointF(*x, *y)) : std::nullopt;
+}
+
 QVector<Th2ScrapStationPoint> th2ScrapStationPoints(const QVector<TherionSourceLogicalCommand> &commands, int scrapStartLine)
 {
     QVector<Th2ScrapStationPoint> points;
@@ -202,10 +212,9 @@ QVector<Th2ScrapStationPoint> th2ScrapStationPoints(const QVector<TherionSourceL
         if (!name.has_value()) {
             continue;
         }
-        const std::optional<qreal> x = numberToken(command.positionalArgumentRanges.at(0).text);
-        const std::optional<qreal> y = numberToken(command.positionalArgumentRanges.at(1).text);
-        if (x.has_value() && y.has_value()) {
-            points.append(Th2ScrapStationPoint{name->text.trimmed(), QPointF(*x, *y), command.startLineNumber});
+        const std::optional<QPointF> position = th2PointCommandPosition(command);
+        if (position.has_value()) {
+            points.append(Th2ScrapStationPoint{name->text.trimmed(), *position, command.startLineNumber});
         }
     }
     return points;
@@ -406,18 +415,28 @@ Th2CentrelineFit fitTh2ScrapToMeasuredLegs(const QVector<TherionSourceLogicalCom
     if (scrapStartLine <= 0) {
         return Th2CentrelineFit();
     }
+    QVector<QPair<QString, QPointF>> drawnStations;
+    for (const Th2ScrapStationPoint &point : th2ScrapStationPoints(commands, scrapStartLine)) {
+        const QString key = stationKeyByLine.value(point.lineNumber);
+        if (!key.isEmpty()) {
+            drawnStations.append({key, point.position});
+        }
+    }
+    return fitTh2StationPointsToMeasuredLegs(drawnStations, legs, projection);
+}
+
+Th2CentrelineFit fitTh2StationPointsToMeasuredLegs(const QVector<QPair<QString, QPointF>> &drawnStations,
+                                                   const QVector<Th2MeasuredLeg> &legs,
+                                                   const QString &projection)
+{
     // A station drawn more than once in the scrap is ambiguous, so its legs are left out.
     QHash<QString, QPointF> drawnByStationKey;
     QSet<QString> drawnTwice;
-    for (const Th2ScrapStationPoint &point : th2ScrapStationPoints(commands, scrapStartLine)) {
-        const QString key = stationKeyByLine.value(point.lineNumber);
-        if (key.isEmpty()) {
-            continue;
-        }
+    for (const auto &[key, position] : drawnStations) {
         if (drawnByStationKey.contains(key)) {
             drawnTwice.insert(key);
         }
-        drawnByStationKey.insert(key, point.position);
+        drawnByStationKey.insert(key, position);
     }
     for (const QString &key : drawnTwice) {
         drawnByStationKey.remove(key);

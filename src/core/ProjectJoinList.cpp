@@ -254,4 +254,65 @@ std::optional<ProjectStructureEntry> nearestSurveyScrap(const ProjectIndexSnapsh
     }
     return nearest;
 }
+
+QSet<QString> projectScrapsFittedByMeasuredLegs(const ProjectIndexSnapshot &snapshot, const QVector<Th2MeasuredLeg> &legs)
+{
+    QHash<QString, QVector<int>> legsByStationKey;
+    for (int index = 0; index < legs.size(); ++index) {
+        legsByStationKey[legs.at(index).fromStationKey].append(index);
+    }
+    QSet<QString> fitted;
+    for (auto scrap = snapshot.stationPointsByScrapObjectId.cbegin(); scrap != snapshot.stationPointsByScrapObjectId.cend();
+         ++scrap) {
+        QVector<QPair<QString, QPointF>> drawnStations;
+        QVector<Th2MeasuredLeg> scrapLegs;
+        for (const ProjectScrapStationPoint &point : scrap.value()) {
+            if (!point.position.has_value()) {
+                continue;
+            }
+            drawnStations.append({point.stationKey, *point.position});
+            for (const int index : legsByStationKey.value(point.stationKey)) {
+                scrapLegs.append(legs.at(index));
+            }
+        }
+        const QString projection = snapshot.scrapProjectionByObjectId.value(scrap.key());
+        if (fitTh2StationPointsToMeasuredLegs(drawnStations, scrapLegs, projection).isValid()) {
+            fitted.insert(scrap.key());
+        }
+    }
+    return fitted;
+}
+
+ProjectConnectionNeed projectJoinPairNeed(const ProjectJoinPair &pair, const QSet<QString> *fittedScraps)
+{
+    if (!pair.canOpen()) {
+        return ProjectConnectionNeed::None;
+    }
+    if (fittedScraps == nullptr) {
+        return pair.needsComputedPositions() ? ProjectConnectionNeed::ComputedPositions : ProjectConnectionNeed::None;
+    }
+    // A stand-in scrap is only chosen when the connection opens, so only drawn sides are checked.
+    for (const ProjectJoinSide *side : {&pair.first, &pair.second}) {
+        if (side->drawing.has_value() && !fittedScraps->contains(side->drawing->scrapObjectId)) {
+            return ProjectConnectionNeed::Approximate;
+        }
+    }
+    return ProjectConnectionNeed::None;
+}
+
+ProjectConnectionNeed projectJoinOnlyNeed(const ProjectJoinGroup &group, const QSet<QString> *fittedScraps)
+{
+    if (group.joinOnlyScraps.size() != 2) {
+        return ProjectConnectionNeed::None;
+    }
+    if (fittedScraps == nullptr) {
+        return ProjectConnectionNeed::ComputedPositions;
+    }
+    for (const ProjectStructureEntry &scrap : group.joinOnlyScraps) {
+        if (!fittedScraps->contains(scrap.objectId)) {
+            return ProjectConnectionNeed::Approximate;
+        }
+    }
+    return ProjectConnectionNeed::None;
+}
 }

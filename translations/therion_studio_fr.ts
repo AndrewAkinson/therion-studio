@@ -6536,6 +6536,16 @@ Supprimer le sommet malgré tout ?</translation>
         <translation>Jonctions non valides</translation>
     </message>
     <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="235"/>
+        <source>Placed by its XVI only</source>
+        <translation>Placé par son XVI seulement</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="235"/>
+        <source>Needs station positions</source>
+        <translation>Nécessite les positions des stations</translation>
+    </message>
+    <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="209"/>
         <source>Join with no centreline tie</source>
         <translation>Jonction sans lien par la centerline</translation>
@@ -6544,6 +6554,21 @@ Supprimer le sommet malgré tout ?</translation>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="226"/>
         <source>A join here breaks a join rule; see the Validation panel.</source>
         <translation>Un join ici enfreint une règle de jonction ; voir le panneau Validation.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="276"/>
+        <source>A drawing is placed by its XVI, as its scrap has too few measured legs between station points.</source>
+        <translation>Un dessin est placé par son XVI, car son scrap a trop peu de visées mesurées entre ses points de station.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="278"/>
+        <source>Lines up once there are station positions; compile with &quot;export database -fmt sql&quot; in the thconfig.</source>
+        <translation>S’aligne dès qu’il y a des positions de stations ; compilez avec "export database -fmt sql" dans la configuration.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="281"/>
+        <source>The station positions are out of date.</source>
+        <translation>Les positions des stations ne sont plus à jour.</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="301"/>

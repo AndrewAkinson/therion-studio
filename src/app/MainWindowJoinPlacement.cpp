@@ -120,6 +120,13 @@ void MainWindow::refreshConnectionDataStatus()
     state.running = stationPositionService_->isRunning();
     state.outOfDate = stationPositionService_->isOutOfDate(stationPositionSourceFiles(lastStructureSidebarProjectIndex_));
     projectJoinsPanel_->setDataStatus(TherionStudio::ProjectConnectionDataStatus::text(state, QDateTime::currentDateTime()));
+    // Rows show what they need; the fit pass is quick (milliseconds on a large project).
+    projectJoinsPanel_->setConnectionData(
+        currentStationPositions() != nullptr
+            ? std::optional<QSet<QString>>(TherionStudio::projectScrapsFittedByMeasuredLegs(
+                  lastStructureSidebarProjectIndex_, stationPositionService_->legs()))
+            : std::nullopt,
+        state.outOfDate);
 }
 
 TherionStudio::MapEditorJoinPlacement MainWindow::joinPlacement(const QString &firstScrapObjectId,

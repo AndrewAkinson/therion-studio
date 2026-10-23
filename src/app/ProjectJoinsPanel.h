@@ -4,7 +4,10 @@
 
 #include <QColor>
 #include <QIcon>
+#include <QSet>
 #include <QWidget>
+
+#include <optional>
 
 class QComboBox;
 class QGridLayout;
@@ -41,6 +44,9 @@ public:
     void setConnectionColors(const ConnectionColors &colors);
     // The line above the list saying where station positions come from.
     void setDataStatus(const QString &text);
+    // Scraps fitted by the measured legs that came with the station positions, or none without positions; rows show
+    // what they need (projectJoinPairNeed), faded when the positions are out of date.
+    void setConnectionData(const std::optional<QSet<QString>> &fittedScraps, bool outOfDate);
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
@@ -67,15 +73,21 @@ private:
     QStringList connectionDescription(ProjectJoinConnection connection, const QVector<ProjectJoinCommand> &joins) const;
     QString linkDescription(const ProjectEquateLink &link) const;
     void openJoinOnlyScraps(const ProjectJoinGroup &group);
+    [[nodiscard]] const QSet<QString> *fittedScraps() const { return fittedScraps_.has_value() ? &*fittedScraps_ : nullptr; }
     void updateLegend();
     QIcon ruleWarningIcon() const;
     void applyRuleWarning(QStandardItem *item,
                           const QVector<ProjectJoinRuleViolation> &violations,
                           QStringList *toolTip) const;
+    // The need symbol, unless the row already shows the rule warning.
+    void applyConnectionNeed(QStandardItem *item, ProjectConnectionNeed need, QStringList *toolTip) const;
+    [[nodiscard]] QIcon connectionNeedIcon(ProjectConnectionNeed need, bool faded) const;
 
     ProjectIndexSnapshot snapshot_;
     QVector<ProjectJoinGroup> groups_;
     QLabel *dataStatusLabel_ = nullptr;
+    std::optional<QSet<QString>> fittedScraps_;
+    bool dataOutOfDate_ = false;
     QComboBox *projectionCombo_ = nullptr;
     QLineEdit *filterEdit_ = nullptr;
     // Key below the list: what each row colour, font and marker means; the header button folds it away.

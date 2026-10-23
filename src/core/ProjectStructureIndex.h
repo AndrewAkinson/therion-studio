@@ -1,12 +1,14 @@
 #pragma once
 
 #include <QHash>
+#include <QPointF>
 #include <QSet>
 #include <QString>
 #include <QVector>
 
 #include <functional>
 #include <memory>
+#include <optional>
 
 namespace TherionStudio
 {
@@ -180,6 +182,8 @@ struct ProjectScrapStationPoint
 {
     int lineNumber = 0;
     QString stationKey;
+    // Drawing position, when the point's coordinates are numbers.
+    std::optional<QPointF> position;
 };
 
 struct ProjectStructureIndexScanStats

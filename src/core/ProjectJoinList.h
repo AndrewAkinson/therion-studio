@@ -100,6 +100,26 @@ struct ProjectJoinGroup
 [[nodiscard]] QVector<ProjectJoinGroup> projectJoinGroups(const ProjectIndexSnapshot &snapshot,
                                                           const QString &projection);
 
+// What a connection row needs to line up fully; the row shows it as a symbol.
+enum class ProjectConnectionNeed
+{
+    None,
+    // Opens, but a drawing is placed by its XVI: its scrap has too few measured legs between station points.
+    Approximate,
+    // Cannot be lined up without computed station positions.
+    ComputedPositions,
+};
+
+// Scraps whose station points fit the measured legs (see fitTh2StationPointsToMeasuredLegs), each in its own
+// projection. Legs are looked up by station, so the cost follows the project's size once, not per scrap.
+[[nodiscard]] QSet<QString> projectScrapsFittedByMeasuredLegs(const ProjectIndexSnapshot &snapshot,
+                                                              const QVector<Th2MeasuredLeg> &legs);
+
+// `fittedScraps` comes with the station positions (projectScrapsFittedByMeasuredLegs), or is null without them.
+// Rows that cannot be opened need nothing.
+[[nodiscard]] ProjectConnectionNeed projectJoinPairNeed(const ProjectJoinPair &pair, const QSet<QString> *fittedScraps);
+[[nodiscard]] ProjectConnectionNeed projectJoinOnlyNeed(const ProjectJoinGroup &group, const QSet<QString> *fittedScraps);
+
 // Of a SurveyDrawnWithoutStation side's scraps, the one with a station point nearest its station by computed
 // position; none when the positions do not cover them.
 [[nodiscard]] std::optional<ProjectStructureEntry> nearestSurveyScrap(const ProjectIndexSnapshot &snapshot,

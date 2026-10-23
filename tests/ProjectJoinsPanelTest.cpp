@@ -195,8 +195,9 @@ private slots:
         const ProjectJoinsPanel::ConnectionColors colors{QColor(Qt::darkGreen), QColor(Qt::darkCyan), QColor(Qt::darkYellow)};
         panel.setConnectionColors(colors);
         QVERIFY(legend->isVisibleTo(&panel));
-        // Seven entries styled like the rows, plus the warning icon; the Key button folds them away.
-        QCOMPARE(legend->findChildren<QLabel *>().size(), 8);
+        // Nine entries styled like the rows, plus the warning and two connection-need icons; the Key button folds them
+        // away.
+        QCOMPARE(legend->findChildren<QLabel *>().size(), 12);
         auto *legendToggle = panel.findChild<QToolButton *>(QStringLiteral("joinsLegendToggle"));
         legendToggle->click();
         QVERIFY(!legend->isVisibleTo(&panel));
@@ -221,6 +222,8 @@ private slots:
         QVERIFY(!joinOnly.data(Qt::DecorationRole).value<QIcon>().isNull());
         QVERIFY(joinOnly.data(Qt::ToolTipRole).toString().contains(QStringLiteral("Validation")));
         QVERIFY(joined.data(Qt::DecorationRole).value<QIcon>().isNull());
+        // Without station positions the join-only row also says it needs them; its icon stays the rule warning.
+        QVERIFY(joinOnly.data(Qt::ToolTipRole).toString().contains(QStringLiteral("export database -fmt sql")));
 
         // Two scraps: opened as a pair, placed from computed station positions when they are available.
         QSignalSpy joinOnlySpy(&panel, &ProjectJoinsPanel::joinOnlyRequested);
@@ -228,6 +231,15 @@ private slots:
         QCOMPARE(joinOnlySpy.count(), 1);
         const auto group = joinOnlySpy.at(0).at(0).value<ProjectJoinGroup>();
         QCOMPARE(group.joinOnlyScraps.at(1).sourceFile, QStringLiteral("far.th2"));
+
+        // With positions whose legs fit no scrap, the drawn equate row is placed by its XVI only. This rebuilds the
+        // rows, so earlier indexes are not used after it.
+        panel.setConnectionData(QSet<QString>(), false);
+        const QModelIndex approximate = model->index(0, 0);
+        QVERIFY(!approximate.data(Qt::DecorationRole).value<QIcon>().isNull());
+        QVERIFY(approximate.data(Qt::ToolTipRole).toString().contains(QStringLiteral("placed by its XVI")));
+        panel.setConnectionData(QSet<QString>(), true);
+        QVERIFY(model->index(0, 0).data(Qt::ToolTipRole).toString().contains(QStringLiteral("out of date")));
     }
 
     void keepsProjectionAndFiltersRows()
