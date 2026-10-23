@@ -28,9 +28,9 @@ struct ProjectStationPositionRequest
 };
 
 // Measured legs and computed station positions from Therion for the whole project, used to place joined drawings.
-// Runs Therion in the background on its own runner (the Compiler panel stays free) with a temporary config that
-// only exports the database, in a temporary folder outside the project. One run at a time: a request while running
-// is queued once.
+// They come from the database export of the user's compile when there is one. Otherwise request() runs Therion once
+// in the background on its own runner (the Compiler panel stays free) with a temporary config that only exports the
+// database, in a temporary folder outside the project. One run at a time: a request while running is queued once.
 class ProjectStationPositionService final : public QObject
 {
     Q_OBJECT
@@ -40,9 +40,11 @@ public:
     explicit ProjectStationPositionService(const QString &temporaryBasePath, QObject *parent = nullptr);
     ~ProjectStationPositionService() override;
 
-    // Starts an export when there are no positions for this config yet or a source file other than a drawing is
-    // newer than them.
+    // Starts an export when there are no positions yet, or when positions from an earlier run are older than a source
+    // file other than a drawing. Positions from a compile are kept until the next compile.
     void request(const ProjectStationPositionRequest &request);
+    // Reads positions from the database export of the user's compile, replacing any from a run.
+    void loadCompileExport(const QString &sqlPath);
     // Forgets positions and stops a run, for example when the project closes.
     void clear();
 
@@ -76,12 +78,14 @@ private:
     std::unique_ptr<QTemporaryDir> temporaryDir_;
     TherionRunnerService *runner_ = nullptr;
     QFutureWatcher<LoadResult> *loadWatcher_ = nullptr;
+    QFutureWatcher<LoadResult> *compileLoadWatcher_ = nullptr;
     std::optional<ProjectStationPositionRequest> queued_;
     // Config and executable of the last attempt, and when it started; sources newer than that make it stale.
     QString attemptKey_;
     QDateTime attemptStartedAt_;
     QHash<QString, Th2StationPosition> positions_;
     QVector<Th2MeasuredLeg> legs_;
+    bool fromCompile_ = false;
     bool running_ = false;
     quint64 generation_ = 0;
 };

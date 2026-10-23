@@ -65,6 +65,12 @@ private slots:
         QCOMPARE(pairs.at(1).second.status, ProjectJoinSideStatus::NotDrawnInProjection);
         QVERIFY(!pairs.at(1).isAvailable());
         QCOMPARE(pairs.at(2).second.status, ProjectJoinSideStatus::NotDrawn);
+        // A drawn equate is placed at its station; anything else needs computed positions.
+        QVERIFY(!pairs.at(0).needsComputedPositions());
+        QVERIFY(pairs.at(1).needsComputedPositions());
+        ProjectJoinPair noSurvey = pairs.at(0);
+        noSurvey.linkKind = ProjectStationLinkKind::NoSurvey;
+        QVERIFY(noSurvey.needsComputedPositions());
 
         QCOMPARE(groups.at(1).pairs.size(), 1);
         QCOMPARE(groups.at(1).pairs.at(0).second.status, ProjectJoinSideStatus::Unresolved);
@@ -95,6 +101,7 @@ private slots:
         QCOMPARE(plan.first.surveyScraps.size(), 2);
         QVERIFY(!plan.isAvailable());
         QVERIFY(plan.canOpen());
+        QVERIFY(plan.needsComputedPositions());
         // No offset in extended, so such rows do not open there.
         snapshot.stationDrawingPointsByStationKey[b.stationKey] = {drawing(b, QStringLiteral("b-ee.th2"), QStringLiteral("extended"))};
         const ProjectJoinPair extended = projectJoinGroups(snapshot, QStringLiteral("extended")).at(0).pairs.at(0);

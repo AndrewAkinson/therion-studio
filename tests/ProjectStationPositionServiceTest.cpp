@@ -15,17 +15,13 @@ namespace
 // The service runs Therion with only its config file name; this test binary stands in for Therion then.
 const char *const kConfigArgument = "station-positions.thconfig";
 
-int runFakeTherion()
+bool writeStationExport(const QString &path)
 {
-    QFile config(QString::fromLatin1(kConfigArgument));
-    if (!config.open(QIODevice::ReadOnly) || !config.readAll().contains("export database -fmt sql")) {
-        return 1;
-    }
-    QFile sql(QStringLiteral("station-positions.sql"));
+    QFile sql(path);
     if (!sql.open(QIODevice::WriteOnly)) {
-        return 1;
+        return false;
     }
-    sql.write("create table SURVEY (ID integer, PARENT_ID integer, NAME varchar(4), FULL_NAME varchar(9), TITLE varchar(4));\n"
+    return sql.write("create table SURVEY (ID integer, PARENT_ID integer, NAME varchar(4), FULL_NAME varchar(9), TITLE varchar(4));\n"
               "create table CENTRELINE (ID integer, SURVEY_ID integer, TITLE varchar(4), TOPO_DATE date, EXPLO_DATE date, "
               "LENGTH real, SURFACE_LENGTH real, DUPLICATE_LENGTH real);\n"
               "create table PERSON (ID integer, NAME varchar(8), SURNAME varchar(10));\n"
@@ -45,8 +41,16 @@ int runFakeTherion()
               "insert into SHOT values (2, 1, 2, 1, 2.0, 90.0, 0.0, 2.0, 90.0, 0.0, 0.0, 0.0, 0.0);\n"
               "insert into SHOT_FLAG values (2, 'spl');\n"
               "insert into SHOT values (3, 3, 1, 1, 5.0, 180.0, 0.0, 5.0, 180.0, 0.0, 0.0, 0.0, 0.0);\n"
-              "insert into SHOT_FLAG values (3, 'dpl');\n");
-    return 0;
+              "insert into SHOT_FLAG values (3, 'dpl');\n") > 0;
+}
+
+int runFakeTherion()
+{
+    QFile config(QString::fromLatin1(kConfigArgument));
+    if (!config.open(QIODevice::ReadOnly) || !config.readAll().contains("export database -fmt sql")) {
+        return 1;
+    }
+    return writeStationExport(QStringLiteral("station-positions.sql")) ? 0 : 1;
 }
 
 QString writeProject(const QTemporaryDir &dir)
@@ -119,6 +123,52 @@ private slots:
         service.clear();
         QVERIFY(service.positions().isEmpty());
         QVERIFY(service.legs().isEmpty());
+    }
+
+    void usesTheCompileExportWithoutRunningTherion()
+    {
+        QTemporaryDir project;
+        QTemporaryDir temporaryBase;
+        QVERIFY(project.isValid() && temporaryBase.isValid());
+        const QString configPath = writeProject(project);
+        const QString exportPath = QDir(project.path()).filePath(QStringLiteral("cave.sql"));
+        QVERIFY(writeStationExport(exportPath));
+
+        ProjectStationPositionService service(temporaryBase.path());
+        QSignalSpy ready(&service, &ProjectStationPositionService::positionsReady);
+        service.loadCompileExport(exportPath);
+        QVERIFY(!service.isRunning());
+        QVERIFY(ready.wait(10000));
+        QCOMPARE(service.positions().size(), 2);
+        QCOMPARE(service.legs().size(), 1);
+
+        // A newer .th does not start a run: compile data is kept until the next compile.
+        QFile source(QDir(project.path()).filePath(QStringLiteral("cave.th")));
+        QVERIFY(source.open(QIODevice::ReadWrite));
+        QVERIFY(source.setFileTime(QDateTime::currentDateTime().addSecs(60), QFileDevice::FileModificationTime));
+        service.request(ProjectStationPositionRequest{QCoreApplication::applicationFilePath(), configPath, {source.fileName()}});
+        QVERIFY(!service.isRunning());
+        QCOMPARE(service.positions().size(), 2);
+    }
+
+    void compileExportReplacesARunInProgress()
+    {
+        QTemporaryDir project;
+        QTemporaryDir temporaryBase;
+        QVERIFY(project.isValid() && temporaryBase.isValid());
+        const QString configPath = writeProject(project);
+        const QString exportPath = QDir(project.path()).filePath(QStringLiteral("cave.sql"));
+        QVERIFY(writeStationExport(exportPath));
+
+        ProjectStationPositionService service(temporaryBase.path());
+        QSignalSpy ready(&service, &ProjectStationPositionService::positionsReady);
+        service.request(ProjectStationPositionRequest{QCoreApplication::applicationFilePath(), configPath, {}});
+        QVERIFY(service.isRunning());
+        service.loadCompileExport(exportPath);
+        QVERIFY(!service.isRunning());
+        QVERIFY(ready.wait(10000));
+        QCOMPARE(ready.count(), 1);
+        QCOMPARE(service.positions().size(), 2);
     }
 
     void reportsAFailedRunOnce()

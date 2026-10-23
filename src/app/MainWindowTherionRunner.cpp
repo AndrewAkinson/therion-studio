@@ -71,6 +71,10 @@ void MainWindow::buildConsole()
 
     therionRunnerService_ = new TherionStudio::TherionRunnerService(this);
     compileResultRecorder_ = new TherionStudio::TherionCompileResultRecorder(this);
+    connect(compileResultRecorder_,
+            &TherionStudio::TherionCompileResultRecorder::latestChanged,
+            this,
+            &MainWindow::loadJoinStationPositionsFromCompile);
     TherionStudio::MainWindowTherionConsoleWiring::WiringInput wiringInput;
     wiringInput.context = this;
     wiringInput.therionRunButton = therionRunButton_;

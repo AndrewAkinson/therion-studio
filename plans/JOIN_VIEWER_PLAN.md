@@ -12,6 +12,7 @@ drawing in each pane.
 Status: phase 1 implemented (slices 1–6 below). Phase 2 (options A-C and fixes D1-D5) implemented by 2026-10-22,
 pending review and the PR; items left for later are noted in their sections. Specification, architecture, user manual, worklog and translations are updated in the same
 changes that implement each slice. Not archived until phase 2 is done.
+Phase 3 (connections and compile data, E1-E4) planned 2026-10-23, not implemented.
 
 ## Current State
 
@@ -426,7 +427,66 @@ Still open:
 1. Check during C4 whether `export database` can leave out the shot tables. No longer wanted once D5 is done, since
    it reads the `SHOT` table.
 
-## Risks
+## Phase 3: Connections and Compile Data (planned 2026-10-23)
+
+Background Therion runs are expensive, so connection windows take Therion data from the user's own compile, as the
+planned structure info panel does (`plans/STRUCTURE_INFO_PANEL_PLAN.md` on `feature/structure-info-panel`). The
+shared code is on `feature/compile-results` (from `main`, `TherionCompileResultRecorder`), merged into this branch and
+into the info panel branch so neither depends on the other.
+
+What the SQL data is used for today:
+1. Scale and rotation of each drawing from measured legs between its station points. Used even when the station is
+   drawn in both drawings; without it the XVI is used, which may be turned by the declination (existing note).
+2. Lining up two drawings that share no station point (equates and Therion `join` rows alike).
+3. Choosing a drawing for an equate whose station has no station point in that projection (nearest scrap of its
+   survey).
+
+### E1. Terminology
+
+- "Connection" is the general word: the sidebar page becomes `Connections`, the Join view becomes the connection
+  window, and the join-related UI text follows. `join` and `equate` are kept for the Therion commands and their rows
+  (legend entries such as `Automatic Join` stay).
+- Specification, manual, worklog and translations updated in the same change. Internal type names are not renamed in
+  this slice.
+
+### E2. Compile data instead of the automatic run
+
+Status: implemented 2026-10-23, awaiting review. No new UI strings.
+
+- Merge `feature/compile-results`. Station positions and legs are read from the database export of the latest
+  compile (`TherionCompileResult::databasePaths`), with the existing queries (`TherionStationPositionExport`).
+- The automatic background run is removed: showing the Connections page or a project index refresh no longer starts
+  Therion.
+- A one-off run is kept only for opening a connection that cannot be lined up otherwise (uses 2 and 3) when there is
+  no compile data. Use 1 without compile data falls back to the XVI as now.
+- Compile data is out of date when a `.th` source was saved after the compile started. `.th2` saves do not make it
+  out of date, since positions and legs do not depend on drawings (as now).
+
+### E3. Status line above the list
+
+One line for the whole list, since one compile serves every row. For example "Positions from the compile at 10:42",
+"Sources changed since the compile", or "No database export. Add `export database` to the thconfig". Nothing is shown
+per row for this.
+
+### E4. Row symbols
+
+At most one symbol per row, for what that connection needs now. Tooltips and the legend explain each.
+
+| Symbol | Meaning |
+|---|---|
+| none | opens and lines up fully now |
+| approximate | opens, lined up from the XVI only (may be turned by the declination); compile data would improve it |
+| needs compile data | cannot be lined up (no shared station point, or an equated station not drawn); works after a compile with a database export |
+
+- `Cannot be opened` keeps its existing grey row; the rule warning icon is unchanged.
+- When compile data is out of date, rows that use it show their symbol faded; E3 says why.
+- Icons are Lucide, like the rest of the app. Proposed: `database` for needs compile data; the approximate icon is
+  chosen in the slice (not `compass`, which is the survey icon).
+- Working out "approximate" needs the legs fit per scrap; measure its cost on the test project before building it into
+  the list, and compute it off the UI thread if needed.
+
+Each slice is a separate commit with tests, doc and translation updates, checked in the app.
+
 
 - Same file in two buffers: avoided by keeping normal tabs (no editor reuse needed).
 - Drawings whose station points are not snapped to the XVI stations give a less exact fit; the fit residual is shown in

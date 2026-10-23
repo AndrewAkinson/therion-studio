@@ -28,6 +28,7 @@ ProjectStationPositionService::ProjectStationPositionService(const QString &temp
     , temporaryBasePath_(temporaryBasePath)
     , runner_(new TherionRunnerService(this))
     , loadWatcher_(new QFutureWatcher<LoadResult>(this))
+    , compileLoadWatcher_(new QFutureWatcher<LoadResult>(this))
 {
     connect(runner_, &TherionRunnerService::runFinished, this, &ProjectStationPositionService::handleRunFinished);
     connect(runner_, &TherionRunnerService::runError, this, [this](const QString &errorText) {
@@ -36,12 +37,27 @@ ProjectStationPositionService::ProjectStationPositionService(const QString &temp
         }
     });
     connect(loadWatcher_, &QFutureWatcher<LoadResult>::finished, this, &ProjectStationPositionService::handleLoadFinished);
+    connect(compileLoadWatcher_, &QFutureWatcher<LoadResult>::finished, this, [this]() {
+        const LoadResult result = compileLoadWatcher_->result();
+        if (result.generation != generation_) {
+            return;
+        }
+        if (!result.errorMessage.isEmpty()) {
+            emit positionsFailed(result.errorMessage);
+            return;
+        }
+        positions_ = result.positions;
+        legs_ = result.legs;
+        fromCompile_ = true;
+        emit positionsReady();
+    });
 }
 
 ProjectStationPositionService::~ProjectStationPositionService()
 {
     runner_->stop();
     loadWatcher_->waitForFinished();
+    compileLoadWatcher_->waitForFinished();
 }
 
 void ProjectStationPositionService::request(const ProjectStationPositionRequest &request)
@@ -58,12 +74,31 @@ void ProjectStationPositionService::request(const ProjectStationPositionRequest 
     }
 }
 
+void ProjectStationPositionService::loadCompileExport(const QString &sqlPath)
+{
+    // A compile is newer than any run, so a run in progress is dropped.
+    ++generation_;
+    queued_.reset();
+    if (running_) {
+        running_ = false;
+        runner_->stop();
+        emit runningChanged(false);
+    }
+    const quint64 generation = generation_;
+    compileLoadWatcher_->setFuture(QtConcurrent::run([sqlPath, generation]() {
+        LoadResult result = loadPositions(sqlPath);
+        result.generation = generation;
+        return result;
+    }));
+}
+
 void ProjectStationPositionService::clear()
 {
     ++generation_;
     queued_.reset();
     positions_.clear();
     legs_.clear();
+    fromCompile_ = false;
     attemptKey_.clear();
     attemptStartedAt_ = QDateTime();
     if (running_) {
@@ -90,6 +125,9 @@ const QVector<Th2MeasuredLeg> &ProjectStationPositionService::legs() const
 
 bool ProjectStationPositionService::isCurrent(const ProjectStationPositionRequest &request) const
 {
+    if (fromCompile_ && !positions_.isEmpty()) {
+        return true;
+    }
     // A failed attempt is not repeated until a source, the config or the Therion executable changes.
     if (attemptKey_ != request.configPath + QLatin1Char('\n') + request.executableInput || !attemptStartedAt_.isValid()) {
         return false;
@@ -178,6 +216,7 @@ void ProjectStationPositionService::handleLoadFinished()
     }
     positions_ = result.positions;
     legs_ = result.legs;
+    fromCompile_ = false;
     emit positionsReady();
     finish(QString());
 }

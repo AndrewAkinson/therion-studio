@@ -490,7 +490,6 @@ void MainWindow::setStructurePanelPage(int pageIndex)
     }
     // Joins has its own list; the shared Survey/Map tree and its view mode stay as they were.
     if (boundedPageIndex == StructurePanelJoinsPage) {
-        requestJoinStationPositions();
         return;
     }
 

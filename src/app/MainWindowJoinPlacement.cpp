@@ -2,6 +2,7 @@
 
 #include "ProjectJoinsPanel.h"
 #include "ProjectStationPositionService.h"
+#include "TherionCompileResult.h"
 #include "text_editor/map_editor/MapEditorJoinPairs.h"
 #include "text_editor/map_editor/MapEditorJoinViewLink.h"
 #include "text_editor/map_editor/MapEditorTab.h"
@@ -64,6 +65,14 @@ void MainWindow::setupJoinStationPositions()
             [this](const QString &message) { statusBar()->showMessage(message, 8000); });
 }
 
+void MainWindow::loadJoinStationPositionsFromCompile()
+{
+    const TherionStudio::TherionCompileResult &result = compileResultRecorder_->latest();
+    if (stationPositionService_ != nullptr && result.isValid() && !result.databasePaths.isEmpty()) {
+        stationPositionService_->loadCompileExport(result.databasePaths.first());
+    }
+}
+
 void MainWindow::requestJoinStationPositions()
 {
     const TherionStudio::ProjectIndexSnapshot &snapshot = lastStructureSidebarProjectIndex_;
@@ -114,7 +123,9 @@ void MainWindow::openProjectJoin(const TherionStudio::ProjectJoinPair &pair, boo
     if (!pair.canOpen()) {
         return;
     }
-    requestJoinStationPositions();
+    if (pair.needsComputedPositions()) {
+        requestJoinStationPositions();
+    }
     // Each drawing opens at its join-station point, or at the scrap of its survey that stands in for it.
     const QHash<QString, TherionStudio::Th2StationPosition> *positions = currentStationPositions();
     const std::optional<JoinDrawing> first = joinDrawing(lastStructureSidebarProjectIndex_, pair.first, positions);

@@ -253,6 +253,7 @@ private:
     // Asks Therion for measured legs and computed station positions when they are missing or older than the
     // project sources.
     void requestJoinStationPositions();
+    void loadJoinStationPositionsFromCompile();
     // Computed station positions, or none while Therion is running or before it has run.
     [[nodiscard]] const QHash<QString, TherionStudio::Th2StationPosition> *currentStationPositions() const;
     [[nodiscard]] TherionStudio::MapEditorJoinPlacement joinPlacement(const QString &firstScrapObjectId,

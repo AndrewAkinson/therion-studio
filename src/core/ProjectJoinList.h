@@ -73,6 +73,11 @@ struct ProjectJoinPair
         return isAvailable()
             || (placeable(first) && placeable(second) && projection != QStringLiteral("extended"));
     }
+    // Only computed station positions place it: a side's station is not drawn, or the drawings draw two stations.
+    [[nodiscard]] bool needsComputedPositions() const
+    {
+        return !isAvailable() || linkKind != ProjectStationLinkKind::Equate;
+    }
 };
 
 struct ProjectJoinGroup
