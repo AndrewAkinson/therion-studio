@@ -10,12 +10,14 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
+#include <QProgressBar>
 #include <QPushButton>
 #include <QSet>
 #include <QSortFilterProxyModel>
 #include <QStandardItemModel>
 #include <QStyle>
 #include <QStyledItemDelegate>
+#include <QTimer>
 #include <QToolButton>
 #include <QTreeView>
 #include <QVBoxLayout>
@@ -95,9 +97,33 @@ ProjectJoinsPanel::ProjectJoinsPanel(QWidget *parent)
     dataStatusLabel_->setWordWrap(true);
     layout->addWidget(dataStatusLabel_);
     targetConfigButton_ = new QPushButton(tr("Select Target Config..."), this);
+    targetConfigButton_->setObjectName(QStringLiteral("connectionsTargetConfigButton"));
     targetConfigButton_->setVisible(false);
     connect(targetConfigButton_, &QPushButton::clicked, this, &ProjectJoinsPanel::targetConfigRequested);
     layout->addWidget(targetConfigButton_, 0, Qt::AlignLeft);
+
+    runProgress_ = new QWidget(this);
+    auto *runProgressLayout = new QHBoxLayout(runProgress_);
+    runProgressLayout->setContentsMargins(0, 0, 0, 0);
+    runProgressLayout->setSpacing(6);
+    auto *runBar = new QProgressBar(runProgress_);
+    // No end is known, so the bar only shows that Therion is busy.
+    runBar->setRange(0, 0);
+    runBar->setTextVisible(false);
+    runElapsedLabel_ = new QLabel(runProgress_);
+    auto *cancelButton = new QPushButton(tr("Cancel"), runProgress_);
+    cancelButton->setObjectName(QStringLiteral("connectionsRunCancelButton"));
+    connect(cancelButton, &QPushButton::clicked, this, &ProjectJoinsPanel::runCancelRequested);
+    runProgressLayout->addWidget(runBar, 1);
+    runProgressLayout->addWidget(runElapsedLabel_);
+    runProgressLayout->addWidget(cancelButton);
+    runProgress_->setVisible(false);
+    layout->addWidget(runProgress_);
+    runElapsedTimer_ = new QTimer(this);
+    runElapsedTimer_->setInterval(1000);
+    connect(runElapsedTimer_, &QTimer::timeout, this, [this]() {
+        runElapsedLabel_->setText(tr("%1 s").arg(runElapsed_.elapsed() / 1000));
+    });
 
     auto *projectionRow = new QHBoxLayout;
     projectionRow->setContentsMargins(0, 0, 0, 0);
@@ -205,6 +231,21 @@ void ProjectJoinsPanel::setDataStatus(const QString &text, bool offerTargetConfi
 {
     dataStatusLabel_->setText(text);
     targetConfigButton_->setVisible(offerTargetConfig);
+}
+
+void ProjectJoinsPanel::setRunInProgress(bool running)
+{
+    if (running == runProgress_->isVisibleTo(this)) {
+        return;
+    }
+    runProgress_->setVisible(running);
+    if (running) {
+        runElapsed_.start();
+        runElapsedLabel_->setText(tr("%1 s").arg(0));
+        runElapsedTimer_->start();
+    } else {
+        runElapsedTimer_->stop();
+    }
 }
 
 void ProjectJoinsPanel::setConnectionData(const std::optional<QSet<QString>> &fittedScraps, bool outOfDate)

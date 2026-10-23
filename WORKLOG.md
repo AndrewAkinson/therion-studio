@@ -296,8 +296,8 @@ Active planning only. Completed history belongs in archive files. Stable archite
   data, one-off run only for joins that need positions) is committed; E1 (`Connections` naming in the UI, spec,
   manuals and catalogs) is committed; E3 (status line) and E4 (row symbols) are
   committed. E5 fixes found in use: E5a (status line explains a missing target config or database export) is
-  committed; E5b (row icon alignment) awaits review; E5c (a setting and prompt for the one-off run, with progress and
-  Cancel) is next.
+  committed, as are E5b (row icon alignment) and E5c (a setting and prompt for the one-off run, with
+  progress and Cancel).
 - Phase 2 slice A (awaiting review): `Open Join with Separate Window` and the Settings option that makes it the
   activation default (SPECIFICATION 3.8.6, 3.12).
 - Specification review for the join work (2026-10-14): the `Survey`/`Map` "only surveys, maps, and scraps" rule is

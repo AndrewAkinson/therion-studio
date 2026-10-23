@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
+#include <QProgressBar>
 #include <QPushButton>
 #include <QSignalSpy>
 #include <QStandardItemModel>
@@ -271,7 +272,7 @@ private slots:
     {
         ProjectJoinsPanel panel;
         QSignalSpy requested(&panel, &ProjectJoinsPanel::targetConfigRequested);
-        auto *button = panel.findChild<QPushButton *>();
+        auto *button = panel.findChild<QPushButton *>(QStringLiteral("connectionsTargetConfigButton"));
         QVERIFY(button != nullptr);
         QVERIFY(!button->isVisibleTo(&panel));
         panel.setDataStatus(QStringLiteral("No target config"), true);
@@ -280,6 +281,23 @@ private slots:
         QCOMPARE(requested.count(), 1);
         panel.setDataStatus(QStringLiteral("Positions"), false);
         QVERIFY(!button->isVisibleTo(&panel));
+    }
+
+    void showsRunProgressWithCancel()
+    {
+        ProjectJoinsPanel panel;
+        QSignalSpy cancelled(&panel, &ProjectJoinsPanel::runCancelRequested);
+        auto *bar = panel.findChild<QProgressBar *>();
+        QVERIFY(bar != nullptr);
+        QVERIFY(!bar->isVisibleTo(&panel));
+        panel.setRunInProgress(true);
+        QVERIFY(bar->isVisibleTo(&panel));
+        auto *cancel = panel.findChild<QPushButton *>(QStringLiteral("connectionsRunCancelButton"));
+        QVERIFY(cancel != nullptr);
+        cancel->click();
+        QCOMPARE(cancelled.count(), 1);
+        panel.setRunInProgress(false);
+        QVERIFY(!bar->isVisibleTo(&panel));
     }
 
     void keepsProjectionAndFiltersRows()

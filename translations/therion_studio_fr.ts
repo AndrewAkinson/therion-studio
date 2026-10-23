@@ -1489,6 +1489,41 @@ Si le fichier est ouvert, il sera d&apos;abord fermé.</translation>
         <translation>%1 n’a pas de point de station dans cette vue ; rouvrez la connexion une fois que Therion aura calculé les positions des stations, qui choisissent le dessin le plus proche de sa topographie.</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="67"/>
+        <source>Station Positions</source>
+        <translation>Positions des stations</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="68"/>
+        <source>The station positions are out of date. Run Therion to update them?</source>
+        <translation>Les positions des stations ne sont plus à jour. Lancer Therion pour les mettre à jour ?</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="69"/>
+        <source>This connection needs station positions. Run Therion now?</source>
+        <translation>Cette connexion a besoin des positions des stations. Lancer Therion maintenant ?</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="70"/>
+        <source>On a large project this can take a while.</source>
+        <translation>Sur un grand projet, cela peut prendre un moment.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="72"/>
+        <source>Use Them As They Are</source>
+        <translation>Les utiliser telles quelles</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="73"/>
+        <source>Open Without Alignment</source>
+        <translation>Ouvrir sans alignement</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="77"/>
+        <source>Don&apos;t ask again</source>
+        <translation>Ne plus demander</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindowJoinPlacement.cpp" line="129"/>
         <source>%1 has no station point in this view, and Therion has computed no position to choose its survey&apos;s nearest drawing.</source>
         <translation>%1 n’a pas de point de station dans cette vue, et Therion n’a calculé aucune position pour choisir le dessin le plus proche de sa topographie.</translation>
@@ -2224,6 +2259,11 @@ Les fichiers attendus sont `docs/USER_MANUAL.&lt;language&gt;.md` ou `docs/USER_
         <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="20"/>
         <source>No target config selected, so the drawings Therion reads are unknown.</source>
         <translation>Aucune configuration cible n’est sélectionnée : les dessins lus par Therion sont inconnus.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="24"/>
+        <source>Computing station positions with Therion; the connection opens when they are ready.</source>
+        <translation>Therion calcule les positions des stations ; la connexion s’ouvre dès qu’elles sont prêtes.</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="20"/>
@@ -3852,6 +3892,31 @@ Lignes de points : %1</translation>
         <location filename="../src/app/MainWindowSettingsDialog.cpp" line="99"/>
         <source>Applies to double-click and Enter on the Connections page; the right-click menu offers the other choice.</source>
         <translation>S’applique au double-clic et à Entrée dans la page Connexions ; le menu contextuel propose l’autre choix.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="103"/>
+        <source>Ask</source>
+        <translation>Demander</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="104"/>
+        <source>Run Therion</source>
+        <translation>Lancer Therion</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="105"/>
+        <source>Never</source>
+        <translation>Jamais</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="108"/>
+        <source>When a connection needs station positions and the compile gave none, or those from a Therion run are out of date. On a large project a run can take a while.</source>
+        <translation>Quand une connexion a besoin des positions des stations et que la compilation n’en a donné aucune, ou que celles d’une exécution de Therion ne sont plus à jour. Sur un grand projet, une exécution peut prendre un moment.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="110"/>
+        <source>When a connection needs station positions</source>
+        <translation>Quand une connexion a besoin des positions des stations</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowSettingsDialog.cpp" line="96"/>
@@ -6478,6 +6543,17 @@ Supprimer le sommet malgré tout ?</translation>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="76"/>
         <source>Select Target Config...</source>
         <translation>Choisir la configuration cible...</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="114"/>
+        <source>Cancel</source>
+        <translation>Annuler</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="125"/>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="244"/>
+        <source>%1 s</source>
+        <translation>%1 s</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="108"/>

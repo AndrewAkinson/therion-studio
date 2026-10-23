@@ -28,9 +28,10 @@ struct ProjectStationPositionRequest
 };
 
 // Measured legs and computed station positions from Therion for the whole project, used to place joined drawings.
-// They come from the database export of the user's compile when there is one. Otherwise request() runs Therion once
-// in the background on its own runner (the Compiler panel stays free) with a temporary config that only exports the
-// database, in a temporary folder outside the project. One run at a time: a request while running is queued once.
+// They come from the database export of the user's compile when there is one. Otherwise run() runs Therion in the
+// background on its own runner (the Compiler panel stays free) with a temporary config that only exports the
+// database, in a temporary folder outside the project. Whether to run is the caller's choice. One run at a time: a
+// run asked for while running is queued once.
 class ProjectStationPositionService final : public QObject
 {
     Q_OBJECT
@@ -47,9 +48,12 @@ public:
     explicit ProjectStationPositionService(const QString &temporaryBasePath, QObject *parent = nullptr);
     ~ProjectStationPositionService() override;
 
-    // Starts an export when there are no positions yet, or when positions from an earlier run are older than a source
-    // file other than a drawing. Positions from a compile are kept until the next compile.
-    void request(const ProjectStationPositionRequest &request);
+    void run(const ProjectStationPositionRequest &request);
+    // Stops a run; the positions there were are kept.
+    void cancel();
+    // The last run for this config and executable failed and no source file other than a drawing has changed since,
+    // so another run would fail the same way.
+    [[nodiscard]] bool attemptFailed(const ProjectStationPositionRequest &request) const;
     // Reads positions from the database export of the user's compile, replacing any from a run.
     void loadCompileExport(const QString &sqlPath, const QDateTime &compileStartedAt);
     // Forgets positions and stops a run, for example when the project closes.
@@ -80,7 +84,6 @@ private:
         QDateTime takenAt;
     };
 
-    [[nodiscard]] bool isCurrent(const ProjectStationPositionRequest &request) const;
     void start(const ProjectStationPositionRequest &request);
     void handleRunFinished(int exitCode, QProcess::ExitStatus exitStatus);
     void handleLoadFinished();
@@ -96,6 +99,7 @@ private:
     // Config and executable of the last attempt, and when it started; sources newer than that make it stale.
     QString attemptKey_;
     QDateTime attemptStartedAt_;
+    bool attemptFailed_ = false;
     QHash<QString, Th2StationPosition> positions_;
     QVector<Th2MeasuredLeg> legs_;
     DataSource dataSource_ = DataSource::None;

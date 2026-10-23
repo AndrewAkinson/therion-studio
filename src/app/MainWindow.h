@@ -11,6 +11,7 @@
 
 #include <memory>
 
+#include "ConnectionPositionRunPolicy.h"
 #include "MainWindowTherionConsoleController.h"
 #include "ProjectOutputsScanner.h"
 #include "ProjectFileWatchInventoryService.h"
@@ -237,6 +238,10 @@ private:
     QWidget *openProjectSourceLocation(const QString &sourceFile, int lineNumber);
     void openProjectJoin(const TherionStudio::ProjectJoinPair &pair, bool separateWindow);
     void openProjectJoinOnly(const TherionStudio::ProjectJoinGroup &group, bool separateWindow);
+    // Open with the station positions there are; openProjectJoin and openProjectJoinOnly first settle whether
+    // Therion runs.
+    void openProjectJoinNow(const TherionStudio::ProjectJoinPair &pair, bool separateWindow);
+    void openProjectJoinOnlyNow(const TherionStudio::ProjectJoinGroup &group, bool separateWindow);
     // Opens two drawings, links and outlines them; shared by equate and join-only rows (MainWindowJoinPlacement).
     void openProjectJoinDrawings(const QString &firstFile,
                                  int firstLine,
@@ -250,9 +255,11 @@ private:
                                              const QString &firstFile,
                                              const QString &secondFile) const;
     void setupJoinStationPositions();
-    // Asks Therion for measured legs and computed station positions when they are missing or older than the
-    // project sources.
-    void requestJoinStationPositions();
+    // For a connection that needs station positions: true to open it now, false when it waits for a Therion run (it
+    // then opens when the run ends) or the user closed the prompt.
+    bool prepareConnectionPositions(const TherionStudio::ProjectConnectionPendingOpen &open);
+    void openPendingConnection();
+    void cancelStationPositionRun();
     void loadJoinStationPositionsFromCompile();
     void refreshConnectionDataStatus();
     // Computed station positions, or none while Therion is running or before it has run.
@@ -612,4 +619,5 @@ private:
     TherionStudio::ProjectStructureScanner *structureSidebarScanner_ = nullptr;
     TherionStudio::ProjectJoinsPanel *projectJoinsPanel_ = nullptr;
     TherionStudio::ProjectStationPositionService *stationPositionService_ = nullptr;
+    std::optional<TherionStudio::ProjectConnectionPendingOpen> pendingConnection_;
 };

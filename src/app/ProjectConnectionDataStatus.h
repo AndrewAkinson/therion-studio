@@ -24,6 +24,8 @@ public:
         bool noTargetConfig = false;
         // The latest compile finished without writing a database export.
         bool compileWroteNoDatabase = false;
+        // A connection opens when the run ends.
+        bool openPending = false;
     };
 
     // `now` decides whether the date is shown with the time.

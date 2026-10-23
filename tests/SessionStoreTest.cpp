@@ -54,6 +54,7 @@ int runInstanceBackedRoundTripTest()
         store.setDefaultTextEditorMode(QStringLiteral("blocks"));
         store.setAutomaticProjectValidationEnabled(true);
         store.setJoinOpensSeparateWindow(true);
+        store.setConnectionPositionRunMode(QStringLiteral("never"));
         store.setTroubleshootingLogsEnabledUntilUtc(
             utcDateTime(QDate(2026, 6, 29), QTime(12, 30, 0, 123)));
         store.setTherionExecutablePath(QStringLiteral("/usr/bin/therion"));
@@ -121,6 +122,10 @@ int runInstanceBackedRoundTripTest()
     }
     if (!expect(store.joinOpensSeparateWindow(),
                 "Join separate-window flag should round-trip through the injected settings file.")) {
+        return 1;
+    }
+    if (!expect(store.connectionPositionRunMode() == QStringLiteral("never"),
+                "Connection position run mode should round-trip through the injected settings file.")) {
         return 1;
     }
     if (!expect(store.troubleshootingLogsEnabledUntilUtc()
@@ -254,6 +259,10 @@ int runDefaultsTest()
     }
     if (!expect(!store.joinOpensSeparateWindow(),
                 "Default join separate-window flag should be false.")) {
+        return 1;
+    }
+    if (!expect(store.connectionPositionRunMode() == QStringLiteral("ask"),
+                "Default connection position run mode should be ask.")) {
         return 1;
     }
     if (!expect(!store.automaticProjectValidationEnabled(),
@@ -398,6 +407,7 @@ int runCopyApplicationSettingsTest()
     source.setApplicationLanguage(QStringLiteral("sk"));
     source.setDefaultTextEditorMode(QStringLiteral("blocks"));
     source.setJoinOpensSeparateWindow(true);
+    source.setConnectionPositionRunMode(QStringLiteral("run"));
     source.setAutomaticProjectValidationEnabled(true);
     source.setOpenDocumentPaths({QStringLiteral("/tmp/project/a.th")});
 
@@ -406,6 +416,7 @@ int runCopyApplicationSettingsTest()
     if (!expect(target.applicationLanguage() == QStringLiteral("sk")
                     && target.defaultTextEditorMode() == QStringLiteral("blocks")
                     && target.joinOpensSeparateWindow()
+                    && target.connectionPositionRunMode() == QStringLiteral("run")
                     && target.automaticProjectValidationEnabled(),
                 "Application settings should be copied to the new store.")) {
         return 1;

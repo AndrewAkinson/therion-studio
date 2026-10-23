@@ -1529,6 +1529,41 @@ Pokud je soubor otevřený, nejprve se zavře.</translation>
         <translation>%1 nemá v tomto pohledu bod stanice; otevřete spojení znovu, až Therion vypočte polohy stanic, podle nichž se vybere nejbližší kresba jejího měření.</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="67"/>
+        <source>Station Positions</source>
+        <translation>Polohy stanic</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="68"/>
+        <source>The station positions are out of date. Run Therion to update them?</source>
+        <translation>Polohy stanic jsou zastaralé. Spustit Therion a aktualizovat je?</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="69"/>
+        <source>This connection needs station positions. Run Therion now?</source>
+        <translation>Toto spojení potřebuje polohy stanic. Spustit Therion teď?</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="70"/>
+        <source>On a large project this can take a while.</source>
+        <translation>U velkého projektu to může chvíli trvat.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="72"/>
+        <source>Use Them As They Are</source>
+        <translation>Použít je tak, jak jsou</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="73"/>
+        <source>Open Without Alignment</source>
+        <translation>Otevřít bez zarovnání</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowJoinPlacement.cpp" line="77"/>
+        <source>Don&apos;t ask again</source>
+        <translation>Už se neptat</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindowJoinPlacement.cpp" line="129"/>
         <source>%1 has no station point in this view, and Therion has computed no position to choose its survey&apos;s nearest drawing.</source>
         <translation>%1 nemá v tomto pohledu bod stanice a Therion nevypočetl žádnou polohu, podle níž by se vybrala nejbližší kresba jejího měření.</translation>
@@ -2276,6 +2311,11 @@ Očekávané soubory jsou `docs/USER_MANUAL.&lt;language&gt;.md` nebo `docs/USER
         <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="20"/>
         <source>No target config selected, so the drawings Therion reads are unknown.</source>
         <translation>Není vybrána cílová konfigurace, takže není známo, které kresby Therion čte.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="24"/>
+        <source>Computing station positions with Therion; the connection opens when they are ready.</source>
+        <translation>Therion počítá polohy stanic; spojení se otevře, až budou hotové.</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="20"/>
@@ -3916,6 +3956,31 @@ Line-point options: %1</translation>
         <location filename="../src/app/MainWindowSettingsDialog.cpp" line="99"/>
         <source>Applies to double-click and Enter on the Connections page; the right-click menu offers the other choice.</source>
         <translation>Platí pro dvojklik a Enter na stránce Spojení; nabídka pravého tlačítka nabízí druhou možnost.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="103"/>
+        <source>Ask</source>
+        <translation>Zeptat se</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="104"/>
+        <source>Run Therion</source>
+        <translation>Spustit Therion</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="105"/>
+        <source>Never</source>
+        <translation>Nikdy</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="108"/>
+        <source>When a connection needs station positions and the compile gave none, or those from a Therion run are out of date. On a large project a run can take a while.</source>
+        <translation>Když spojení potřebuje polohy stanic a kompilace žádné nedala, nebo jsou polohy z běhu Therionu zastaralé. U velkého projektu může běh chvíli trvat.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="110"/>
+        <source>When a connection needs station positions</source>
+        <translation>Když spojení potřebuje polohy stanic</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowSettingsDialog.cpp" line="96"/>
@@ -6643,6 +6708,17 @@ subtype blocks</translation>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="76"/>
         <source>Select Target Config...</source>
         <translation>Vybrat cílovou konfiguraci...</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="114"/>
+        <source>Cancel</source>
+        <translation>Zrušit</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="125"/>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="244"/>
+        <source>%1 s</source>
+        <translation>%1 s</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="108"/>

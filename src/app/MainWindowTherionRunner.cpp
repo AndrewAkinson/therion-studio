@@ -335,6 +335,7 @@ QString MainWindow::resolvedTherionTargetConfigPath() const
 
 void MainWindow::resetProjectTherionRunContext()
 {
+    pendingConnection_.reset();
     if (stationPositionService_ != nullptr) {
         stationPositionService_->clear();
         refreshConnectionDataStatus();

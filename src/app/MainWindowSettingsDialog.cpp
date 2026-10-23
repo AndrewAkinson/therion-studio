@@ -99,6 +99,16 @@ MainWindowSettingsDialog::MainWindowSettingsDialog(const Settings &settings, QWi
         tr("Applies to double-click and Enter on the Connections page; the right-click menu offers the other choice."));
     formLayout->addRow(QString(), joinOpensSeparateWindowCheckBox_);
 
+    connectionPositionRunModeCombo_ = new QComboBox(this);
+    connectionPositionRunModeCombo_->addItem(tr("Ask"), QStringLiteral("ask"));
+    connectionPositionRunModeCombo_->addItem(tr("Run Therion"), QStringLiteral("run"));
+    connectionPositionRunModeCombo_->addItem(tr("Never"), QStringLiteral("never"));
+    selectComboData(connectionPositionRunModeCombo_, settings.connectionPositionRunMode, QStringLiteral("ask"));
+    connectionPositionRunModeCombo_->setToolTip(
+        tr("When a connection needs station positions and the compile gave none, or those from a Therion run are out "
+           "of date. On a large project a run can take a while."));
+    formLayout->addRow(tr("When a connection needs station positions"), connectionPositionRunModeCombo_);
+
     troubleshootingLogsCheckBox_ =
         new QCheckBox(tr("Enable troubleshooting logs for 24 hours"), this);
     troubleshootingLogsCheckBox_->setChecked(settings.troubleshootingLogsEnabled);
@@ -156,6 +166,9 @@ MainWindowSettingsDialog::Settings MainWindowSettingsDialog::settings() const
         && automaticProjectValidationCheckBox_->isChecked();
     result.joinOpensSeparateWindow = joinOpensSeparateWindowCheckBox_ != nullptr
         && joinOpensSeparateWindowCheckBox_->isChecked();
+    result.connectionPositionRunMode = connectionPositionRunModeCombo_ != nullptr
+        ? connectionPositionRunModeCombo_->currentData().toString()
+        : QStringLiteral("ask");
     result.troubleshootingLogsEnabled = troubleshootingLogsCheckBox_ != nullptr
         && troubleshootingLogsCheckBox_->isChecked();
     return result;

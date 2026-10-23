@@ -1,3 +1,4 @@
+#include "../src/app/ConnectionPositionRunPolicy.h"
 #include "../src/app/ProjectConnectionDataStatus.h"
 #include "../src/app/ProjectStationPositionService.h"
 #include "../src/core/ProjectStructureIndex.h"
@@ -86,7 +87,7 @@ private slots:
         const ProjectStationPositionRequest request{QCoreApplication::applicationFilePath(),
                                                     configPath,
                                                     {QDir(project.path()).filePath(QStringLiteral("cave.th"))}};
-        service.request(request);
+        service.run(request);
         QVERIFY(service.isRunning());
         QVERIFY(ready.wait(10000));
         QCOMPARE(failed.count(), 0);
@@ -103,23 +104,19 @@ private slots:
         // Nothing is written into the project.
         QCOMPARE(QDir(project.path()).entryList(QDir::Files).size(), 2);
 
-        // Up to date: a second request does not run Therion again.
-        service.request(request);
-        QVERIFY(!service.isRunning());
-
-        // A newer drawing does not make them stale; a newer .th does.
+        // A newer drawing does not make them out of date; a newer .th does. Whether to run again is the caller's
+        // choice, so nothing runs by itself.
         const QDateTime later = QDateTime::currentDateTime().addSecs(60);
         QFile drawing(QDir(project.path()).filePath(QStringLiteral("cave.th2")));
         QVERIFY(drawing.open(QIODevice::WriteOnly));
         QVERIFY(drawing.setFileTime(later, QFileDevice::FileModificationTime));
-        ProjectStationPositionRequest withDrawing = request;
-        withDrawing.sourceFiles.append(drawing.fileName());
-        service.request(withDrawing);
-        QVERIFY(!service.isRunning());
+        QVERIFY(!service.isOutOfDate({drawing.fileName()}));
         QFile source(request.sourceFiles.first());
         QVERIFY(source.open(QIODevice::ReadWrite));
         QVERIFY(source.setFileTime(later, QFileDevice::FileModificationTime));
-        service.request(withDrawing);
+        QVERIFY(service.isOutOfDate(request.sourceFiles));
+        QVERIFY(!service.isRunning());
+        service.run(request);
         QVERIFY(service.isRunning());
         QVERIFY(ready.wait(10000));
 
@@ -148,14 +145,14 @@ private slots:
         QCOMPARE(service.dataSource(), ProjectStationPositionService::DataSource::Compile);
         QCOMPARE(service.dataTakenAt(), compileStartedAt);
 
-        // A newer .th does not start a run: compile data is kept until the next compile.
+        // A newer .th makes them out of date but keeps them.
         QFile source(QDir(project.path()).filePath(QStringLiteral("cave.th")));
         QVERIFY(source.open(QIODevice::ReadWrite));
         QVERIFY(source.setFileTime(QDateTime::currentDateTime().addSecs(60), QFileDevice::FileModificationTime));
-        service.request(ProjectStationPositionRequest{QCoreApplication::applicationFilePath(), configPath, {source.fileName()}});
         QVERIFY(!service.isRunning());
         QCOMPARE(service.positions().size(), 2);
         QVERIFY(service.isOutOfDate({source.fileName()}));
+        QVERIFY(!configPath.isEmpty());
         // Saving a drawing does not make them out of date.
         QFile drawing(QDir(project.path()).filePath(QStringLiteral("cave.th2")));
         QVERIFY(drawing.open(QIODevice::WriteOnly));
@@ -192,6 +189,8 @@ private slots:
         QVERIFY(Status::text(state, now).startsWith(QStringLiteral("Positions from a Therion run")));
         state.running = true;
         QCOMPARE(Status::text(state, now), QStringLiteral("Computing station positions with Therion..."));
+        state.openPending = true;
+        QVERIFY(Status::text(state, now).endsWith(QStringLiteral("the connection opens when they are ready.")));
     }
 
     void compileExportReplacesARunInProgress()
@@ -205,7 +204,7 @@ private slots:
 
         ProjectStationPositionService service(temporaryBase.path());
         QSignalSpy ready(&service, &ProjectStationPositionService::positionsReady);
-        service.request(ProjectStationPositionRequest{QCoreApplication::applicationFilePath(), configPath, {}});
+        service.run(ProjectStationPositionRequest{QCoreApplication::applicationFilePath(), configPath, {}});
         QVERIFY(service.isRunning());
         service.loadCompileExport(exportPath, QDateTime::currentDateTime());
         QVERIFY(!service.isRunning());
@@ -214,23 +213,75 @@ private slots:
         QCOMPARE(service.positions().size(), 2);
     }
 
-    void reportsAFailedRunOnce()
+    void remembersAFailedRun()
     {
         QTemporaryDir project;
         QTemporaryDir temporaryBase;
         const QString configPath = writeProject(project);
         ProjectStationPositionService service(temporaryBase.path());
         QSignalSpy failed(&service, &ProjectStationPositionService::positionsFailed);
+        const QString source = QDir(project.path()).filePath(QStringLiteral("cave.th"));
         const ProjectStationPositionRequest request{QDir(project.path()).filePath(QStringLiteral("no-therion")),
                                                     configPath,
-                                                    {}};
-        service.request(request);
+                                                    {source}};
+        QVERIFY(!service.attemptFailed(request));
+        service.run(request);
         QTRY_COMPARE_WITH_TIMEOUT(failed.count(), 1, 10000);
         QVERIFY(!service.isRunning());
-        // Not retried until a source, the config or the executable changes.
-        service.request(request);
+        // Another run would fail the same way until a source, the config or the executable changes.
+        QVERIFY(service.attemptFailed(request));
+        ProjectStationPositionRequest otherExecutable = request;
+        otherExecutable.executableInput = QCoreApplication::applicationFilePath();
+        QVERIFY(!service.attemptFailed(otherExecutable));
+        QFile file(source);
+        QVERIFY(file.open(QIODevice::ReadWrite));
+        QVERIFY(file.setFileTime(QDateTime::currentDateTime().addSecs(60), QFileDevice::FileModificationTime));
+        QVERIFY(!service.attemptFailed(request));
+    }
+
+    void cancelStopsARunAndKeepsThePositions()
+    {
+        QTemporaryDir project;
+        QTemporaryDir temporaryBase;
+        QVERIFY(project.isValid() && temporaryBase.isValid());
+        const QString configPath = writeProject(project);
+        const QString exportPath = QDir(project.path()).filePath(QStringLiteral("cave.sql"));
+        QVERIFY(writeStationExport(exportPath));
+
+        ProjectStationPositionService service(temporaryBase.path());
+        QSignalSpy ready(&service, &ProjectStationPositionService::positionsReady);
+        QSignalSpy failed(&service, &ProjectStationPositionService::positionsFailed);
+        service.loadCompileExport(exportPath, QDateTime::currentDateTime());
+        QVERIFY(ready.wait(10000));
+        service.run(ProjectStationPositionRequest{QCoreApplication::applicationFilePath(), configPath, {}});
+        QVERIFY(service.isRunning());
+        service.cancel();
         QVERIFY(!service.isRunning());
-        QCOMPARE(failed.count(), 1);
+        QCOMPARE(service.positions().size(), 2);
+        // The cancelled run neither reports positions nor a failure.
+        QTest::qWait(500);
+        QCOMPARE(ready.count(), 1);
+        QCOMPARE(failed.count(), 0);
+    }
+
+    void choosesWhetherToRunTherion()
+    {
+        using Action = ConnectionPositionRunAction;
+        QCOMPARE(connectionPositionRunModeFromSetting(QStringLiteral("run")), ConnectionPositionRunMode::Run);
+        QCOMPARE(connectionPositionRunModeFromSetting(QStringLiteral("never")), ConnectionPositionRunMode::Never);
+        QCOMPARE(connectionPositionRunModeFromSetting(QString()), ConnectionPositionRunMode::Ask);
+        QCOMPARE(connectionPositionRunModeSetting(ConnectionPositionRunMode::Never), QStringLiteral("never"));
+        for (const ConnectionPositionRunMode mode :
+             {ConnectionPositionRunMode::Ask, ConnectionPositionRunMode::Run, ConnectionPositionRunMode::Never}) {
+            // Current positions open at once, whatever the setting.
+            QCOMPARE(connectionPositionRunAction(mode, true, false), Action::OpenNow);
+        }
+        QCOMPARE(connectionPositionRunAction(ConnectionPositionRunMode::Ask, false, false), Action::AskFirst);
+        QCOMPARE(connectionPositionRunAction(ConnectionPositionRunMode::Ask, true, true), Action::AskFirst);
+        QCOMPARE(connectionPositionRunAction(ConnectionPositionRunMode::Run, false, false), Action::Run);
+        QCOMPARE(connectionPositionRunAction(ConnectionPositionRunMode::Run, true, true), Action::Run);
+        QCOMPARE(connectionPositionRunAction(ConnectionPositionRunMode::Never, false, false), Action::OpenNow);
+        QCOMPARE(connectionPositionRunAction(ConnectionPositionRunMode::Never, true, true), Action::OpenNow);
     }
 };
 

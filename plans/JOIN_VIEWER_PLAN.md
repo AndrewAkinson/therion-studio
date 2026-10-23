@@ -12,7 +12,7 @@ drawing in each pane.
 Status: phase 1 implemented (slices 1–6 below). Phase 2 (options A-C and fixes D1-D5) implemented by 2026-10-22,
 pending review and the PR; items left for later are noted in their sections. Specification, architecture, user manual, worklog and translations are updated in the same
 changes that implement each slice. Not archived until phase 2 is done.
-Phase 3 (connections and compile data, E1-E4) planned 2026-10-23, not implemented.
+Phase 3 (connections and compile data, E1-E4, and fixes E5a-E5c) implemented 2026-10-23, pending review and the PR.
 
 ## Current State
 
@@ -443,7 +443,7 @@ What the SQL data is used for today:
 
 ### E1. Terminology
 
-Status: implemented 2026-10-23, awaiting review. Kept as `join`: `Go to Join in Source`, the key entries, the row
+Status: done 2026-10-23. Kept as `join`: `Go to Join in Source`, the key entries, the row
 tooltips about `join` kinds and the Validation messages, since they name the Therion command.
 
 - "Connection" is the general word: the sidebar page becomes `Connections`, the Join view becomes the connection
@@ -454,7 +454,7 @@ tooltips about `join` kinds and the Validation messages, since they name the The
 
 ### E2. Compile data instead of the automatic run
 
-Status: implemented 2026-10-23, awaiting review. No new UI strings.
+Status: done 2026-10-23. No new UI strings.
 
 - Merge `feature/compile-results`. Station positions and legs are read from the database export of the latest
   compile (`TherionCompileResult::databasePaths`), with the existing queries (`TherionStationPositionExport`).
@@ -467,7 +467,7 @@ Status: implemented 2026-10-23, awaiting review. No new UI strings.
 
 ### E3. Status line above the list
 
-Status: implemented 2026-10-23, awaiting review (`ProjectConnectionDataStatus`).
+Status: done 2026-10-23 (`ProjectConnectionDataStatus`).
 
 One line for the whole list, since one compile serves every row. For example "Positions from the compile at 10:42",
 "Sources changed since the compile", or "No database export. Add `export database` to the thconfig". Nothing is shown
@@ -475,7 +475,7 @@ per row for this.
 
 ### E4. Row symbols
 
-Status: implemented 2026-10-23, awaiting review. Approximate uses Lucide `circle-dashed`. Measured on the test project:
+Status: done 2026-10-23. Approximate uses Lucide `circle-dashed`. Measured on the test project:
 the fit of every scrap takes about 11 ms (555 legs, 180 scraps), so it runs on the UI thread when the positions or
 the index change. Without positions no row is marked approximate (the status line already says there are none).
 
@@ -502,10 +502,9 @@ Each slice is a separate commit with tests, doc and translation updates, checked
   on the test project, 30 with its config), and nothing said why. The line now says so first, with a
   `Select Target Config...` button (the Compiler pane's file dialog), and row tooltips name it. After a compile with
   no database export it says that, and that opening a connection that needs positions runs Therion once.
-  Status: implemented, awaiting review.
+  Status: done 2026-10-23.
 - **E5b Symbols push row text right.** Only some rows have an icon, so their text starts further right. Reserve the
-  icon space on every row. Status: implemented with an item delegate (rows without a symbol keep no icon in the
-  model), awaiting review.
+  icon space on every row. Status: done with an item delegate (rows without a symbol keep no icon in the model).
 - **E5c Choose and show the one-off run.** The run takes about 1.3 s on the test project and many seconds on large
   ones, it reran by itself when its positions were out of date, and the only sign of it was a line of text. Agreed
   2026-10-23:
@@ -521,6 +520,8 @@ Each slice is a separate commit with tests, doc and translation updates, checked
   - While a run is going, the status line shows a busy bar, the seconds elapsed and `Cancel`.
   - The requested connection opens by itself when the run finishes; after `Cancel` or a failed run it opens
     without alignment.
+  - Status: done 2026-10-23 (`ConnectionPositionRunPolicy`, service `run`/`cancel`/
+    `attemptFailed` replacing the automatic `request`). A failed run now keeps the positions there were.
 
 ## Risks
 

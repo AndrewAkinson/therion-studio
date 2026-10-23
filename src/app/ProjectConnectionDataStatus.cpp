@@ -20,7 +20,9 @@ QString ProjectConnectionDataStatus::text(const State &state, const QDateTime &n
         return tr("No target config selected, so the drawings Therion reads are unknown.");
     }
     if (state.running) {
-        return tr("Computing station positions with Therion...");
+        return state.openPending
+            ? tr("Computing station positions with Therion; the connection opens when they are ready.")
+            : tr("Computing station positions with Therion...");
     }
     const QString at = takenAtText(state.takenAt, now);
     switch (state.source) {

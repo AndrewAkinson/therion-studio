@@ -8,8 +8,11 @@
 #include "text_editor/map_editor/MapEditorJoinViewLink.h"
 #include "text_editor/map_editor/MapEditorTab.h"
 
+#include <QCheckBox>
 #include <QDir>
 #include <QFileInfo>
+#include <QMessageBox>
+#include <QPushButton>
 #include <QSet>
 #include <QStatusBar>
 #include <QTabWidget>
@@ -35,6 +38,49 @@ QStringList stationPositionSourceFiles(const TherionStudio::ProjectIndexSnapshot
         }
     }
     return QStringList(sourceFiles.cbegin(), sourceFiles.cend());
+}
+
+std::optional<TherionStudio::ProjectStationPositionRequest> stationPositionRequest(
+    const TherionStudio::ProjectIndexSnapshot &snapshot,
+    const QString &executableInput)
+{
+    if (snapshot.rootConfigPath.isEmpty()) {
+        return std::nullopt;
+    }
+    return TherionStudio::ProjectStationPositionRequest{
+        executableInput.isEmpty() ? QStringLiteral("therion") : executableInput,
+        snapshot.rootConfigPath,
+        stationPositionSourceFiles(snapshot)};
+}
+
+enum class RunChoice
+{
+    Run,
+    Open,
+    Closed,
+};
+
+RunChoice askToRunTherion(QWidget *parent, bool outOfDate, bool *dontAskAgain)
+{
+    QMessageBox box(parent);
+    box.setIcon(QMessageBox::Question);
+    box.setWindowTitle(MainWindow::tr("Station Positions"));
+    box.setText(outOfDate ? MainWindow::tr("The station positions are out of date. Run Therion to update them?")
+                          : MainWindow::tr("This connection needs station positions. Run Therion now?"));
+    box.setInformativeText(MainWindow::tr("On a large project this can take a while."));
+    QPushButton *run = box.addButton(MainWindow::tr("Run Therion"), QMessageBox::AcceptRole);
+    QPushButton *open = box.addButton(outOfDate ? MainWindow::tr("Use Them As They Are")
+                                                : MainWindow::tr("Open Without Alignment"),
+                                      QMessageBox::RejectRole);
+    box.addButton(QMessageBox::Cancel);
+    box.setDefaultButton(run);
+    box.setCheckBox(new QCheckBox(MainWindow::tr("Don't ask again"), &box));
+    box.exec();
+    *dontAskAgain = box.checkBox()->isChecked();
+    if (box.clickedButton() == run) {
+        return RunChoice::Run;
+    }
+    return box.clickedButton() == open ? RunChoice::Open : RunChoice::Closed;
 }
 
 struct JoinDrawing
@@ -78,12 +124,17 @@ void MainWindow::setupJoinStationPositions()
             this,
             [this](const QString &message) {
                 statusBar()->showMessage(message, 8000);
+                openPendingConnection();
                 refreshConnectionDataStatus();
             });
-    connect(stationPositionService_,
-            &TherionStudio::ProjectStationPositionService::positionsReady,
+    connect(stationPositionService_, &TherionStudio::ProjectStationPositionService::positionsReady, this, [this]() {
+        refreshConnectionDataStatus();
+        openPendingConnection();
+    });
+    connect(projectJoinsPanel_,
+            &TherionStudio::ProjectJoinsPanel::runCancelRequested,
             this,
-            &MainWindow::refreshConnectionDataStatus);
+            &MainWindow::cancelStationPositionRun);
     refreshConnectionDataStatus();
 }
 
@@ -96,18 +147,75 @@ void MainWindow::loadJoinStationPositionsFromCompile()
     refreshConnectionDataStatus();
 }
 
-void MainWindow::requestJoinStationPositions()
+bool MainWindow::prepareConnectionPositions(const TherionStudio::ProjectConnectionPendingOpen &open)
 {
-    const TherionStudio::ProjectIndexSnapshot &snapshot = lastStructureSidebarProjectIndex_;
-    if (stationPositionService_ == nullptr || snapshot.rootConfigPath.isEmpty()
-        || (snapshot.equateLinks.isEmpty() && snapshot.joinCommands.isEmpty())) {
+    if (stationPositionService_ == nullptr) {
+        return true;
+    }
+    if (stationPositionService_->isRunning()) {
+        pendingConnection_ = open;
+        refreshConnectionDataStatus();
+        return false;
+    }
+    const std::optional<TherionStudio::ProjectStationPositionRequest> request =
+        stationPositionRequest(lastStructureSidebarProjectIndex_, therionExecutableInput());
+    // Without a target config, or after a run that failed for unchanged sources, open with what there is.
+    if (!request.has_value() || stationPositionService_->attemptFailed(*request)) {
+        return true;
+    }
+    const bool runPositionsOutOfDate =
+        stationPositionService_->dataSource() == TherionStudio::ProjectStationPositionService::DataSource::Run
+        && stationPositionService_->isOutOfDate(request->sourceFiles);
+    const TherionStudio::ConnectionPositionRunMode mode = TherionStudio::connectionPositionRunModeFromSetting(
+        sessionStore_ != nullptr ? sessionStore_->connectionPositionRunMode() : QString());
+    const TherionStudio::ConnectionPositionRunAction action =
+        TherionStudio::connectionPositionRunAction(mode, currentStationPositions() != nullptr, runPositionsOutOfDate);
+    if (action == TherionStudio::ConnectionPositionRunAction::OpenNow) {
+        return true;
+    }
+    if (action == TherionStudio::ConnectionPositionRunAction::AskFirst) {
+        bool dontAskAgain = false;
+        const RunChoice choice = askToRunTherion(this, runPositionsOutOfDate, &dontAskAgain);
+        if (choice == RunChoice::Closed) {
+            return false;
+        }
+        if (dontAskAgain && sessionStore_ != nullptr) {
+            sessionStore_->setConnectionPositionRunMode(TherionStudio::connectionPositionRunModeSetting(
+                choice == RunChoice::Run ? TherionStudio::ConnectionPositionRunMode::Run
+                                         : TherionStudio::ConnectionPositionRunMode::Never));
+        }
+        if (choice == RunChoice::Open) {
+            return true;
+        }
+    }
+    pendingConnection_ = open;
+    stationPositionService_->run(*request);
+    refreshConnectionDataStatus();
+    return false;
+}
+
+void MainWindow::openPendingConnection()
+{
+    if (!pendingConnection_.has_value()) {
         return;
     }
-    const QString executable = therionExecutableInput();
-    stationPositionService_->request(TherionStudio::ProjectStationPositionRequest{
-        executable.isEmpty() ? QStringLiteral("therion") : executable,
-        snapshot.rootConfigPath,
-        stationPositionSourceFiles(snapshot)});
+    const TherionStudio::ProjectConnectionPendingOpen open = *pendingConnection_;
+    pendingConnection_.reset();
+    if (open.pair.has_value()) {
+        openProjectJoinNow(*open.pair, open.separateWindow);
+    } else if (open.joinOnly.has_value()) {
+        openProjectJoinOnlyNow(*open.joinOnly, open.separateWindow);
+    }
+}
+
+void MainWindow::cancelStationPositionRun()
+{
+    if (stationPositionService_ != nullptr) {
+        stationPositionService_->cancel();
+    }
+    // The connection still opens, with the positions there were or without alignment.
+    openPendingConnection();
+    refreshConnectionDataStatus();
 }
 
 void MainWindow::refreshConnectionDataStatus()
@@ -126,8 +234,10 @@ void MainWindow::refreshConnectionDataStatus()
         const TherionStudio::TherionCompileResult &compile = compileResultRecorder_->latest();
         state.compileWroteNoDatabase = compile.isValid() && compile.databasePaths.isEmpty();
     }
+    state.openPending = pendingConnection_.has_value();
     projectJoinsPanel_->setDataStatus(TherionStudio::ProjectConnectionDataStatus::text(state, QDateTime::currentDateTime()),
                                       state.noTargetConfig);
+    projectJoinsPanel_->setRunInProgress(state.running);
     // Rows show what they need; the fit pass is quick (milliseconds on a large project).
     projectJoinsPanel_->setConnectionData(
         currentStationPositions() != nullptr
@@ -167,24 +277,25 @@ void MainWindow::openProjectJoin(const TherionStudio::ProjectJoinPair &pair, boo
     if (!pair.canOpen()) {
         return;
     }
-    if (pair.needsComputedPositions()) {
-        requestJoinStationPositions();
+    if (pair.needsComputedPositions()
+        && !prepareConnectionPositions(TherionStudio::ProjectConnectionPendingOpen{pair, std::nullopt, separateWindow})) {
+        return;
     }
+    openProjectJoinNow(pair, separateWindow);
+}
+
+void MainWindow::openProjectJoinNow(const TherionStudio::ProjectJoinPair &pair, bool separateWindow)
+{
     // Each drawing opens at its join-station point, or at the scrap of its survey that stands in for it.
     const QHash<QString, TherionStudio::Th2StationPosition> *positions = currentStationPositions();
     const std::optional<JoinDrawing> first = joinDrawing(lastStructureSidebarProjectIndex_, pair.first, positions);
     const std::optional<JoinDrawing> second = joinDrawing(lastStructureSidebarProjectIndex_, pair.second, positions);
     if (!first.has_value() || !second.has_value()) {
         const QString station = (first.has_value() ? pair.second : pair.first).station.reference;
-        statusBar()->showMessage(
-            stationPositionService_ != nullptr && stationPositionService_->isRunning()
-                ? tr("%1 has no station point in this view; open the connection again once Therion has computed the "
-                     "station positions, which choose its survey's nearest drawing.")
-                      .arg(station)
-                : tr("%1 has no station point in this view, and Therion has computed no position to choose its "
-                     "survey's nearest drawing.")
-                      .arg(station),
-            8000);
+        statusBar()->showMessage(tr("%1 has no station point in this view, and Therion has computed no position to choose "
+                                    "its survey's nearest drawing.")
+                                     .arg(station),
+                                 8000);
         return;
     }
     openProjectJoinDrawings(first->sourceFile,
@@ -200,10 +311,15 @@ void MainWindow::openProjectJoin(const TherionStudio::ProjectJoinPair &pair, boo
 
 void MainWindow::openProjectJoinOnly(const TherionStudio::ProjectJoinGroup &group, bool separateWindow)
 {
-    if (group.joinOnlyScraps.size() != 2) {
+    if (group.joinOnlyScraps.size() != 2
+        || !prepareConnectionPositions(TherionStudio::ProjectConnectionPendingOpen{std::nullopt, group, separateWindow})) {
         return;
     }
-    requestJoinStationPositions();
+    openProjectJoinOnlyNow(group, separateWindow);
+}
+
+void MainWindow::openProjectJoinOnlyNow(const TherionStudio::ProjectJoinGroup &group, bool separateWindow)
+{
     const TherionStudio::ProjectStructureEntry &first = group.joinOnlyScraps.at(0);
     const TherionStudio::ProjectStructureEntry &second = group.joinOnlyScraps.at(1);
     const QString projection = lastStructureSidebarProjectIndex_.scrapProjectionByObjectId.value(first.objectId);
@@ -225,10 +341,7 @@ QString MainWindow::joinFailureMessage(TherionStudio::MapEditorJoinFailure failu
         return tr("No station is shared by these drawings, and drawings in an extended elevation can only be "
                   "aligned at a shared station.");
     }
-    return stationPositionService_ != nullptr && stationPositionService_->isRunning()
-        ? tr("No station is shared by these drawings; they will line up once Therion has computed the station "
-             "positions. Open the connection again then.")
-        : tr("No station is shared by these drawings, so they open without alignment.");
+    return tr("No station is shared by these drawings, so they open without alignment.");
 }
 
 QString MainWindow::joinPlacementNotes(const TherionStudio::MapEditorJoinResult &result,
