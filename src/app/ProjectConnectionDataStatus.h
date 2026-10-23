@@ -20,6 +20,10 @@ public:
         QDateTime takenAt;
         bool outOfDate = false;
         bool running = false;
+        // Without a target config the index cannot tell which drawings Therion reads.
+        bool noTargetConfig = false;
+        // The latest compile finished without writing a database export.
+        bool compileWroteNoDatabase = false;
     };
 
     // `now` decides whether the date is shown with the time.

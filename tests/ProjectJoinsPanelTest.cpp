@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
+#include <QPushButton>
 #include <QTimer>
 #include <QSignalSpy>
 #include <QToolButton>
@@ -240,6 +241,21 @@ private slots:
         QVERIFY(approximate.data(Qt::ToolTipRole).toString().contains(QStringLiteral("placed by its XVI")));
         panel.setConnectionData(QSet<QString>(), true);
         QVERIFY(model->index(0, 0).data(Qt::ToolTipRole).toString().contains(QStringLiteral("out of date")));
+    }
+
+    void offersTheTargetConfigOnlyWhenNoneIsSelected()
+    {
+        ProjectJoinsPanel panel;
+        QSignalSpy requested(&panel, &ProjectJoinsPanel::targetConfigRequested);
+        auto *button = panel.findChild<QPushButton *>();
+        QVERIFY(button != nullptr);
+        QVERIFY(!button->isVisibleTo(&panel));
+        panel.setDataStatus(QStringLiteral("No target config"), true);
+        QVERIFY(button->isVisibleTo(&panel));
+        button->click();
+        QCOMPARE(requested.count(), 1);
+        panel.setDataStatus(QStringLiteral("Positions"), false);
+        QVERIFY(!button->isVisibleTo(&panel));
     }
 
     void keepsProjectionAndFiltersRows()

@@ -2222,6 +2222,11 @@ Les fichiers attendus sont `docs/USER_MANUAL.&lt;language&gt;.md` ou `docs/USER_
     <name>ProjectConnectionDataStatus</name>
     <message>
         <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="20"/>
+        <source>No target config selected, so the drawings Therion reads are unknown.</source>
+        <translation>Aucune configuration cible n’est sélectionnée : les dessins lus par Therion sont inconnus.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="20"/>
         <source>Computing station positions with Therion...</source>
         <translation>Therion calcule les positions des stations...</translation>
     </message>
@@ -2244,6 +2249,11 @@ Les fichiers attendus sont `docs/USER_MANUAL.&lt;language&gt;.md` ou `docs/USER_
         <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="29"/>
         <source>Positions from a Therion run at %1.</source>
         <translation>Positions issues d’une exécution de Therion de %1.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="37"/>
+        <source>The last compile wrote no database export. Add &quot;export database -fmt sql&quot; to the thconfig, or open a connection that needs station positions to run Therion once.</source>
+        <translation>La dernière compilation n’a écrit aucun export de base de données. Ajoutez "export database -fmt sql" à la configuration, ou ouvrez une connexion qui a besoin des positions des stations pour lancer Therion une fois.</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="33"/>
@@ -6465,6 +6475,11 @@ Supprimer le sommet malgré tout ?</translation>
         <translation>Légende</translation>
     </message>
     <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="76"/>
+        <source>Select Target Config...</source>
+        <translation>Choisir la configuration cible...</translation>
+    </message>
+    <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="108"/>
         <source>Show or hide what the row colours and markers mean</source>
         <translation>Afficher ou masquer la signification des couleurs et des marques des lignes</translation>
@@ -6610,6 +6625,11 @@ Supprimer le sommet malgré tout ?</translation>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="183"/>
         <source>%1: station not found in any centreline</source>
         <translation>%1 : station introuvable dans les centrelines</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="470"/>
+        <source>%1: no station point in a drawing that Therion reads; no target config is selected, so those drawings are unknown</source>
+        <translation>%1 : aucun point de station dans un dessin lu par Therion ; aucune configuration cible n’est sélectionnée, ces dessins sont donc inconnus</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="185"/>

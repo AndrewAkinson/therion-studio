@@ -10,6 +10,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
+#include <QPushButton>
 #include <QSet>
 #include <QSortFilterProxyModel>
 #include <QStandardItemModel>
@@ -72,6 +73,10 @@ ProjectJoinsPanel::ProjectJoinsPanel(QWidget *parent)
     dataStatusLabel_->setTextFormat(Qt::PlainText);
     dataStatusLabel_->setWordWrap(true);
     layout->addWidget(dataStatusLabel_);
+    targetConfigButton_ = new QPushButton(tr("Select Target Config..."), this);
+    targetConfigButton_->setVisible(false);
+    connect(targetConfigButton_, &QPushButton::clicked, this, &ProjectJoinsPanel::targetConfigRequested);
+    layout->addWidget(targetConfigButton_, 0, Qt::AlignLeft);
 
     auto *projectionRow = new QHBoxLayout;
     projectionRow->setContentsMargins(0, 0, 0, 0);
@@ -174,9 +179,10 @@ void ProjectJoinsPanel::setActivationOpensSeparateWindow(bool separateWindow)
     activationOpensSeparateWindow_ = separateWindow;
 }
 
-void ProjectJoinsPanel::setDataStatus(const QString &text)
+void ProjectJoinsPanel::setDataStatus(const QString &text, bool offerTargetConfig)
 {
     dataStatusLabel_->setText(text);
+    targetConfigButton_->setVisible(offerTargetConfig);
 }
 
 void ProjectJoinsPanel::setConnectionData(const std::optional<QSet<QString>> &fittedScraps, bool outOfDate)
@@ -460,7 +466,11 @@ QString ProjectJoinsPanel::sideDescription(const ProjectJoinSide &side) const
     case ProjectJoinSideStatus::Unresolved:
         return tr("%1: station not found in any centreline").arg(side.station.reference);
     case ProjectJoinSideStatus::NotDrawn:
-        return tr("%1: no station point in a drawing that Therion reads").arg(side.station.reference);
+        return snapshot_.rootConfigPath.isEmpty()
+            ? tr("%1: no station point in a drawing that Therion reads; no target config is selected, so those "
+                 "drawings are unknown")
+                  .arg(side.station.reference)
+            : tr("%1: no station point in a drawing that Therion reads").arg(side.station.reference);
     case ProjectJoinSideStatus::NotDrawnInProjection:
         return tr("%1: not drawn in the %2 view").arg(side.station.reference, projectionCombo_->currentText());
     case ProjectJoinSideStatus::SurveyDrawnWithoutStation:

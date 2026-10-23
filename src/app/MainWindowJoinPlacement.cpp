@@ -93,6 +93,7 @@ void MainWindow::loadJoinStationPositionsFromCompile()
     if (stationPositionService_ != nullptr && result.isValid() && !result.databasePaths.isEmpty()) {
         stationPositionService_->loadCompileExport(result.databasePaths.first(), result.startedAt);
     }
+    refreshConnectionDataStatus();
 }
 
 void MainWindow::requestJoinStationPositions()
@@ -119,7 +120,14 @@ void MainWindow::refreshConnectionDataStatus()
     state.takenAt = stationPositionService_->dataTakenAt();
     state.running = stationPositionService_->isRunning();
     state.outOfDate = stationPositionService_->isOutOfDate(stationPositionSourceFiles(lastStructureSidebarProjectIndex_));
-    projectJoinsPanel_->setDataStatus(TherionStudio::ProjectConnectionDataStatus::text(state, QDateTime::currentDateTime()));
+    state.noTargetConfig = lastStructureSidebarProjectIndex_.rootConfigPath.isEmpty();
+    // The sidebar is built before the compiler console that owns the recorder.
+    if (compileResultRecorder_ != nullptr) {
+        const TherionStudio::TherionCompileResult &compile = compileResultRecorder_->latest();
+        state.compileWroteNoDatabase = compile.isValid() && compile.databasePaths.isEmpty();
+    }
+    projectJoinsPanel_->setDataStatus(TherionStudio::ProjectConnectionDataStatus::text(state, QDateTime::currentDateTime()),
+                                      state.noTargetConfig);
     // Rows show what they need; the fit pass is quick (milliseconds on a large project).
     projectJoinsPanel_->setConnectionData(
         currentStationPositions() != nullptr

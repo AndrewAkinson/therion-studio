@@ -496,6 +496,32 @@ At most one symbol per row, for what that connection needs now. Tooltips and the
 
 Each slice is a separate commit with tests, doc and translation updates, checked in the app.
 
+### E5. Fixes found in use (2026-10-23)
+
+- **E5a Status line explains missing setup.** Without a target config most rows cannot be opened (6 of 43 plan rows
+  on the test project, 30 with its config), and nothing said why. The line now says so first, with a
+  `Select Target Config...` button (the Compiler pane's file dialog), and row tooltips name it. After a compile with
+  no database export it says that, and that opening a connection that needs positions runs Therion once.
+  Status: implemented, awaiting review.
+- **E5b Symbols push row text right.** Only some rows have an icon, so their text starts further right. Reserve the
+  icon space on every row.
+- **E5c Choose and show the one-off run.** The run takes about 1.3 s on the test project and many seconds on large
+  ones, it reran by itself when its positions were out of date, and the only sign of it was a line of text. Agreed
+  2026-10-23:
+  - A setting "When a connection needs station positions" with `Ask` (default), `Run Therion` and `Never`, stored
+    with the other settings.
+  - `Ask`: opening such a connection without positions asks "This connection needs station positions. Run Therion
+    now? On a large project this can take a while." with `Run Therion` and `Open Without Alignment`, and a
+    "Don't ask again" box that sets the setting to the choice made.
+  - Out-of-date positions from a run are used faded, like compile data, and are not rerun by themselves. Under `Ask`
+    the prompt offers updating them or using them as they are; `Run Therion` updates them; `Never` uses them.
+  - `Never`: opens without alignment (or with the out-of-date positions); compiling with `export database` provides
+    positions.
+  - While a run is going, the status line shows a busy bar, the seconds elapsed and `Cancel`.
+  - The requested connection opens by itself when the run finishes; after `Cancel` or a failed run it opens
+    without alignment.
+
+## Risks
 
 - Same file in two buffers: avoided by keeping normal tabs (no editor reuse needed).
 - Drawings whose station points are not snapped to the XVI stations give a less exact fit; the fit residual is shown in

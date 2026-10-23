@@ -2274,6 +2274,11 @@ Očekávané soubory jsou `docs/USER_MANUAL.&lt;language&gt;.md` nebo `docs/USER
     <name>ProjectConnectionDataStatus</name>
     <message>
         <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="20"/>
+        <source>No target config selected, so the drawings Therion reads are unknown.</source>
+        <translation>Není vybrána cílová konfigurace, takže není známo, které kresby Therion čte.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="20"/>
         <source>Computing station positions with Therion...</source>
         <translation>Therion počítá polohy stanic...</translation>
     </message>
@@ -2296,6 +2301,11 @@ Očekávané soubory jsou `docs/USER_MANUAL.&lt;language&gt;.md` nebo `docs/USER
         <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="29"/>
         <source>Positions from a Therion run at %1.</source>
         <translation>Polohy z běhu Therionu v %1.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="37"/>
+        <source>The last compile wrote no database export. Add &quot;export database -fmt sql&quot; to the thconfig, or open a connection that needs station positions to run Therion once.</source>
+        <translation>Poslední kompilace nezapsala export databáze. Přidejte do konfigurace "export database -fmt sql", nebo otevřete spojení, které potřebuje polohy stanic, a Therion se jednou spustí.</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="33"/>
@@ -6630,6 +6640,11 @@ subtype blocks</translation>
         <translation>Legenda</translation>
     </message>
     <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="76"/>
+        <source>Select Target Config...</source>
+        <translation>Vybrat cílovou konfiguraci...</translation>
+    </message>
+    <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="108"/>
         <source>Show or hide what the row colours and markers mean</source>
         <translation>Zobrazí nebo skryje význam barev a značek řádků</translation>
@@ -6775,6 +6790,11 @@ subtype blocks</translation>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="183"/>
         <source>%1: station not found in any centreline</source>
         <translation>%1: stanice nebyla nalezena v žádném centreline</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectJoinsPanel.cpp" line="470"/>
+        <source>%1: no station point in a drawing that Therion reads; no target config is selected, so those drawings are unknown</source>
+        <translation>%1: žádný bod stanice v kresbě, kterou Therion čte; není vybrána cílová konfigurace, takže tyto kresby nejsou známy</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="185"/>

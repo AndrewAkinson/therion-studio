@@ -169,6 +169,12 @@ private slots:
         const QDateTime now(QDate(2026, 10, 23), QTime(15, 0));
         Status::State state;
         QVERIFY(Status::text(state, now).contains(QStringLiteral("export database -fmt sql")));
+        state.compileWroteNoDatabase = true;
+        QVERIFY(Status::text(state, now).startsWith(QStringLiteral("The last compile wrote no database export.")));
+        // Without a target config nothing else is meaningful.
+        state.noTargetConfig = true;
+        QVERIFY(Status::text(state, now).startsWith(QStringLiteral("No target config selected")));
+        state = Status::State();
 
         state.source = ProjectStationPositionService::DataSource::Compile;
         state.takenAt = QDateTime(QDate(2026, 10, 23), QTime(10, 42));

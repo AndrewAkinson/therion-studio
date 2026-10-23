@@ -16,6 +16,9 @@ QString takenAtText(const QDateTime &takenAt, const QDateTime &now)
 
 QString ProjectConnectionDataStatus::text(const State &state, const QDateTime &now)
 {
+    if (state.noTargetConfig) {
+        return tr("No target config selected, so the drawings Therion reads are unknown.");
+    }
     if (state.running) {
         return tr("Computing station positions with Therion...");
     }
@@ -29,6 +32,10 @@ QString ProjectConnectionDataStatus::text(const State &state, const QDateTime &n
                                : tr("Positions from a Therion run at %1.").arg(at);
     case ProjectStationPositionService::DataSource::None:
         break;
+    }
+    if (state.compileWroteNoDatabase) {
+        return tr("The last compile wrote no database export. Add \"export database -fmt sql\" to the thconfig, or open "
+                  "a connection that needs station positions to run Therion once.");
     }
     return tr("No station positions. Add \"export database -fmt sql\" to the thconfig and compile.");
 }

@@ -393,6 +393,7 @@ void MainWindow::buildStructureSidebar()
     structureViewStack_->addWidget(projectJoinsPanel_);
     connect(projectJoinsPanel_, &TherionStudio::ProjectJoinsPanel::joinRequested, this, &MainWindow::openProjectJoin);
     connect(projectJoinsPanel_, &TherionStudio::ProjectJoinsPanel::joinOnlyRequested, this, &MainWindow::openProjectJoinOnly);
+    connect(projectJoinsPanel_, &TherionStudio::ProjectJoinsPanel::targetConfigRequested, this, &MainWindow::browseTherionTargetConfig);
     setupJoinStationPositions();
     connect(projectJoinsPanel_,
             &TherionStudio::ProjectJoinsPanel::sourceLocationRequested,

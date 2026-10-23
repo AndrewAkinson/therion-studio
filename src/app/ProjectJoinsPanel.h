@@ -13,6 +13,7 @@ class QComboBox;
 class QGridLayout;
 class QLabel;
 class QLineEdit;
+class QPushButton;
 class QSortFilterProxyModel;
 class QStandardItem;
 class QStandardItemModel;
@@ -42,8 +43,9 @@ public:
     // other choice.
     void setActivationOpensSeparateWindow(bool separateWindow);
     void setConnectionColors(const ConnectionColors &colors);
-    // The line above the list saying where station positions come from.
-    void setDataStatus(const QString &text);
+    // The line above the list saying where station positions come from, with a button to choose the target config
+    // when none is selected.
+    void setDataStatus(const QString &text, bool offerTargetConfig);
     // Scraps fitted by the measured legs that came with the station positions, or none without positions; rows show
     // what they need (projectJoinPairNeed), faded when the positions are out of date.
     void setConnectionData(const std::optional<QSet<QString>> &fittedScraps, bool outOfDate);
@@ -57,6 +59,7 @@ signals:
     void joinOnlyRequested(const TherionStudio::ProjectJoinGroup &group, bool separateWindow);
     void sourceLocationRequested(const QString &sourceFile, int lineNumber);
     void statusMessageRequested(const QString &message);
+    void targetConfigRequested();
 
 private:
     void rebuildRows();
@@ -86,6 +89,7 @@ private:
     ProjectIndexSnapshot snapshot_;
     QVector<ProjectJoinGroup> groups_;
     QLabel *dataStatusLabel_ = nullptr;
+    QPushButton *targetConfigButton_ = nullptr;
     std::optional<QSet<QString>> fittedScraps_;
     bool dataOutOfDate_ = false;
     QComboBox *projectionCombo_ = nullptr;
