@@ -134,7 +134,7 @@ private slots:
         QVERIFY(QTest::qWaitForWindowExposed(&panel));
         auto *tree = panel.findChild<QTreeView *>();
         tree->setFocus();
-        // Row 1 is a multi-station group: its menu has no `Open Join` (that is per pair), unlike row 0.
+        // Row 1 is a multi-station group: its menu has no `Open Connection` (that is per pair), unlike row 0.
         tree->setCurrentIndex(tree->model()->index(1, 0));
 
         // Read the popup's actions, then close it so the modal menu returns.
@@ -152,7 +152,7 @@ private slots:
         QCoreApplication::sendEvent(tree, &keyboardMenu);
 
         QVERIFY2(menuActions.contains(tr("Go to Equate in Source")), qPrintable(menuActions.join(QLatin1Char('|'))));
-        QVERIFY2(!menuActions.contains(tr("Open Join")), qPrintable(menuActions.join(QLatin1Char('|'))));
+        QVERIFY2(!menuActions.contains(tr("Open Connection")), qPrintable(menuActions.join(QLatin1Char('|'))));
     }
 
     void coloursRowsByJoinKindAndOpensJoinOnlyScraps()

@@ -443,6 +443,9 @@ What the SQL data is used for today:
 
 ### E1. Terminology
 
+Status: implemented 2026-10-23, awaiting review. Kept as `join`: `Go to Join in Source`, the key entries, the row
+tooltips about `join` kinds and the Validation messages, since they name the Therion command.
+
 - "Connection" is the general word: the sidebar page becomes `Connections`, the Join view becomes the connection
   window, and the join-related UI text follows. `join` and `equate` are kept for the Therion commands and their rows
   (legend entries such as `Automatic Join` stay).

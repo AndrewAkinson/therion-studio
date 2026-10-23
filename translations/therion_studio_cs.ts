@@ -1230,13 +1230,13 @@ Pokud je soubor otevřený, nejprve se zavře.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowSidebar.cpp" line="350"/>
-        <source>Joins</source>
+        <source>Connections</source>
         <translation>Spojení</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowSidebar.cpp" line="351"/>
-        <source>Equates that join different surveys</source>
-        <translation>Příkazy equate spojující různé survey</translation>
+        <source>Equates and joins that connect different surveys</source>
+        <translation>Příkazy equate a join spojující různé survey</translation>
     </message>
     <message>
         <source>Browse project files, surveys, maps, and scraps.</source>
@@ -1323,8 +1323,8 @@ Pokud je soubor otevřený, nejprve se zavře.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="88"/>
-        <source>Drawings joined to this one through an equate</source>
-        <translation>Kresby spojené s touto kresbou příkazem equate</translation>
+        <source>Drawings connected to this one</source>
+        <translation>Kresby spojené s touto kresbou</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="180"/>
@@ -1343,7 +1343,7 @@ Pokud je soubor otevřený, nejprve se zavře.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="107"/>
-        <source>Remove Join</source>
+        <source>Remove Connection</source>
         <translation>Odebrat spojení</translation>
     </message>
     <message>
@@ -1363,12 +1363,12 @@ Pokud je soubor otevřený, nejprve se zavře.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="201"/>
-        <source>Joined: %1</source>
+        <source>Connected: %1</source>
         <translation>Spojeno: %1</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="203"/>
-        <source>Joined: %1 drawings</source>
+        <source>Connected: %1 drawings</source>
         <translation>Spojené kresby: %1</translation>
     </message>
     <message>
@@ -1500,17 +1500,17 @@ Pokud je soubor otevřený, nejprve se zavře.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowJoinPlacement.cpp" line="32"/>
-        <source>Computing station positions with Therion for joined drawings...</source>
+        <source>Computing station positions with Therion for connected drawings...</source>
         <translation>Therion počítá polohy stanic pro spojené kresby...</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStructureBrowser.cpp" line="1211"/>
-        <source>Cannot align the joined drawings because a scrap has neither enough measured legs between its station points nor an XVI background.</source>
+        <source>Cannot align the connected drawings because a scrap has neither enough measured legs between its station points nor an XVI background.</source>
         <translation>Spojené kresby nelze zarovnat, protože scrap nemá dost naměřených tahů mezi body stanic ani podklad XVI.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowJoinPlacement.cpp" line="107"/>
-        <source>No station is shared by these drawings; they will line up once Therion has computed the station positions. Open the join again then.</source>
+        <source>No station is shared by these drawings; they will line up once Therion has computed the station positions. Open the connection again then.</source>
         <translation>Tyto kresby nemají společnou stanici; zarovnají se, až Therion vypočítá polohy stanic. Pak spojení otevřete znovu.</translation>
     </message>
     <message>
@@ -1525,7 +1525,7 @@ Pokud je soubor otevřený, nejprve se zavře.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowJoinPlacement.cpp" line="126"/>
-        <source>%1 has no station point in this view; open the join again once Therion has computed the station positions, which choose its survey&apos;s nearest drawing.</source>
+        <source>%1 has no station point in this view; open the connection again once Therion has computed the station positions, which choose its survey&apos;s nearest drawing.</source>
         <translation>%1 nemá v tomto pohledu bod stanice; otevřete spojení znovu, až Therion vypočte polohy stanic, podle nichž se vybere nejbližší kresba jejího měření.</translation>
     </message>
     <message>
@@ -3866,12 +3866,12 @@ Line-point options: %1</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowSettingsDialog.cpp" line="96"/>
-        <source>Opening a join shows the second drawing in a separate window</source>
+        <source>Opening a connection shows the second drawing in a separate window</source>
         <translation>Otevření spojení zobrazí druhou kresbu v samostatném okně</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowSettingsDialog.cpp" line="99"/>
-        <source>Applies to double-click and Enter on the Joins page; the right-click menu offers the other choice.</source>
+        <source>Applies to double-click and Enter on the Connections page; the right-click menu offers the other choice.</source>
         <translation>Platí pro dvojklik a Enter na stránce Spojení; nabídka pravého tlačítka nabízí druhou možnost.</translation>
     </message>
     <message>
@@ -6572,7 +6572,7 @@ subtype blocks</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="56"/>
-        <source>Scrap projection whose drawings are joined</source>
+        <source>Scrap projection whose drawings are connected</source>
         <translation>Projekce scrapů, jejichž kresby se spojují</translation>
     </message>
     <message>
@@ -6745,17 +6745,17 @@ subtype blocks</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="246"/>
-        <source>Open Join</source>
+        <source>Open Connection</source>
         <translation>Otevřít spojení</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="267"/>
-        <source>Open Join in Tabs</source>
+        <source>Open Connection in Tabs</source>
         <translation>Otevřít spojení v kartách</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectJoinsPanel.cpp" line="267"/>
-        <source>Open Join with Separate Window</source>
+        <source>Open Connection with Separate Window</source>
         <translation>Otevřít spojení se samostatným oknem</translation>
     </message>
     <message>

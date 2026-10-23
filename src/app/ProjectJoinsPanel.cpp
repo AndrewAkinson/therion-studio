@@ -70,7 +70,7 @@ ProjectJoinsPanel::ProjectJoinsPanel(QWidget *parent)
     projectionRow->setSpacing(6);
     auto *projectionLabel = new QLabel(tr("View:"), this);
     projectionCombo_ = new QComboBox(this);
-    projectionCombo_->setToolTip(tr("Scrap projection whose drawings are joined"));
+    projectionCombo_->setToolTip(tr("Scrap projection whose drawings are connected"));
     projectionLabel->setBuddy(projectionCombo_);
     projectionRow->addWidget(projectionLabel);
     projectionRow->addWidget(projectionCombo_, 1);
@@ -500,8 +500,8 @@ void ProjectJoinsPanel::showContextMenu(const QPoint &position)
     QMenu menu(this);
     if (pair.has_value()) {
         const bool separate = activationOpensSeparateWindow_;
-        QAction *openJoin = menu.addAction(tr("Open Join"));
-        QAction *openOther = menu.addAction(separate ? tr("Open Join in Tabs") : tr("Open Join with Separate Window"));
+        QAction *openJoin = menu.addAction(tr("Open Connection"));
+        QAction *openOther = menu.addAction(separate ? tr("Open Connection in Tabs") : tr("Open Connection with Separate Window"));
         openJoin->setEnabled(pair->canOpen());
         openOther->setEnabled(pair->canOpen());
         connect(openJoin, &QAction::triggered, this, [this, pair, separate]() { emit joinRequested(*pair, separate); });

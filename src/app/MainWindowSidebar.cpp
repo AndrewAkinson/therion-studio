@@ -347,8 +347,8 @@ void MainWindow::buildStructureSidebar()
     auto *filesViewButton = new QPushButton(tr("Files"), structureViewSelector);
     auto *surveyViewButton = new QPushButton(tr("Survey"), structureViewSelector);
     auto *mapViewButton = new QPushButton(QStringLiteral("Map"), structureViewSelector);
-    auto *joinsViewButton = new QPushButton(tr("Joins"), structureViewSelector);
-    joinsViewButton->setToolTip(tr("Equates that join different surveys"));
+    auto *joinsViewButton = new QPushButton(tr("Connections"), structureViewSelector);
+    joinsViewButton->setToolTip(tr("Equates and joins that connect different surveys"));
     const QList<QPushButton *> structureViewButtons = {filesViewButton, surveyViewButton, mapViewButton, joinsViewButton};
     for (QPushButton *button : structureViewButtons) {
         button->setCheckable(true);

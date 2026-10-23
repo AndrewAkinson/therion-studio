@@ -54,7 +54,7 @@ void MainWindow::setupJoinStationPositions()
     stationPositionService_ = new TherionStudio::ProjectStationPositionService(QDir::tempPath(), this);
     connect(stationPositionService_, &TherionStudio::ProjectStationPositionService::runningChanged, this, [this](bool running) {
         if (running) {
-            statusBar()->showMessage(tr("Computing station positions with Therion for joined drawings..."));
+            statusBar()->showMessage(tr("Computing station positions with Therion for connected drawings..."));
         } else {
             statusBar()->clearMessage();
         }
@@ -134,7 +134,7 @@ void MainWindow::openProjectJoin(const TherionStudio::ProjectJoinPair &pair, boo
         const QString station = (first.has_value() ? pair.second : pair.first).station.reference;
         statusBar()->showMessage(
             stationPositionService_ != nullptr && stationPositionService_->isRunning()
-                ? tr("%1 has no station point in this view; open the join again once Therion has computed the "
+                ? tr("%1 has no station point in this view; open the connection again once Therion has computed the "
                      "station positions, which choose its survey's nearest drawing.")
                       .arg(station)
                 : tr("%1 has no station point in this view, and Therion has computed no position to choose its "
@@ -174,7 +174,7 @@ void MainWindow::openProjectJoinOnly(const TherionStudio::ProjectJoinGroup &grou
 QString MainWindow::joinFailureMessage(TherionStudio::MapEditorJoinFailure failure, const QString &projection) const
 {
     if (failure == TherionStudio::MapEditorJoinFailure::NoFit) {
-        return tr("Cannot align the joined drawings because a scrap has neither enough measured legs between its "
+        return tr("Cannot align the connected drawings because a scrap has neither enough measured legs between its "
                   "station points nor an XVI background.");
     }
     if (projection == QStringLiteral("extended")) {
@@ -183,7 +183,7 @@ QString MainWindow::joinFailureMessage(TherionStudio::MapEditorJoinFailure failu
     }
     return stationPositionService_ != nullptr && stationPositionService_->isRunning()
         ? tr("No station is shared by these drawings; they will line up once Therion has computed the station "
-             "positions. Open the join again then.")
+             "positions. Open the connection again then.")
         : tr("No station is shared by these drawings, so they open without alignment.");
 }
 

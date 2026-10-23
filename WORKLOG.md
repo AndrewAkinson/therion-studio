@@ -293,7 +293,8 @@ Active planning only. Completed history belongs in archive files. Stable archite
   `Joined` indicator) is implemented on `JoinViewer`.
 - Phase 3 (planned 2026-10-23): `Connections` naming, positions and legs from the user's compile instead of the
   automatic background run (via `feature/compile-results`), a status line and row symbols (plan E1-E4). E2 (compile
-  data, one-off run only for joins that need positions) is implemented and awaiting review.
+  data, one-off run only for joins that need positions) is committed; E1 (`Connections` naming in the UI, spec,
+  manuals and catalogs) is implemented and awaiting review.
 - Phase 2 slice A (awaiting review): `Open Join with Separate Window` and the Settings option that makes it the
   activation default (SPECIFICATION 3.8.6, 3.12).
 - Specification review for the join work (2026-10-14): the `Survey`/`Map` "only surveys, maps, and scraps" rule is
