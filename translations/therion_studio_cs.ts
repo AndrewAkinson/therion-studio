@@ -2315,6 +2315,11 @@ Očekávané soubory jsou `docs/USER_MANUAL.&lt;language&gt;.md` nebo `docs/USER
         <translation>Nevyřešený scrap: %1</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindowStructureBrowser.cpp" line="252"/>
+        <source>Unresolved map item: %1</source>
+        <translation>Nevyřešená položka mapy: %1</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindowStructureBrowser.cpp" line="250"/>
         <source>Mixed map/scrap content near: %1</source>
         <translation>Smíšený obsah map/scrap poblíž: %1</translation>
@@ -2633,6 +2638,16 @@ Line-point options: %1</translation>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="173"/>
         <source>Unknown map scrap reference</source>
         <translation>Neznámý odkaz na mapový scrap</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="185"/>
+        <source>Unknown map item</source>
+        <translation>Neznámá položka mapy</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="186"/>
+        <source>Map item `%1` does not exist. No scrap, map, or survey of that name was found in the project index.</source>
+        <translation>Položka mapy `%1` neexistuje. V indexu projektu nebyl nalezen žádný scrap, mapa ani survey tohoto jména.</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="174"/>

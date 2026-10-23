@@ -77,6 +77,61 @@ private slots:
         QCOMPARE(unknownStationReferences.count(QStringLiteral("missing")), 1);
         QCOMPARE(unknownStationReferences.count(QStringLiteral("1@cave")), 1);
     }
+
+    void reportsMapItemsThatDoNotExistWhateverTheirName()
+    {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        QDir projectDir(tempDir.path());
+        QVERIFY(projectDir.mkpath(QStringLiteral("maps")));
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("root.th")),
+                              QStringLiteral(
+                                  "survey top\n"
+                                  "  survey branch\n"
+                                  "  endsurvey branch\n"
+                                  "  input maps/map.th2\n"
+                                  "  map plan\n"
+                                  "    plan1\n"
+                                  "    PlanMissing2\n"
+                                  "  endmap\n"
+                                  "  map whole\n"
+                                  "    plan\n"
+                                  "    WholeMissing\n"
+                                  "  endmap\n"
+                                  "  map bySurvey\n"
+                                  "    branch\n"
+                                  "  endmap\n"
+                                  "  map suffixed\n"
+                                  "    missing.s\n"
+                                  "  endmap\n"
+                                  "endsurvey top\n")));
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("maps/map.th2")),
+                              QStringLiteral(
+                                  "scrap plan1\n"
+                                  "endscrap\n")));
+
+        QString errorMessage;
+        const ProjectIndexSnapshot snapshot =
+            ProjectStructureIndex::scanProjectIndex(projectDir.path(), &errorMessage);
+        QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage));
+
+        QStringList unknownMapItems;
+        QStringList unknownMapScraps;
+        for (const ProjectIndexDiagnostic &diagnostic : snapshot.diagnostics) {
+            QVERIFY2(diagnostic.kind != ProjectIndexDiagnosticKind::MixedMapAndScrapReferences,
+                     "A missing map item should not count as map or scrap content.");
+            if (diagnostic.kind == ProjectIndexDiagnosticKind::UnknownMapItemReference) {
+                unknownMapItems.append(QStringLiteral("%1:%2").arg(diagnostic.referencedName).arg(diagnostic.lineNumber));
+            } else if (diagnostic.kind == ProjectIndexDiagnosticKind::UnknownMapScrapReference) {
+                unknownMapScraps.append(diagnostic.referencedName);
+            }
+        }
+
+        unknownMapItems.sort();
+        QCOMPARE(unknownMapItems, QStringList({QStringLiteral("PlanMissing2:7"), QStringLiteral("WholeMissing:11")}));
+        QCOMPARE(unknownMapScraps, QStringList({QStringLiteral("missing.s")}));
+    }
 };
 
 int runProjectStructureIndexQTest(int argc, char **argv)

@@ -1310,6 +1310,23 @@ std::optional<QString> duplicateIdentityNamespacePath(const ProjectStructureEntr
     return std::nullopt;
 }
 
+// Surveys keyed by the namespace their name lives in, so a map item can name a survey as Therion allows.
+ReferenceKeyIndex surveyKeysByReferenceName(const QVector<ProjectStructureEntry> &entries)
+{
+    ReferenceKeyIndex surveyKeys;
+    for (const ProjectStructureEntry &entry : entries) {
+        if (entry.kind != ProjectStructureEntryKind::Survey || entry.name.trimmed().isEmpty()) {
+            continue;
+        }
+
+        const QString lookupKey =
+            namespacedReferenceLookupKey(entry.name, parentNamespacePathForDuplicateIdentity(entry));
+        surveyKeys.keysByNameAndNamespace[lookupKey].append(ProjectStructureIndex::structureEntryNodeKey(entry));
+    }
+
+    return surveyKeys;
+}
+
 std::optional<TherionSourceLogicalArgumentRange> commandDuplicateIdentityRange(
     const TherionSourceLogicalCommand &command,
     ProjectStructureEntryKind kind)
@@ -1588,6 +1605,7 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
 
     const ReferenceKeyIndex mapKeysByName = entryKeysByReferenceName(entries, ProjectStructureEntryKind::Map);
     const ReferenceKeyIndex scrapKeysByName = entryKeysByReferenceName(entries, ProjectStructureEntryKind::Scrap);
+    const ReferenceKeyIndex surveyKeysByName = surveyKeysByReferenceName(entries);
 
     QHash<QString, QVector<ProjectStructureEntry>> mapsBySourceFile;
     for (const ProjectStructureEntry &entry : entries) {
@@ -1750,16 +1768,22 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
                     continue;
                 }
 
-                const MapCompositionContentKind unresolvedContentKind = mapCompositionContentKind(candidate);
-                if (unresolvedContentKind == MapCompositionContentKind::Unknown) {
+                if (resolveReferenceKey(surveyKeysByName, candidate, mapEntry.namespacePath).state
+                    != ReferenceResolutionState::Missing) {
                     continue;
                 }
 
+                // Therion rejects every missing map item; the .m/.s naming scheme only picks the wording.
+                const MapCompositionContentKind unresolvedContentKind = mapCompositionContentKind(candidate);
                 registerContentKind(unresolvedContentKind, parsedLine, candidate);
+                ProjectIndexDiagnosticKind unresolvedDiagnosticKind = ProjectIndexDiagnosticKind::UnknownMapItemReference;
+                if (unresolvedContentKind == MapCompositionContentKind::Map) {
+                    unresolvedDiagnosticKind = ProjectIndexDiagnosticKind::UnknownMapReference;
+                } else if (unresolvedContentKind == MapCompositionContentKind::Scrap) {
+                    unresolvedDiagnosticKind = ProjectIndexDiagnosticKind::UnknownMapScrapReference;
+                }
                 appendMapReferenceDiagnostic(&result.diagnostics,
-                                             unresolvedContentKind == MapCompositionContentKind::Map
-                                                 ? ProjectIndexDiagnosticKind::UnknownMapReference
-                                                 : ProjectIndexDiagnosticKind::UnknownMapScrapReference,
+                                             unresolvedDiagnosticKind,
                                              mapEntry,
                                              fileIt.key(),
                                              parsedLine.lineNumber,

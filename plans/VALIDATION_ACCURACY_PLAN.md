@@ -2,7 +2,7 @@
 
 Date: 2026-10-15
 
-Status: V1a, V1b, V2a, V2b, V3, V4, V4b, V5, V5b, V6, and V6b done. Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
+Status: V1a, V1b, V2a, V2b, V3, V4, V4b, V5, V5b, V6, and V6b done; V6c done (2026-10-23). Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
 values, Therion's line splitting (`thsplit_args`) first in two parts (V1a, V1b), code blocks as a potential slice,
 and slices renumbered.
 
@@ -411,6 +411,35 @@ the same projection in one file, mostly neighbouring scraps where they join (for
 Answered (2026-10-22): warning for the different-place repeat (Therion compiles it, so not an error under V5); same
 file only; no scrap naming convention, as names do not reliably say which scraps are neighbours.
 
+## V6c - Map Items That Do Not Exist
+
+Goal: report every name in a `map` that is not a scrap, map, or survey, as Therion does.
+
+Done (2026-10-23), in `scanMapReferences` (`ProjectStructureIndex.cpp`). Found on a real project: a map listed a
+scrap that its drawing did not define, Therion stopped with `object does not exist`, and project validation said
+nothing.
+
+Therion looks every map item up as an object (`thdb2d::process_map_references` in `src/therion-core/thdb2d.cxx`)
+and stops with `object does not exist` when nothing of that name exists, whatever the name looks like. Therion
+Studio resolved maps and scraps, and for a name it could not resolve guessed what it was meant to be from its
+ending, `.m` for a map and `.s` for a scrap. Any other name was skipped, so only projects using that naming scheme
+got the error.
+
+- Every map item that is not a map, scrap, or survey (looked up in the map's namespace, `@` references included) is
+  an error at the item.
+- Surveys are looked up in the namespace their name belongs to (the parent survey, or the same one for
+  `-namespace off`), so a survey listed in a map is not reported.
+- The `.m` and `.s` endings only choose the wording (`unknown-map-reference`, `unknown-map-scrap-reference`). Every
+  other missing name gets the neutral `unknown-map-item-reference` and does not count as map or scrap content, so it
+  cannot also cause the mixed map and scrap warning.
+- `.m`/`.s` is one naming scheme. Other schemes (for example `<survey>M...` maps and `<survey>S...` scraps) could
+  choose the wording too, but none is configured yet, and the error does not depend on it.
+- A map item naming a point, line, or area `-id` is reported with the same `does not exist` wording. Therion
+  rejects it too, but as `invalid map object`.
+- Tests: `ProjectStructureIndexQTest::reportsMapItemsThatDoNotExistWhateverTheirName`.
+- Documentation: `SPECIFICATION.md` validation list, the four manuals, `docs/THERION_COMPATIBILITY.md`,
+  translations for the new messages.
+
 ## V7 (potential) - Validate Each Drawing Against The Config That Reads It
 
 Potential, not scheduled. When another config in the project folder reads a drawing (for example a per-survey
@@ -440,6 +469,7 @@ WORKLOG backlog item "Compiler-confirmed project-index comparison". Revisit afte
 | V5b | Drawing object IDs unique in the survey, not the scrap | |
 | V6 | Code blocks highlighted by their own rules (TeX and MetaPost) | |
 | V6b | Station points repeated in a drawing | |
+| V6c | Map items that do not exist, whatever their name | |
 | V7 (p) | Validate each drawing against the config that reads it | |
 | V8 (p) | Therion referee test | |
 

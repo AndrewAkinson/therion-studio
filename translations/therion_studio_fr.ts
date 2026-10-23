@@ -2257,6 +2257,11 @@ Les fichiers attendus sont `docs/USER_MANUAL.&lt;language&gt;.md` ou `docs/USER_
         <translation>Scrap non résolu : %1</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindowStructureBrowser.cpp" line="252"/>
+        <source>Unresolved map item: %1</source>
+        <translation>Élément de map non résolu : %1</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindowStructureBrowser.cpp" line="250"/>
         <source>Mixed map/scrap content near: %1</source>
         <translation>Contenu mixte map/scrap à proximité de : %1</translation>
@@ -2575,6 +2580,16 @@ Lignes de points : %1</translation>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="173"/>
         <source>Unknown map scrap reference</source>
         <translation>Référence de scrap de dessin inconnue</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="185"/>
+        <source>Unknown map item</source>
+        <translation>Élément de map inconnu</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="186"/>
+        <source>Map item `%1` does not exist. No scrap, map, or survey of that name was found in the project index.</source>
+        <translation>L’élément de map `%1` n’existe pas. Aucun scrap, map ou topographie de ce nom n’a été trouvé dans l’index du projet.</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="174"/>

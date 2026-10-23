@@ -48,6 +48,7 @@ Therion Studio is an editor and early-feedback tool. The Therion compiler remain
 ## Map And Scrap Concepts
 
 - `map ... endmap` contains references to child maps or scraps. These references are composition relationships, not ownership.
+- Therion looks up every map item as an object and stops with `object does not exist` when none has that name, whatever the name looks like (`thdb2d::process_map_references`). A survey is also a valid map item, looked up in the namespace its name belongs to. Naming schemes such as `.m`/`.s` endings are user conventions, not Therion rules, so they may only choose a diagnostic's wording, never whether an unresolved item is reported.
 - `scrap ... endscrap` groups map objects but is not a namespace. Area border references resolve to `line -id` values in the survey namespace, and Therion requires the line to be in the same scrap as the area.
 - `join` may reference line endpoints and marked line points. `:0` and `:end` identify the start and end of a resolved line; named suffixes such as `:k1` should resolve to a `mark k1` row inside that target line when the line reference itself is unambiguous.
 - `.th2` visual edits must serialize canonical Therion source. Map-editor conveniences must not invent alternate source syntax.

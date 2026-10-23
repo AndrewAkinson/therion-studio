@@ -180,6 +180,12 @@ TherionSourceDiagnostic diagnosticForProjectIndexDiagnostic(const ProjectIndexDi
         diagnostic.message = QObject::tr("Map references child map `%1`, but no matching map was found in the project index.")
                                  .arg(indexDiagnostic.referencedName);
         break;
+    case ProjectIndexDiagnosticKind::UnknownMapItemReference:
+        diagnostic.code = QStringLiteral("unknown-map-item-reference");
+        diagnostic.title = QObject::tr("Unknown map item");
+        diagnostic.message = QObject::tr("Map item `%1` does not exist. No scrap, map, or survey of that name was found in the project index.")
+                                 .arg(indexDiagnostic.referencedName);
+        break;
     case ProjectIndexDiagnosticKind::AmbiguousMapScrapReference:
         diagnostic.code = QStringLiteral("ambiguous-map-scrap-reference");
         diagnostic.title = QObject::tr("Ambiguous map scrap reference");

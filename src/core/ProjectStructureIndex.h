@@ -31,6 +31,7 @@ enum class ProjectIndexDiagnosticKind
 {
     UnknownMapScrapReference,
     UnknownMapReference,
+    UnknownMapItemReference,
     AmbiguousMapScrapReference,
     AmbiguousMapReference,
     MixedMapAndScrapReferences,
