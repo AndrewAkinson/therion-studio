@@ -2114,6 +2114,55 @@ Les fichiers attendus sont `docs/USER_MANUAL.&lt;language&gt;.md` ou `docs/USER_
     </message>
 </context>
 <context>
+    <name>MainWindowStructureInfoPresenter</name>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="47"/>
+        <source>Select a survey, map or scrap to see its details.</source>
+        <translation>Sélectionnez une topographie, une carte ou un scrap pour afficher ses détails.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="53"/>
+        <source>Survey %1</source>
+        <translation>Topographie %1</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="55"/>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="64"/>
+        <source>Full name</source>
+        <translation>Nom complet</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="57"/>
+        <source>Namespace</source>
+        <translation>Espace de noms</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="57"/>
+        <source>off</source>
+        <translation>désactivé</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="61"/>
+        <source>Map %1</source>
+        <translation>Carte %1</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="62"/>
+        <source>Scrap %1</source>
+        <translation>Scrap %1</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="69"/>
+        <source>%1, line %2</source>
+        <translation>%1, ligne %2</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="89"/>
+        <source>Defined in</source>
+        <translation>Défini dans</translation>
+    </message>
+</context>
+<context>
     <name>QObject</name>
     <message>
         <location filename="../src/app/MainWindow.cpp" line="191"/>

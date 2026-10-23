@@ -172,6 +172,8 @@ Panel `Struktura` je lehký navigační index otevřeného projektu. Popis v pos
 
 Kliknutím řádek pouze vyberete ve stromu. Dvojklikem na zdrojový řádek, nebo jeho výběrem a stiskem `Enter`, otevřete zdrojový dokument a přejdete na odpovídající řádek.
 
+Informační okno pod stromy `Survey` a `Map` zobrazuje podrobnosti o vybraném survey, mapě nebo scrapu. Uvádí úplný název podle Therionu (například `inner.cave` pro survey nebo `MP1@inner.cave` pro mapu), případně že je jmenný prostor survey vypnutý, a soubor a řádek, kde je objekt definován. Kliknutím na soubor a řádek otevřete zdroj na tomto místě. Text lze vybrat a zkopírovat. Přetažením oddělovače nad oknem změníte jeho velikost, přetažením úplně dolů okno skryjete.
+
 Pohledy `Survey` a `Mapa` si při otevřeném stejném projektu pamatují svůj stav rozbalení/sbalení odděleně.
 
 Index používá vybranou `Cílovou konfiguraci`, pokud ukazuje do otevřeného projektu. Bez explicitního configu použije první kořenový config v pořadí `thconfig`, `thconfig.thconfig`, `main.thconfig`, `index.thconfig` a `<nazev_projektu>.thconfig`, kde `<nazev_projektu>` je název otevřené projektové složky. Pokud žádný z nich neexistuje a v kořeni je právě jeden pojmenovaný config (`*.thconfig` nebo `thconfig.*`), použije se ten. Pokud je možných configů víc, vyberte požadovanou `Cílovou konfiguraci` v panelu `Kompilátor`.

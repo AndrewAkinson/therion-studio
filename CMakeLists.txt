@@ -222,6 +222,7 @@ set(THERION_MAIN_WINDOW_QTEST_SUITES
     MainWindowSessionRestoreUiFlowServiceTest
     MainWindowSessionStateServiceTest
     MainWindowSessionWindowRestoreServiceTest
+    MainWindowStructureInfoPresenterTest
     MainWindowStructureNameOverridesServiceTest
     TherionSqlReportDatabaseTest
     TherionSqlReportWorkerTest)
@@ -373,6 +374,8 @@ set(THERION_APP_SOURCES
     src/app/MainWindowDocumentTabOpenController.h
     src/app/MainWindowTherionRunnerController.cpp
     src/app/MainWindowTherionRunnerController.h
+    src/app/MainWindowStructureInfoPresenter.cpp
+    src/app/MainWindowStructureInfoPresenter.h
     src/app/MainWindowStructureNameOverridesService.cpp
     src/app/MainWindowStructureNameOverridesService.h
     src/app/MainWindowValidationFixApplyService.cpp
@@ -1510,6 +1513,7 @@ qt_add_executable(MainWindowServiceQTests
     tests/MainWindowSessionRestoreUiFlowServiceTest.cpp
     tests/MainWindowSessionStateServiceTest.cpp
     tests/MainWindowSessionWindowRestoreServiceTest.cpp
+    tests/MainWindowStructureInfoPresenterTest.cpp
     tests/MainWindowStructureNameOverridesServiceTest.cpp
     tests/TherionSqlReportDatabaseTest.cpp
     tests/TherionSqlReportWorkerTest.cpp

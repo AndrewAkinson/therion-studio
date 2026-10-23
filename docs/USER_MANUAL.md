@@ -198,6 +198,8 @@ The `Structure` activity opens the project navigation pane with a compact `Files
 
 Select a row to inspect it in the tree. Double-click a source row, or select it and press `Enter`, to open its source document and navigate to the matching line.
 
+An info box under the `Survey` and `Map` trees shows details of the selected survey, map or scrap. It gives the Therion full name (for example `inner.cave` for a survey or `MP1@inner.cave` for a map), or says that the survey namespace is off, and the file and line where the object is defined. Click the file and line to open the source there. The text can be selected and copied. Drag the divider above the box to resize it, or drag it to the bottom to hide the box.
+
 Within each parent, rows are grouped as surveys, maps, then scraps, and each group is sorted alphabetically by the displayed name. Warning rows appear after the project objects they relate to.
 
 The index uses the selected `Target Config` when it points inside the opened project. Without an explicit target config, Therion Studio uses the first root config found in this priority order: `thconfig`, `thconfig.thconfig`, `main.thconfig`, `index.thconfig`, then `<project_name>.thconfig` where `<project_name>` is the opened project folder name. If none of those exists and exactly one named root config exists (`*.thconfig` or `thconfig.*`), that file is used. If several config files are possible, choose the intended `Target Config` in the `Compiler` pane. Renaming, deleting, creating, or externally changing project source/config files refreshes the shared project index; if the selected `Target Config` no longer exists, it is cleared so discovery can run again.

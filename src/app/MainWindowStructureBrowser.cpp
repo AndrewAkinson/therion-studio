@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 
 #include "MainWindowDocumentHelpers.h"
+#include "MainWindowStructureInfoPresenter.h"
 #include "MainWindowStructureRoles.h"
 #include "three_d_viewer/ThreeDViewerTab.h"
 #include "../core/TherionFileTypes.h"
@@ -21,6 +22,7 @@
 #include <QModelIndex>
 #include <QPainter>
 #include <QPalette>
+#include <QScopeGuard>
 #include <QSignalBlocker>
 #include <QSet>
 #include <QStandardItem>
@@ -29,6 +31,7 @@
 #include <QStringList>
 #include <QSvgRenderer>
 #include <QTabWidget>
+#include <QTextBrowser>
 #include <QToolButton>
 #include <QTreeView>
 
@@ -304,10 +307,7 @@ QStandardItem *createDiagnosticItem(const TherionStudio::ProjectIndexDiagnostic 
 
 QString structureBrowserItemText(const TherionStudio::ProjectStructureEntry &entry)
 {
-    const QString displayName = entry.category == QStringLiteral("Scraps")
-            && entry.name == QStringLiteral("Unnamed Scrap")
-        ? QObject::tr("Unnamed Scrap")
-        : entry.name;
+    const QString displayName = TherionStudio::structureEntryDisplayName(entry);
     if (entry.category == QStringLiteral("Surveys") && !entry.createsNamespace) {
         return QObject::tr("%1 (namespace off)").arg(displayName);
     }
@@ -317,10 +317,7 @@ QString structureBrowserItemText(const TherionStudio::ProjectStructureEntry &ent
 
 QString mapObjectItemText(const TherionStudio::ProjectStructureEntry &entry)
 {
-    const QString displayName = entry.category == QStringLiteral("Scraps")
-            && entry.name == QStringLiteral("Unnamed Scrap")
-        ? QObject::tr("Unnamed Scrap")
-        : entry.name;
+    const QString displayName = TherionStudio::structureEntryDisplayName(entry);
     if (entry.category == QStringLiteral("Scraps")) {
         return displayName;
     }
@@ -707,6 +704,10 @@ void MainWindow::storeCurrentStructureExpansionState()
 void MainWindow::applyStructureSidebarIndex(const TherionStudio::ProjectIndexSnapshot &projectIndex)
 {
     lastStructureSidebarProjectIndex_ = projectIndex;
+    // Entries change on every apply, so the info box is refreshed on each exit path.
+    const auto refreshInfoBoxOnExit = qScopeGuard([this]() {
+        refreshStructureInfoBox();
+    });
 
     const QString currentExpansionProjectRootPath = normalizedStructurePathKey(projectRootPath_);
     if (structureExpansionProjectRootPath_ != currentExpansionProjectRootPath) {
@@ -1303,6 +1304,33 @@ void MainWindow::updateStructureSelectionFromEditorLocation(const QString &fileP
     }
 
     structureTree_->scrollTo(targetIndex, QAbstractItemView::PositionAtCenter);
+    refreshStructureInfoBox();
+}
+
+const TherionStudio::ProjectStructureEntry *MainWindow::structureEntryForIndex(const QModelIndex &index) const
+{
+    const QString objectId = index.isValid() ? index.data(ObjectIdRole).toString() : QString();
+    if (objectId.isEmpty()) {
+        return nullptr;
+    }
+    for (const TherionStudio::ProjectStructureEntry &entry : lastStructureSidebarProjectIndex_.entries) {
+        if (entry.objectId == objectId) {
+            return &entry;
+        }
+    }
+    return nullptr;
+}
+
+void MainWindow::refreshStructureInfoBox()
+{
+    if (structureInfoBox_ == nullptr || structureTree_ == nullptr) {
+        return;
+    }
+
+    const TherionStudio::ProjectStructureEntry *entry = structureEntryForIndex(structureTree_->currentIndex());
+    const QString sourcePath = entry != nullptr ? relativeStructurePath(projectRootPath_, entry->sourceFile) : QString();
+    structureInfoBox_->setHtml(TherionStudio::MainWindowStructureInfoPresenter::html(
+        TherionStudio::MainWindowStructureInfoPresenter::present(entry, sourcePath)));
 }
 
 QModelIndex MainWindow::findMapObjectIndexForSourceLocation(const QString &filePath, int lineNumber) const

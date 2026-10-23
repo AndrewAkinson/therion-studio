@@ -227,6 +227,8 @@ private:
     QByteArray documentFileFingerprint(const QString &filePath) const;
     void openStructureSourceIndex(const QModelIndex &current, QTreeView *sourceTree);
     void handleStructureItemActivated(const QModelIndex &index, QTreeView *sourceTree);
+    const TherionStudio::ProjectStructureEntry *structureEntryForIndex(const QModelIndex &index) const;
+    void refreshStructureInfoBox();
     bool confirmCloseTab(int index);
     bool closeOpenDocumentForFilePath(const QString &filePath);
     bool confirmCloseDirtyDocuments();
@@ -357,6 +359,8 @@ private:
     QVBoxLayout *structureSurveyLayout_ = nullptr;
     QVBoxLayout *structureMapLayout_ = nullptr;
     QTreeView *structureTree_ = nullptr;
+    QSplitter *structureSplitter_ = nullptr;
+    QTextBrowser *structureInfoBox_ = nullptr;
     QTreeView *searchResultsTree_ = nullptr;
     QTreeView *validationResultsTree_ = nullptr;
     QTreeView *mapObjectsTree_ = nullptr;

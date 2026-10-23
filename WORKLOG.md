@@ -19,7 +19,9 @@ Active planning only. Completed history belongs in archive files. Stable archite
 
 - Planned in `plans/STRUCTURE_INFO_PANEL_PLAN.md`: an info box under the `Survey` and `Map` Structure trees, with
   survey statistics from Therion's xtherion output first, then map and scrap details and survey extras from the SQL
-  export, all read from the user's compile. Not implemented.
+  export, all read from the user's compile.
+- Slice 1 (info box with source details: kind, name, Therion full name, definition location) implemented. Next is
+  slice 2, survey statistics from `.xtherion.dat`.
 
 ### Compile Results
 

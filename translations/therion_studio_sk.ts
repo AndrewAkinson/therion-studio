@@ -2166,6 +2166,55 @@ Očakávané súbory sú `docs/USER_MANUAL.&lt;language&gt;.md` alebo `docs/USER
     </message>
 </context>
 <context>
+    <name>MainWindowStructureInfoPresenter</name>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="47"/>
+        <source>Select a survey, map or scrap to see its details.</source>
+        <translation>Vyberte survey, mapu alebo scrap a zobrazia sa jeho podrobnosti.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="53"/>
+        <source>Survey %1</source>
+        <translation>Survey %1</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="55"/>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="64"/>
+        <source>Full name</source>
+        <translation>Úplný názov</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="57"/>
+        <source>Namespace</source>
+        <translation>Menný priestor</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="57"/>
+        <source>off</source>
+        <translation>vypnutý</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="61"/>
+        <source>Map %1</source>
+        <translation>Mapa %1</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="62"/>
+        <source>Scrap %1</source>
+        <translation>Scrap %1</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="69"/>
+        <source>%1, line %2</source>
+        <translation>%1, riadok %2</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="89"/>
+        <source>Defined in</source>
+        <translation>Definované v</translation>
+    </message>
+</context>
+<context>
     <name>QObject</name>
     <message>
         <location filename="../src/platform/DiagnosticLogging.cpp" line="270"/>
