@@ -15,6 +15,11 @@ Active planning only. Completed history belongs in archive files. Stable archite
 
 ## Active Work
 
+### Compile Results
+
+- `TherionCompileResultRecorder` records the user's latest compile and the database and xtherion files it wrote, for
+  views that show compiled data (the planned structure info panel and the Join Viewer). Nothing reads it yet.
+
 ### 2026.7.2 Planning
 
 - Keep the `2026.7.2` scope open for the focused performance sequence: Map runtime ownership R4-R5 and map refresh

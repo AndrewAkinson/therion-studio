@@ -285,6 +285,7 @@ set(THERION_BLOCK_EDITOR_QTEST_SUITES
     BlockEditorMoveSourceRewriterTest)
 
 set(THERION_RUNNER_SUPPORT_QTEST_SUITES
+    TherionCompileResultTest
     TherionExecutableSelectionControllerTest
     TherionRunnerConfigDisplayControllerTest
     TherionRunnerConfigResolverTest
@@ -420,6 +421,8 @@ set(THERION_APP_SOURCES
     src/app/ValidationResultsMarkdownExporter.h
     src/app/ProjectStructureScanner.cpp
     src/app/ProjectStructureScanner.h
+    src/app/TherionCompileResult.cpp
+    src/app/TherionCompileResult.h
     src/app/TherionExecutableSelectionController.cpp
     src/app/TherionExecutableSelectionController.h
     src/app/TherionExecutableDetector.cpp
@@ -1483,6 +1486,7 @@ target_link_libraries(ValidationResultsMarkdownExporterTest PRIVATE therion_app 
 
 qt_add_executable(TherionRunnerSupportQTests
     tests/TherionRunnerSupportQTestMain.cpp
+    tests/TherionCompileResultTest.cpp
     tests/TherionExecutableSelectionControllerTest.cpp
     tests/TherionRunnerConfigDisplayControllerTest.cpp
     tests/TherionRunnerConfigResolverTest.cpp
