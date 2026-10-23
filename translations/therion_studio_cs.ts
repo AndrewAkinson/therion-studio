@@ -2691,8 +2691,83 @@ Line-point options: %1</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="201"/>
-        <source>Map composition mixes child map and scrap references; `%1` changes the content kind.</source>
-        <translation>Mapová kompozice míchá odkazy na podřízené mapy a scrapy; `%1` mění druh obsahu.</translation>
+        <source>Map mixes scraps with maps or surveys at `%1`. Therion needs every item of a map to be a scrap, or every item to be a map or survey.</source>
+        <translation>Mapa míchá scrapy s mapami nebo survey u `%1`. Therion potřebuje, aby všechny položky mapy byly scrapy, nebo všechny mapy či survey.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="191"/>
+        <source>Invalid map object</source>
+        <translation>Neplatný objekt mapy</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="192"/>
+        <source>Map item `%1` is a point, line, or area. A map can only list scraps, maps, or surveys.</source>
+        <translation>Položka mapy `%1` je bod, linie nebo plocha. Mapa může obsahovat jen scrapy, mapy nebo survey.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="197"/>
+        <source>Invalid map item</source>
+        <translation>Neplatná položka mapy</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="198"/>
+        <source>A map item is a name, optionally followed by a shift in brackets and `above`, `below`, or `none`.</source>
+        <translation>Položka mapy je jméno, případně následované posunem v hranatých závorkách a `above`, `below` nebo `none`.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="202"/>
+        <source>Invalid map shift</source>
+        <translation>Neplatný posun mapy</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="203"/>
+        <source>The map item shift `%1` needs two numbers and optional units, for example `[10 20 m]`.</source>
+        <translation>Posun položky mapy `%1` potřebuje dvě čísla a volitelně jednotky, například `[10 20 m]`.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="208"/>
+        <source>Unsupported preview type</source>
+        <translation>Nepodporovaný typ náhledu</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="209"/>
+        <source>`%1` is not a preview type Therion accepts here. Use `above` or `below`, or `none` after a map item shift.</source>
+        <translation>`%1` není typ náhledu, který zde Therion přijímá. Použijte `above` nebo `below`, nebo `none` za posunem položky mapy.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="214"/>
+        <source>Empty map</source>
+        <translation>Prázdná mapa</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="215"/>
+        <source>Map `%1` lists no scraps, maps, or surveys, which Therion does not allow.</source>
+        <translation>Mapa `%1` neobsahuje žádné scrapy, mapy ani survey, což Therion nedovoluje.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="220"/>
+        <source>Map with only previews</source>
+        <translation>Mapa jen s náhledy</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="221"/>
+        <source>Map `%1` lists only previews. Therion needs at least one scrap, map, or survey.</source>
+        <translation>Mapa `%1` obsahuje jen náhledy. Therion potřebuje alespoň jeden scrap, mapu nebo survey.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="226"/>
+        <source>Invalid map survey</source>
+        <translation>Neplatný survey mapy</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="227"/>
+        <source>`-survey %1` does not name a survey.</source>
+        <translation>`-survey %1` neuvádí žádný survey.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureBrowser.cpp" line="261"/>
+        <source>Invalid map object: %1</source>
+        <translation>Neplatný objekt mapy: %1</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="206"/>

@@ -186,6 +186,47 @@ TherionSourceDiagnostic diagnosticForProjectIndexDiagnostic(const ProjectIndexDi
         diagnostic.message = QObject::tr("Map item `%1` does not exist. No scrap, map, or survey of that name was found in the project index.")
                                  .arg(indexDiagnostic.referencedName);
         break;
+    case ProjectIndexDiagnosticKind::InvalidMapObject:
+        diagnostic.code = QStringLiteral("invalid-map-object");
+        diagnostic.title = QObject::tr("Invalid map object");
+        diagnostic.message = QObject::tr("Map item `%1` is a point, line, or area. A map can only list scraps, maps, or surveys.")
+                                 .arg(indexDiagnostic.referencedName);
+        break;
+    case ProjectIndexDiagnosticKind::InvalidMapItem:
+        diagnostic.code = QStringLiteral("invalid-map-item");
+        diagnostic.title = QObject::tr("Invalid map item");
+        diagnostic.message = QObject::tr("A map item is a name, optionally followed by a shift in brackets and `above`, `below`, or `none`.");
+        break;
+    case ProjectIndexDiagnosticKind::InvalidMapShift:
+        diagnostic.code = QStringLiteral("invalid-map-shift");
+        diagnostic.title = QObject::tr("Invalid map shift");
+        diagnostic.message = QObject::tr("The map item shift `%1` needs two numbers and optional units, for example `[10 20 m]`.")
+                                 .arg(indexDiagnostic.referencedName);
+        break;
+    case ProjectIndexDiagnosticKind::UnsupportedMapPreviewType:
+        diagnostic.code = QStringLiteral("unsupported-map-preview-type");
+        diagnostic.title = QObject::tr("Unsupported preview type");
+        diagnostic.message = QObject::tr("`%1` is not a preview type Therion accepts here. Use `above` or `below`, or `none` after a map item shift.")
+                                 .arg(indexDiagnostic.referencedName);
+        break;
+    case ProjectIndexDiagnosticKind::EmptyMap:
+        diagnostic.code = QStringLiteral("empty-map");
+        diagnostic.title = QObject::tr("Empty map");
+        diagnostic.message = QObject::tr("Map `%1` lists no scraps, maps, or surveys, which Therion does not allow.")
+                                 .arg(indexDiagnostic.referencedName);
+        break;
+    case ProjectIndexDiagnosticKind::MapWithOnlyPreviews:
+        diagnostic.code = QStringLiteral("map-with-only-previews");
+        diagnostic.title = QObject::tr("Map with only previews");
+        diagnostic.message = QObject::tr("Map `%1` lists only previews. Therion needs at least one scrap, map, or survey.")
+                                 .arg(indexDiagnostic.referencedName);
+        break;
+    case ProjectIndexDiagnosticKind::InvalidMapSurveyReference:
+        diagnostic.code = QStringLiteral("invalid-map-survey-reference");
+        diagnostic.title = QObject::tr("Invalid map survey");
+        diagnostic.message = QObject::tr("`-survey %1` does not name a survey.")
+                                 .arg(indexDiagnostic.referencedName);
+        break;
     case ProjectIndexDiagnosticKind::AmbiguousMapScrapReference:
         diagnostic.code = QStringLiteral("ambiguous-map-scrap-reference");
         diagnostic.title = QObject::tr("Ambiguous map scrap reference");
@@ -202,9 +243,8 @@ TherionSourceDiagnostic diagnosticForProjectIndexDiagnostic(const ProjectIndexDi
         break;
     case ProjectIndexDiagnosticKind::MixedMapAndScrapReferences:
         diagnostic.code = QStringLiteral("mixed-map-and-scrap-references");
-        diagnostic.severity = TherionSourceDiagnosticSeverity::Warning;
         diagnostic.title = QObject::tr("Mixed map and scrap references");
-        diagnostic.message = QObject::tr("Map composition mixes child map and scrap references; `%1` changes the content kind.")
+        diagnostic.message = QObject::tr("Map mixes scraps with maps or surveys at `%1`. Therion needs every item of a map to be a scrap, or every item to be a map or survey.")
                                  .arg(indexDiagnostic.referencedName);
         break;
     case ProjectIndexDiagnosticKind::UnknownJoinReference:

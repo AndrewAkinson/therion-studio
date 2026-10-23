@@ -678,8 +678,8 @@ int runProjectIndexDiagnosticProjectionTest()
     if (!expect(findingHasSeverity(waitResult.result,
                                    rootFile,
                                    QStringLiteral("mixed-map-and-scrap-references"),
-                                   TherionSourceDiagnosticSeverity::Warning),
-                "Project validation should expose mixed map/scrap composition as a warning.")) {
+                                   TherionSourceDiagnosticSeverity::Error),
+                "Project validation should expose mixed map/scrap composition as an error, as Therion rejects it.")) {
         return 1;
     }
     if (!expect(waitResult.result.projectIndexScanStats.logicalDocumentBuilds == 0,

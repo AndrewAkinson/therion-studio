@@ -132,6 +132,132 @@ private slots:
         QCOMPARE(unknownMapItems, QStringList({QStringLiteral("PlanMissing2:7"), QStringLiteral("WholeMissing:11")}));
         QCOMPARE(unknownMapScraps, QStringList({QStringLiteral("missing.s")}));
     }
+
+    void reportsMapContentTherionRejects()
+    {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        QDir projectDir(tempDir.path());
+        QVERIFY(projectDir.mkpath(QStringLiteral("maps")));
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("root.th")),
+                              QStringLiteral(
+                                  "survey top\n"
+                                  "  survey branch\n"
+                                  "  endsurvey branch\n"
+                                  "  input maps/map.th2\n"
+                                  "  map mixed\n"
+                                  "    plan1\n"
+                                  "    branch\n"
+                                  "  endmap\n"
+                                  "  map objects\n"
+                                  "    plan1\n"
+                                  "    wall1\n"
+                                  "  endmap\n"
+                                  "  map empty\n"
+                                  "  endmap\n"
+                                  "  map previews\n"
+                                  "    preview above mixed\n"
+                                  "  endmap\n"
+                                  "  map syntax\n"
+                                  "    plan1 extra\n"
+                                  "    plan1 [1 x m] above\n"
+                                  "    plan1 [1 2 m] Above\n"
+                                  "    preview none mixed\n"
+                                  "  endmap\n"
+                                  "  map surveyOption -survey nowhere\n"
+                                  "    plan1\n"
+                                  "  endmap\n"
+                                  "  map good -survey branch\n"
+                                  "    plan1 [1 2 m] none\n"
+                                  "    preview below mixed\n"
+                                  "  endmap\n"
+                                  "endsurvey top\n")));
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("maps/map.th2")),
+                              QStringLiteral(
+                                  "scrap plan1\n"
+                                  "line wall -id wall1\n"
+                                  "  0 0\n"
+                                  "  1 1\n"
+                                  "endline\n"
+                                  "endscrap\n")));
+
+        QString errorMessage;
+        const ProjectIndexSnapshot snapshot =
+            ProjectStructureIndex::scanProjectIndex(projectDir.path(), &errorMessage);
+        QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage));
+
+        QStringList findings = diagnosticSummaries(snapshot.diagnostics);
+        findings.sort();
+        QStringList expected = {
+            QStringLiteral("mixed:branch:7"),
+            QStringLiteral("invalid-object:wall1:11"),
+            QStringLiteral("empty:empty:13"),
+            QStringLiteral("only-previews:previews:15"),
+            QStringLiteral("invalid-item:plan1:19"),
+            QStringLiteral("invalid-shift:[1 x m]:20"),
+            QStringLiteral("preview-type:Above:21"),
+            QStringLiteral("preview-type:none:22"),
+            QStringLiteral("survey:nowhere:24"),
+        };
+        expected.sort();
+        QCOMPARE(findings, expected);
+    }
+
+    void readsMapItemShiftsOnlyWithMapsOffset()
+    {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        QDir projectDir(tempDir.path());
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("thconfig")),
+                              QStringLiteral(
+                                  "source root.th\n"
+                                  "maps-offset off\n")));
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("root.th")),
+                              QStringLiteral(
+                                  "survey top\n"
+                                  "  input map.th2\n"
+                                  "  map plan\n"
+                                  "    plan1 [1 x m] Above\n"
+                                  "    plan1 extra\n"
+                                  "  endmap\n"
+                                  "endsurvey top\n")));
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("map.th2")),
+                              QStringLiteral(
+                                  "scrap plan1\n"
+                                  "endscrap\n")));
+
+        QString errorMessage;
+        const ProjectIndexSnapshot snapshot =
+            ProjectStructureIndex::scanProjectIndex(projectDir.path(), &errorMessage);
+        QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage));
+
+        QCOMPARE(diagnosticSummaries(snapshot.diagnostics), QStringList({QStringLiteral("invalid-item:plan1:5")}));
+    }
+
+private:
+    static QStringList diagnosticSummaries(const QVector<ProjectIndexDiagnostic> &diagnostics)
+    {
+        static const QHash<ProjectIndexDiagnosticKind, QString> labels = {
+            {ProjectIndexDiagnosticKind::MixedMapAndScrapReferences, QStringLiteral("mixed")},
+            {ProjectIndexDiagnosticKind::InvalidMapObject, QStringLiteral("invalid-object")},
+            {ProjectIndexDiagnosticKind::EmptyMap, QStringLiteral("empty")},
+            {ProjectIndexDiagnosticKind::MapWithOnlyPreviews, QStringLiteral("only-previews")},
+            {ProjectIndexDiagnosticKind::InvalidMapItem, QStringLiteral("invalid-item")},
+            {ProjectIndexDiagnosticKind::InvalidMapShift, QStringLiteral("invalid-shift")},
+            {ProjectIndexDiagnosticKind::UnsupportedMapPreviewType, QStringLiteral("preview-type")},
+            {ProjectIndexDiagnosticKind::InvalidMapSurveyReference, QStringLiteral("survey")},
+        };
+        QStringList summaries;
+        for (const ProjectIndexDiagnostic &diagnostic : diagnostics) {
+            summaries.append(QStringLiteral("%1:%2:%3")
+                                 .arg(labels.value(diagnostic.kind, QStringLiteral("other")),
+                                      diagnostic.referencedName)
+                                 .arg(diagnostic.lineNumber));
+        }
+        return summaries;
+    }
 };
 
 int runProjectStructureIndexQTest(int argc, char **argv)

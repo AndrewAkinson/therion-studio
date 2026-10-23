@@ -143,6 +143,8 @@ set(THERION_CORE_SOURCES
     src/core/TherionCodeBlockRules.h
     src/core/TherionRepeatedStationPoints.cpp
     src/core/TherionRepeatedStationPoints.h
+    src/core/TherionMapItemRules.cpp
+    src/core/TherionMapItemRules.h
     src/core/TherionDocumentParser.cpp
     src/core/TherionDocumentParser.h
     src/core/SessionStore.cpp

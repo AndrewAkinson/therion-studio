@@ -7,6 +7,7 @@
 #include <QFileInfo>
 #include <QTemporaryDir>
 
+#include <algorithm>
 #include <iostream>
 
 using namespace TherionStudio;
@@ -646,8 +647,9 @@ int runProjectIndexAmbiguousMapReferenceDiagnosticsTest()
     if (!expect(errorMessage.isEmpty(), errorMessage.toUtf8().constData())) {
         return 1;
     }
-    if (!expect(snapshot.diagnostics.size() == 5,
-                "The project index should report ambiguous map/scrap references, duplicate names, and mixed content.")) {
+    // The two branch-map.m maps are empty, which Therion rejects with "empty map not allowed".
+    if (!expect(snapshot.diagnostics.size() == 7,
+                "The project index should report ambiguous map/scrap references, duplicate names, mixed content, and empty maps.")) {
         return 1;
     }
 
@@ -656,7 +658,12 @@ int runProjectIndexAmbiguousMapReferenceDiagnosticsTest()
     bool foundMixedContent = false;
     bool foundDuplicateMapName = false;
     bool foundDuplicateScrapName = false;
+    QList<int> emptyMapLines;
     for (const ProjectIndexDiagnostic &diagnostic : snapshot.diagnostics) {
+        if (diagnostic.kind == ProjectIndexDiagnosticKind::EmptyMap
+            && diagnostic.referencedName == QStringLiteral("branch-map.m")) {
+            emptyMapLines.append(diagnostic.lineNumber);
+        }
         if (diagnostic.kind == ProjectIndexDiagnosticKind::AmbiguousMapScrapReference
             && diagnostic.referencedName == QStringLiteral("target.s")
             && diagnostic.candidateCount == 2
@@ -704,6 +711,11 @@ int runProjectIndexAmbiguousMapReferenceDiagnosticsTest()
     }
     if (!expect(foundDuplicateScrapName,
                 "The project index did not report the duplicate scrap name diagnostic.")) {
+        return 1;
+    }
+    std::sort(emptyMapLines.begin(), emptyMapLines.end());
+    if (!expect(emptyMapLines == QList<int>({4, 6}),
+                "The project index did not report both empty branch maps.")) {
         return 1;
     }
 

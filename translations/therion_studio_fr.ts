@@ -2633,8 +2633,83 @@ Lignes de points : %1</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="201"/>
-        <source>Map composition mixes child map and scrap references; `%1` changes the content kind.</source>
-        <translation>La composition de la map mélange des références de map de niveau(x) inférieur(s) et de scrap ; `%1` change le type de contenu.</translation>
+        <source>Map mixes scraps with maps or surveys at `%1`. Therion needs every item of a map to be a scrap, or every item to be a map or survey.</source>
+        <translation>La map mélange des scraps avec des maps ou des topographies à `%1`. Therion exige que tous les éléments d’une map soient des scraps, ou tous des maps ou des topographies.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="191"/>
+        <source>Invalid map object</source>
+        <translation>Objet de map non valide</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="192"/>
+        <source>Map item `%1` is a point, line, or area. A map can only list scraps, maps, or surveys.</source>
+        <translation>L’élément de map `%1` est un point, une ligne ou une aire. Une map ne peut lister que des scraps, des maps ou des topographies.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="197"/>
+        <source>Invalid map item</source>
+        <translation>Élément de map non valide</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="198"/>
+        <source>A map item is a name, optionally followed by a shift in brackets and `above`, `below`, or `none`.</source>
+        <translation>Un élément de map est un nom, éventuellement suivi d’un décalage entre crochets et de `above`, `below` ou `none`.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="202"/>
+        <source>Invalid map shift</source>
+        <translation>Décalage de map non valide</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="203"/>
+        <source>The map item shift `%1` needs two numbers and optional units, for example `[10 20 m]`.</source>
+        <translation>Le décalage d’élément de map `%1` doit comporter deux nombres et éventuellement une unité, par exemple `[10 20 m]`.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="208"/>
+        <source>Unsupported preview type</source>
+        <translation>Type d’aperçu non pris en charge</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="209"/>
+        <source>`%1` is not a preview type Therion accepts here. Use `above` or `below`, or `none` after a map item shift.</source>
+        <translation>`%1` n’est pas un type d’aperçu accepté ici par Therion. Utilisez `above` ou `below`, ou `none` après un décalage d’élément de map.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="214"/>
+        <source>Empty map</source>
+        <translation>Map vide</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="215"/>
+        <source>Map `%1` lists no scraps, maps, or surveys, which Therion does not allow.</source>
+        <translation>La map `%1` ne liste aucun scrap, aucune map ni aucune topographie, ce que Therion n’autorise pas.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="220"/>
+        <source>Map with only previews</source>
+        <translation>Map ne contenant que des aperçus</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="221"/>
+        <source>Map `%1` lists only previews. Therion needs at least one scrap, map, or survey.</source>
+        <translation>La map `%1` ne liste que des aperçus. Therion a besoin d’au moins un scrap, une map ou une topographie.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="226"/>
+        <source>Invalid map survey</source>
+        <translation>Topographie de map non valide</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="227"/>
+        <source>`-survey %1` does not name a survey.</source>
+        <translation>`-survey %1` ne désigne pas une topographie.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureBrowser.cpp" line="261"/>
+        <source>Invalid map object: %1</source>
+        <translation>Objet de map non valide : %1</translation>
     </message>
     <message>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="206"/>

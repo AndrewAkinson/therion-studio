@@ -3,6 +3,7 @@
 #include "DocumentFile.h"
 #include "TherionCommandLineModel.h"
 #include "TherionFileTypes.h"
+#include "TherionMapItemRules.h"
 #include "TherionSourceLogicalDocument.h"
 #include "TherionSourceReferenceResolver.h"
 #include "TherionSourceSnapshotCache.h"
@@ -109,6 +110,7 @@ QString objectNameFromLine(const TherionParsedLine &parsedLine);
 QString normalizedStructureDirective(const QString &directive);
 bool projectIndexScanShouldCancel(const std::function<bool()> &shouldCancel);
 MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &entries,
+                                         bool mapsOffset,
                                          ParsedFileCache *cache,
                                          const QHash<QString, QString> &inMemoryFileContentsByPath,
                                          const std::function<bool()> &shouldCancel);
@@ -628,60 +630,27 @@ void appendStationReferenceDiagnosticsForRange(QVector<ProjectIndexDiagnostic> *
                                  referenceName);
 }
 
-QString mapCompositionReferenceToken(const TherionParsedLine &parsedLine)
+// A line in a map body Therion reads as an item or a preview; `break` only starts a new level.
+bool isMapItemLine(const TherionParsedLine &parsedLine)
 {
-    // Preview links describe spatial context, not map ownership, and commonly form cycles.
-    if (parsedLine.directive == QStringLiteral("break")
-        || parsedLine.directive == QStringLiteral("preview")) {
-        return QString();
-    }
-
-    const QStringList &tokens = parsedLine.tokens;
-    if (tokens.isEmpty()) {
-        return QString();
-    }
-
-    const QString token = tokens.first().trimmed();
-    if (token.isEmpty() || token.startsWith(QLatin1Char('-'))) {
-        return QString();
-    }
-
-    if (tokens.size() == 1) {
-        return token;
-    }
-
-    const QString previewMode = tokens.last().toLower();
-    if (tokens.size() < 3
-        || (previewMode != QStringLiteral("above")
-            && previewMode != QStringLiteral("below")
-            && previewMode != QStringLiteral("none"))) {
-        return QString();
-    }
-
-    const QString firstOffsetToken = tokens.value(1).trimmed();
-    const QString lastOffsetToken = tokens.value(tokens.size() - 2).trimmed();
-    if (!firstOffsetToken.startsWith(QLatin1Char('['))
-        || !lastOffsetToken.endsWith(QLatin1Char(']'))) {
-        return QString();
-    }
-
-    return token;
+    const QString firstValue = parsedLine.tokens.value(0).trimmed();
+    return !firstValue.isEmpty()
+        && !firstValue.startsWith(QLatin1Char('-'))
+        && parsedLine.directive != QStringLiteral("break");
 }
 
-QString mapPreviewReferenceToken(const TherionParsedLine &parsedLine)
+ProjectIndexDiagnosticKind mapItemSyntaxDiagnosticKind(TherionMapItemProblem problem)
 {
-    if (parsedLine.directive != QStringLiteral("preview")) {
-        return QString();
+    switch (problem) {
+    case TherionMapItemProblem::InvalidShift:
+        return ProjectIndexDiagnosticKind::InvalidMapShift;
+    case TherionMapItemProblem::UnsupportedPreviewType:
+        return ProjectIndexDiagnosticKind::UnsupportedMapPreviewType;
+    case TherionMapItemProblem::None:
+    case TherionMapItemProblem::InvalidItem:
+        break;
     }
-
-    const QString previewMode = parsedLine.tokens.value(1).trimmed().toLower();
-    if (previewMode != QStringLiteral("above")
-        && previewMode != QStringLiteral("below")
-        && previewMode != QStringLiteral("none")) {
-        return QString();
-    }
-
-    return parsedLine.tokens.value(2).trimmed();
+    return ProjectIndexDiagnosticKind::InvalidMapItem;
 }
 
 MapCompositionContentKind mapCompositionContentKind(const QString &referenceName)
@@ -721,6 +690,33 @@ void appendMapReferenceDiagnostic(QVector<ProjectIndexDiagnostic> *diagnostics,
     diagnostic.referencedName = referencedName;
     diagnostic.candidateCount = candidateCount;
     diagnostics->append(diagnostic);
+}
+
+// `map -survey` must name a survey, looked up from the survey the map is in.
+void appendMapSurveyOptionDiagnostic(QVector<ProjectIndexDiagnostic> *diagnostics,
+                                     const TherionSourceLogicalCommand &mapCommand,
+                                     const ProjectStructureEntry &mapEntry,
+                                     const QString &sourceFile,
+                                     const ReferenceKeyIndex &surveyKeysByName)
+{
+    for (const TherionSourceLogicalOptionEntryRange &optionEntry : mapCommand.optionEntryRanges) {
+        if (normalizedCommandOptionName(optionEntry.key) != QStringLiteral("survey")
+            || optionEntry.valueRanges.isEmpty()) {
+            continue;
+        }
+        const TherionSourceLogicalArgumentRange &surveyRange = optionEntry.valueRanges.constFirst();
+        if (resolveReferenceKey(surveyKeysByName, surveyRange.text, mapEntry.namespacePath).state
+            == ReferenceResolutionState::Missing) {
+            appendMapReferenceDiagnostic(diagnostics,
+                                         ProjectIndexDiagnosticKind::InvalidMapSurveyReference,
+                                         mapEntry,
+                                         sourceFile,
+                                         surveyRange.physicalRange.lineNumber,
+                                         surveyRange.physicalRange.columnNumber,
+                                         surveyRange.physicalRange.columnLength,
+                                         surveyRange.text);
+        }
+    }
 }
 
 void appendProjectIndexDiagnostic(QVector<ProjectIndexDiagnostic> *diagnostics,
@@ -1533,7 +1529,11 @@ ProjectIndexSnapshot scanProjectIndexFromFilePaths(const QString &projectRootPat
         return cancelSnapshot();
     }
 
+    const bool mapsOffset = snapshot.rootConfigPath.isEmpty()
+        || therionConfigUsesMapsOffset(
+            logicalDocumentForFile(snapshot.rootConfigPath, &cache, inMemoryFileContentsByPath));
     const MapReferenceScanResult mapReferenceScan = scanMapReferences(snapshot.entries,
+                                                                      mapsOffset,
                                                                       &cache,
                                                                       inMemoryFileContentsByPath,
                                                                       shouldCancel);
@@ -1596,7 +1596,52 @@ ProjectIndexSnapshot scanProjectIndexFromFilePaths(const QString &projectRootPat
     return snapshot;
 }
 
+QHash<int, TherionSourceLogicalCommand> logicalCommandsByStartLine(const TherionSourceLogicalDocument &logicalDocument)
+{
+    QHash<int, TherionSourceLogicalCommand> commandsByStartLine;
+    for (const TherionSourceLogicalCommand &command : logicalDocument.commands()) {
+        commandsByStartLine.insert(command.startLineNumber, command);
+    }
+    return commandsByStartLine;
+}
+
+// Points, lines and areas by their `-id`, read from the source because an entry without one is named by its type.
+ReferenceKeyIndex drawingObjectIdKeysByReferenceName(const QVector<ProjectStructureEntry> &entries,
+                                                     ParsedFileCache *cache,
+                                                     const QHash<QString, QString> &inMemoryFileContentsByPath)
+{
+    QHash<QString, QVector<ProjectStructureEntry>> entriesByFile;
+    for (const ProjectStructureEntry &entry : entries) {
+        if (structureEntryUsesObjectIdOption(entry.kind) && !entry.sourceFile.isEmpty() && entry.lineNumber > 0) {
+            entriesByFile[normalizedFilePathKey(entry.sourceFile)].append(entry);
+        }
+    }
+
+    ReferenceKeyIndex objectKeys;
+    for (auto fileIt = entriesByFile.constBegin(); fileIt != entriesByFile.constEnd(); ++fileIt) {
+        const TherionSourceLogicalDocument &logicalDocument =
+            logicalDocumentForFile(fileIt.key(), cache, inMemoryFileContentsByPath);
+        const QHash<int, TherionSourceLogicalCommand> commandsByStartLine =
+            logicalCommandsByStartLine(logicalDocument);
+        for (const ProjectStructureEntry &entry : fileIt.value()) {
+            const auto commandIt = commandsByStartLine.constFind(entry.lineNumber);
+            if (commandIt == commandsByStartLine.constEnd()) {
+                continue;
+            }
+            const std::optional<TherionSourceLogicalArgumentRange> idRange =
+                commandDuplicateIdentityRange(commandIt.value(), entry.kind);
+            if (!idRange.has_value() || idRange->text.trimmed().isEmpty()) {
+                continue;
+            }
+            objectKeys.keysByNameAndNamespace[namespacedReferenceLookupKey(idRange->text, entry.namespacePath)]
+                .append(ProjectStructureIndex::structureEntryNodeKey(entry));
+        }
+    }
+    return objectKeys;
+}
+
 MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &entries,
+                                         bool mapsOffset,
                                          ParsedFileCache *cache,
                                          const QHash<QString, QString> &inMemoryFileContentsByPath,
                                          const std::function<bool()> &shouldCancel)
@@ -1606,6 +1651,8 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
     const ReferenceKeyIndex mapKeysByName = entryKeysByReferenceName(entries, ProjectStructureEntryKind::Map);
     const ReferenceKeyIndex scrapKeysByName = entryKeysByReferenceName(entries, ProjectStructureEntryKind::Scrap);
     const ReferenceKeyIndex surveyKeysByName = surveyKeysByReferenceName(entries);
+    // Only needed for a map item that is not a map, scrap or survey, so read on first use.
+    std::optional<ReferenceKeyIndex> drawingObjectKeysByName;
 
     QHash<QString, QVector<ProjectStructureEntry>> mapsBySourceFile;
     for (const ProjectStructureEntry &entry : entries) {
@@ -1681,6 +1728,8 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
                 }
             };
 
+            int normalItemCount = 0;
+            int previewItemCount = 0;
             int mapDepth = 0;
             for (int index = mapLineIndex; index < commands.size(); ++index) {
                 if (projectIndexScanShouldCancel(shouldCancel)) {
@@ -1691,6 +1740,13 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
                 const QString directive = command.metadata.commandName;
 
                 if (directive == QStringLiteral("map")) {
+                    if (index == mapLineIndex) {
+                        appendMapSurveyOptionDiagnostic(&result.diagnostics,
+                                                        command,
+                                                        mapEntry,
+                                                        fileIt.key(),
+                                                        surveyKeysByName);
+                    }
                     ++mapDepth;
                     continue;
                 }
@@ -1701,14 +1757,36 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
                     }
                     continue;
                 }
-                if (mapDepth != 1) {
+                if (mapDepth != 1 || !isMapItemLine(parsedLine)) {
                     continue;
                 }
 
-                const QString previewReference = mapPreviewReferenceToken(parsedLine);
-                if (!previewReference.isEmpty()) {
+                const bool isPreview = parsedLine.directive == QStringLiteral("preview");
+                const TherionMapItemSyntax itemSyntax = isPreview
+                    ? therionMapPreviewSyntax(parsedLine.tokens)
+                    : therionMapItemSyntax(parsedLine.tokens, mapsOffset);
+                if (isPreview) {
+                    ++previewItemCount;
+                } else {
+                    ++normalItemCount;
+                }
+                if (itemSyntax.problem != TherionMapItemProblem::None) {
+                    const TherionSourcePhysicalRange problemRange =
+                        parsedLineTokenPhysicalRange(parsedLine, itemSyntax.problemValueIndex);
+                    appendMapReferenceDiagnostic(&result.diagnostics,
+                                                 mapItemSyntaxDiagnosticKind(itemSyntax.problem),
+                                                 mapEntry,
+                                                 fileIt.key(),
+                                                 parsedLine.lineNumber,
+                                                 problemRange.columnNumber,
+                                                 problemRange.columnLength,
+                                                 parsedLine.tokens.value(itemSyntax.problemValueIndex));
+                    continue;
+                }
+
+                if (isPreview) {
                     const ReferenceResolution previewResolution = resolveReferenceKey(mapKeysByName,
-                                                                                      previewReference,
+                                                                                      itemSyntax.name,
                                                                                       mapEntry.namespacePath);
                     if (previewResolution.state == ReferenceResolutionState::Unique) {
                         const QString owningMapKey = ProjectStructureIndex::structureEntryNodeKey(mapEntry);
@@ -1719,10 +1797,7 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
                     continue;
                 }
 
-                const QString candidate = mapCompositionReferenceToken(parsedLine);
-                if (candidate.isEmpty()) {
-                    continue;
-                }
+                const QString candidate = itemSyntax.name;
                 const TherionSourcePhysicalRange candidateRange = parsedLineTokenPhysicalRange(parsedLine, 0);
 
                 const ReferenceResolution childMapResolution = resolveReferenceKey(mapKeysByName, candidate, mapEntry.namespacePath);
@@ -1768,8 +1843,28 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
                     continue;
                 }
 
+                // Therion treats a survey item as a map of its centreline.
                 if (resolveReferenceKey(surveyKeysByName, candidate, mapEntry.namespacePath).state
                     != ReferenceResolutionState::Missing) {
+                    registerContentKind(MapCompositionContentKind::Map, parsedLine, candidate);
+                    continue;
+                }
+
+                if (!drawingObjectKeysByName.has_value()) {
+                    drawingObjectKeysByName = drawingObjectIdKeysByReferenceName(entries,
+                                                                                 cache,
+                                                                                 inMemoryFileContentsByPath);
+                }
+                if (resolveReferenceKey(*drawingObjectKeysByName, candidate, mapEntry.namespacePath).state
+                    != ReferenceResolutionState::Missing) {
+                    appendMapReferenceDiagnostic(&result.diagnostics,
+                                                 ProjectIndexDiagnosticKind::InvalidMapObject,
+                                                 mapEntry,
+                                                 fileIt.key(),
+                                                 parsedLine.lineNumber,
+                                                 candidateRange.columnNumber,
+                                                 candidateRange.columnLength,
+                                                 candidate);
                     continue;
                 }
 
@@ -1792,6 +1887,19 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
                                              candidate);
             }
 
+            if (normalItemCount == 0) {
+                const TherionParsedLine &mapLine = commands.at(mapLineIndex).parsed;
+                const TherionSourcePhysicalRange mapNameRange = parsedLineTokenPhysicalRange(mapLine, 1);
+                appendMapReferenceDiagnostic(&result.diagnostics,
+                                             previewItemCount == 0 ? ProjectIndexDiagnosticKind::EmptyMap
+                                                                   : ProjectIndexDiagnosticKind::MapWithOnlyPreviews,
+                                             mapEntry,
+                                             fileIt.key(),
+                                             mapLine.lineNumber,
+                                             mapNameRange.columnNumber,
+                                             mapNameRange.columnLength,
+                                             mapLine.tokens.value(1));
+            }
             if (!scrapReferences.isEmpty()) {
                 result.scrapReferencesByMapKey.insert(ProjectStructureIndex::structureEntryNodeKey(mapEntry), scrapReferences);
             }
@@ -2111,10 +2219,8 @@ QVector<ProjectIndexDiagnostic> scanDuplicateObjectIds(const QVector<ProjectStru
         }
         const TherionSourceLogicalDocument &logicalDocument =
             logicalDocumentForFile(fileKey, cache, inMemoryFileContentsByPath);
-        QHash<int, TherionSourceLogicalCommand> commandsByStartLine;
-        for (const TherionSourceLogicalCommand &command : logicalDocument.commands()) {
-            commandsByStartLine.insert(command.startLineNumber, command);
-        }
+        const QHash<int, TherionSourceLogicalCommand> commandsByStartLine =
+            logicalCommandsByStartLine(logicalDocument);
 
         for (const ProjectStructureEntry &entry : entriesByFile.value(fileKey)) {
             if (projectIndexScanShouldCancel(shouldCancel)) {

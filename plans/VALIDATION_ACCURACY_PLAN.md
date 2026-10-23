@@ -2,7 +2,7 @@
 
 Date: 2026-10-15
 
-Status: V1a, V1b, V2a, V2b, V3, V4, V4b, V5, V5b, V6, and V6b done; V6c done (2026-10-23). Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
+Status: V1a, V1b, V2a, V2b, V3, V4, V4b, V5, V5b, V6, and V6b done; V6c done; V6d group 1 (checks 1, 3, 4, 9, 10) written, the rest planned (2026-10-23). Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
 values, Therion's line splitting (`thsplit_args`) first in two parts (V1a, V1b), code blocks as a potential slice,
 and slices renumbered.
 
@@ -440,6 +440,61 @@ got the error.
 - Documentation: `SPECIFICATION.md` validation list, the four manuals, `docs/THERION_COMPATIBILITY.md`,
   translations for the new messages.
 
+## V6d - Map Content Checks Therion Makes
+
+Goal: report the other map errors Therion stops on, so a project the Validation panel passes also passes Therion's
+map processing.
+
+Group 1 (checks 1, 3, 4, 9, 10) written (2026-10-23): item and preview syntax in `TherionMapItemRules.cpp`, the
+rest in `scanMapReferences`, and each message checked against Therion 6.4.0. Checks 2, 5, 6, 7, 8 planned.
+
+Therion checks every map in the files it reads, used or not, in
+`thdb2d::process_map_references` and `thdb2d::postprocess_map_references` (`src/therion-core/thdb2d.cxx`), and the
+item syntax in `thmap::parse_item` and `thmap::parse_preview` (`thmap.cxx`). Each check below is a fatal error in
+Therion, so by the V5 policy each is an error here. Therion stops at the first one; the validator reports all of
+them.
+
+| # | Therion error | Cause | Validator now |
+| --- | --- | --- | --- |
+| 1 | `not a scrap reference`, `not a map reference` | Scraps mixed with maps or surveys in one map. The first item decides which kind the map holds. | Warning, and surveys are not counted |
+| 2 | `incompatible scrap projection`, `incompatible map projection` | Items of different projections in one map, or items that do not match the map's own `-projection` | Not checked |
+| 3 | `invalid map object` | A point, line, or area `-id` (anything but a map, scrap, or survey) listed in a map | Reported as `does not exist` (V6c) |
+| 4 | `empty map not allowed`, `map cannot contain only previews` | A map with no items, or only `preview` items | Not checked |
+| 5 | `recursive map reference` | A map that contains itself, directly or through child maps | Not checked |
+| 6 | `shift is not allowed for scrap` | A scrap item with `[x y units] above/below`; Therion reads the shift only with `maps-offset` on, its default | Not checked |
+| 7 | `no projection for survey`, `unsupported projection for survey` | A survey item in a map without `-projection`, or with `none` | Not checked |
+| 8 | `object does not exist`, `not a map reference`, `incompatible map projection` for `preview` | A `preview` item that is missing, is not a map, or has another projection | Missing previews not reported |
+| 9 | `invalid map item`, `unsupported preview type` | An item line with 2 or more than 3 values, or a shift or preview type other than `above`/`below` | Not checked |
+| 10 | `invalid survey reference` | `map -survey` naming something that is not a survey | Not checked |
+
+How:
+
+- Projections compare as Therion compares them, by type, `:index`, and the elevation angle as written
+  (`thdb2d::parse_projection`), so `[elevation 315]` and `[elevation 315.0]` are different projections, as in
+  Therion. A scrap without `-projection` is `plan`. A child map's projection is the projection of its content,
+  worked out through its own child maps (the same walk finds recursion, check 5). A survey item takes the map's
+  `-projection`. Reuse `scrapProjection` from `TherionRepeatedStationPoints.cpp` by moving it to a shared core rule
+  rather than copying it.
+- `ProjectStructureIndex.cpp` is already over 2000 lines, so the per-map checks go in a new focused core file (for
+  example `TherionMapCompositionRules`), called from `scanMapReferences`, which keeps resolving names.
+- A check is skipped when an item it needs did not resolve uniquely (missing or ambiguous), so one mistake gives one
+  finding. Check 3 replaces the V6c wording for a resolved point, line, or area.
+- Check 6 is reported unless the target config sets `maps-offset off`.
+- Each check gets its own finding code, a translated title and message close to Therion's wording, and a Structure
+  row where the Structure view already shows map problems.
+- Tests: one QTest per check in `ProjectStructureIndexQTest`, plus a map Therion accepts that mixes nothing,
+  previews a compatible map, and lists a survey with `-projection plan` (no findings). Each message checked against
+  Therion 6.4.0 on small made-up projects.
+- Documentation: `SPECIFICATION.md` (validation list, and the Structure warning row for mixed content),
+  `docs/THERION_COMPATIBILITY.md`, the four manuals, cs/fr/sk translations, WORKLOG.
+
+Needs approval before coding: check 1 makes mixed content an error instead of a warning, and
+`tests/ProjectValidationScannerTest.cpp` (around line 678) asserts the warning. The evidence is Therion's
+`not a scrap reference` and `not a map reference` errors; the test would be changed to expect an error.
+
+Order: 1, 3, 4, 9 and 10 are small and go first; then 5 and 2 (they share the projection walk); then 6, 7 and 8.
+One commit per group, each with its tests and documentation.
+
 ## V7 (potential) - Validate Each Drawing Against The Config That Reads It
 
 Potential, not scheduled. When another config in the project folder reads a drawing (for example a per-survey
@@ -470,6 +525,7 @@ WORKLOG backlog item "Compiler-confirmed project-index comparison". Revisit afte
 | V6 | Code blocks highlighted by their own rules (TeX and MetaPost) | |
 | V6b | Station points repeated in a drawing | |
 | V6c | Map items that do not exist, whatever their name | |
+| V6d | Map content checks Therion makes (mixed content, projections, empty and recursive maps, previews) | |
 | V7 (p) | Validate each drawing against the config that reads it | |
 | V8 (p) | Therion referee test | |
 
