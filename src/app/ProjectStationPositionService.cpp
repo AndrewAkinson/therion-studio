@@ -21,6 +21,18 @@ const QString kConfigFileName = QStringLiteral("station-positions.thconfig");
 const QString kExportFileName = QStringLiteral("station-positions.sql");
 // Far more stations and legs than any cave survey; the queries read them all.
 constexpr int kMaximumRows = 10000000;
+
+// Positions and legs do not depend on drawings, so saving one does not count.
+bool sourceSavedSince(const QStringList &sourceFiles, const QDateTime &time)
+{
+    for (const QString &sourceFile : sourceFiles) {
+        if (therionSourceDocumentTypeForFilePath(sourceFile) != TherionSourceDocumentType::TherionMap
+            && QFileInfo(sourceFile).lastModified() > time) {
+            return true;
+        }
+    }
+    return false;
+}
 }
 
 ProjectStationPositionService::ProjectStationPositionService(const QString &temporaryBasePath, QObject *parent)
@@ -28,6 +40,7 @@ ProjectStationPositionService::ProjectStationPositionService(const QString &temp
     , temporaryBasePath_(temporaryBasePath)
     , runner_(new TherionRunnerService(this))
     , loadWatcher_(new QFutureWatcher<LoadResult>(this))
+    , compileLoadWatcher_(new QFutureWatcher<LoadResult>(this))
 {
     connect(runner_, &TherionRunnerService::runFinished, this, &ProjectStationPositionService::handleRunFinished);
     connect(runner_, &TherionRunnerService::runError, this, [this](const QString &errorText) {
@@ -36,15 +49,31 @@ ProjectStationPositionService::ProjectStationPositionService(const QString &temp
         }
     });
     connect(loadWatcher_, &QFutureWatcher<LoadResult>::finished, this, &ProjectStationPositionService::handleLoadFinished);
+    connect(compileLoadWatcher_, &QFutureWatcher<LoadResult>::finished, this, [this]() {
+        const LoadResult result = compileLoadWatcher_->result();
+        if (result.generation != generation_) {
+            return;
+        }
+        if (!result.errorMessage.isEmpty()) {
+            emit positionsFailed(result.errorMessage);
+            return;
+        }
+        positions_ = result.positions;
+        legs_ = result.legs;
+        dataSource_ = DataSource::Compile;
+        dataTakenAt_ = result.takenAt;
+        emit positionsReady();
+    });
 }
 
 ProjectStationPositionService::~ProjectStationPositionService()
 {
     runner_->stop();
     loadWatcher_->waitForFinished();
+    compileLoadWatcher_->waitForFinished();
 }
 
-void ProjectStationPositionService::request(const ProjectStationPositionRequest &request)
+void ProjectStationPositionService::run(const ProjectStationPositionRequest &request)
 {
     if (request.configPath.isEmpty()) {
         return;
@@ -53,9 +82,43 @@ void ProjectStationPositionService::request(const ProjectStationPositionRequest 
         queued_ = request;
         return;
     }
-    if (!isCurrent(request)) {
-        start(request);
+    start(request);
+}
+
+void ProjectStationPositionService::cancel()
+{
+    ++generation_;
+    queued_.reset();
+    if (running_) {
+        running_ = false;
+        runner_->stop();
+        emit runningChanged(false);
     }
+}
+
+bool ProjectStationPositionService::attemptFailed(const ProjectStationPositionRequest &request) const
+{
+    return attemptFailed_ && attemptKey_ == request.configPath + QLatin1Char('\n') + request.executableInput
+        && !sourceSavedSince(request.sourceFiles, attemptStartedAt_);
+}
+
+void ProjectStationPositionService::loadCompileExport(const QString &sqlPath, const QDateTime &compileStartedAt)
+{
+    // A compile is newer than any run, so a run in progress is dropped.
+    ++generation_;
+    queued_.reset();
+    if (running_) {
+        running_ = false;
+        runner_->stop();
+        emit runningChanged(false);
+    }
+    const quint64 generation = generation_;
+    compileLoadWatcher_->setFuture(QtConcurrent::run([sqlPath, generation, compileStartedAt]() {
+        LoadResult result = loadPositions(sqlPath);
+        result.generation = generation;
+        result.takenAt = compileStartedAt;
+        return result;
+    }));
 }
 
 void ProjectStationPositionService::clear()
@@ -64,8 +127,11 @@ void ProjectStationPositionService::clear()
     queued_.reset();
     positions_.clear();
     legs_.clear();
+    dataSource_ = DataSource::None;
+    dataTakenAt_ = QDateTime();
     attemptKey_.clear();
     attemptStartedAt_ = QDateTime();
+    attemptFailed_ = false;
     if (running_) {
         running_ = false;
         runner_->stop();
@@ -78,6 +144,21 @@ bool ProjectStationPositionService::isRunning() const
     return running_;
 }
 
+ProjectStationPositionService::DataSource ProjectStationPositionService::dataSource() const
+{
+    return dataSource_;
+}
+
+QDateTime ProjectStationPositionService::dataTakenAt() const
+{
+    return dataTakenAt_;
+}
+
+bool ProjectStationPositionService::isOutOfDate(const QStringList &sourceFiles) const
+{
+    return dataSource_ != DataSource::None && sourceSavedSince(sourceFiles, dataTakenAt_);
+}
+
 const QHash<QString, Th2StationPosition> &ProjectStationPositionService::positions() const
 {
     return positions_;
@@ -86,22 +167,6 @@ const QHash<QString, Th2StationPosition> &ProjectStationPositionService::positio
 const QVector<Th2MeasuredLeg> &ProjectStationPositionService::legs() const
 {
     return legs_;
-}
-
-bool ProjectStationPositionService::isCurrent(const ProjectStationPositionRequest &request) const
-{
-    // A failed attempt is not repeated until a source, the config or the Therion executable changes.
-    if (attemptKey_ != request.configPath + QLatin1Char('\n') + request.executableInput || !attemptStartedAt_.isValid()) {
-        return false;
-    }
-    for (const QString &sourceFile : request.sourceFiles) {
-        // Legs and positions do not depend on drawings, so saving one does not start a run.
-        if (therionSourceDocumentTypeForFilePath(sourceFile) != TherionSourceDocumentType::TherionMap
-            && QFileInfo(sourceFile).lastModified() > attemptStartedAt_) {
-            return false;
-        }
-    }
-    return true;
 }
 
 void ProjectStationPositionService::start(const ProjectStationPositionRequest &request)
@@ -178,6 +243,9 @@ void ProjectStationPositionService::handleLoadFinished()
     }
     positions_ = result.positions;
     legs_ = result.legs;
+    dataSource_ = DataSource::Run;
+    dataTakenAt_ = attemptStartedAt_;
+    attemptFailed_ = false;
     emit positionsReady();
     finish(QString());
 }
@@ -187,14 +255,14 @@ void ProjectStationPositionService::finish(const QString &errorMessage)
     running_ = false;
     emit runningChanged(false);
     if (!errorMessage.isEmpty()) {
-        positions_.clear();
-        legs_.clear();
+        // The positions there were stay usable; only this attempt failed.
+        attemptFailed_ = true;
         emit positionsFailed(errorMessage);
     }
     if (queued_.has_value()) {
         const ProjectStationPositionRequest next = *queued_;
         queued_.reset();
-        request(next);
+        run(next);
     }
 }
 

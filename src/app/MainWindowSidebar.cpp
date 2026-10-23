@@ -347,8 +347,8 @@ void MainWindow::buildStructureSidebar()
     auto *filesViewButton = new QPushButton(tr("Files"), structureViewSelector);
     auto *surveyViewButton = new QPushButton(tr("Survey"), structureViewSelector);
     auto *mapViewButton = new QPushButton(QStringLiteral("Map"), structureViewSelector);
-    auto *joinsViewButton = new QPushButton(tr("Joins"), structureViewSelector);
-    joinsViewButton->setToolTip(tr("Equates that join different surveys"));
+    auto *joinsViewButton = new QPushButton(tr("Connections"), structureViewSelector);
+    joinsViewButton->setToolTip(tr("Equates and joins that connect different surveys"));
     const QList<QPushButton *> structureViewButtons = {filesViewButton, surveyViewButton, mapViewButton, joinsViewButton};
     for (QPushButton *button : structureViewButtons) {
         button->setCheckable(true);
@@ -393,6 +393,7 @@ void MainWindow::buildStructureSidebar()
     structureViewStack_->addWidget(projectJoinsPanel_);
     connect(projectJoinsPanel_, &TherionStudio::ProjectJoinsPanel::joinRequested, this, &MainWindow::openProjectJoin);
     connect(projectJoinsPanel_, &TherionStudio::ProjectJoinsPanel::joinOnlyRequested, this, &MainWindow::openProjectJoinOnly);
+    connect(projectJoinsPanel_, &TherionStudio::ProjectJoinsPanel::targetConfigRequested, this, &MainWindow::browseTherionTargetConfig);
     setupJoinStationPositions();
     connect(projectJoinsPanel_,
             &TherionStudio::ProjectJoinsPanel::sourceLocationRequested,
@@ -490,7 +491,6 @@ void MainWindow::setStructurePanelPage(int pageIndex)
     }
     // Joins has its own list; the shared Survey/Map tree and its view mode stay as they were.
     if (boundedPageIndex == StructurePanelJoinsPage) {
-        requestJoinStationPositions();
         return;
     }
 

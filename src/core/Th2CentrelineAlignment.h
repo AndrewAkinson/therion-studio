@@ -83,6 +83,9 @@ struct Th2CentrelineFit
 
 [[nodiscard]] std::optional<qreal> therionLengthUnitMetres(const QString &unit);
 
+// Drawing position of a `point x y station` command.
+[[nodiscard]] std::optional<QPointF> th2PointCommandPosition(const TherionSourceLogicalCommand &command);
+
 // Station points of the scrap that starts at `scrapStartLine` (no scrap station-name transform applied).
 [[nodiscard]] QVector<Th2ScrapStationPoint> th2ScrapStationPoints(const QVector<TherionSourceLogicalCommand> &commands,
                                                                   int scrapStartLine);
@@ -132,6 +135,11 @@ struct Th2CentrelineFit
                                                          const QHash<int, QString> &stationKeyByLine,
                                                          const QVector<Th2MeasuredLeg> &legs,
                                                          const QString &projection);
+
+// The same fit from a scrap's station points given as station key and drawing position.
+[[nodiscard]] Th2CentrelineFit fitTh2StationPointsToMeasuredLegs(const QVector<QPair<QString, QPointF>> &drawnStations,
+                                                                 const QVector<Th2MeasuredLeg> &legs,
+                                                                 const QString &projection);
 
 // True when two fits of one scrap differ in scale by more than a tenth (a scrap drawn off its XVI background).
 // Rotation is not compared: it differs by the declination when the drawing was made without it.

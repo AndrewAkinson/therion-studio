@@ -6,8 +6,13 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
-#include <QTimer>
+#include <QProgressBar>
+#include <QPushButton>
 #include <QSignalSpy>
+#include <QStandardItemModel>
+#include <QStyle>
+#include <QStyleOptionViewItem>
+#include <QTimer>
 #include <QToolButton>
 #include <QTreeView>
 #include <QtTest/QtTest>
@@ -134,7 +139,7 @@ private slots:
         QVERIFY(QTest::qWaitForWindowExposed(&panel));
         auto *tree = panel.findChild<QTreeView *>();
         tree->setFocus();
-        // Row 1 is a multi-station group: its menu has no `Open Join` (that is per pair), unlike row 0.
+        // Row 1 is a multi-station group: its menu has no `Open Connection` (that is per pair), unlike row 0.
         tree->setCurrentIndex(tree->model()->index(1, 0));
 
         // Read the popup's actions, then close it so the modal menu returns.
@@ -152,7 +157,7 @@ private slots:
         QCoreApplication::sendEvent(tree, &keyboardMenu);
 
         QVERIFY2(menuActions.contains(tr("Go to Equate in Source")), qPrintable(menuActions.join(QLatin1Char('|'))));
-        QVERIFY2(!menuActions.contains(tr("Open Join")), qPrintable(menuActions.join(QLatin1Char('|'))));
+        QVERIFY2(!menuActions.contains(tr("Open Connection")), qPrintable(menuActions.join(QLatin1Char('|'))));
     }
 
     void coloursRowsByJoinKindAndOpensJoinOnlyScraps()
@@ -195,8 +200,9 @@ private slots:
         const ProjectJoinsPanel::ConnectionColors colors{QColor(Qt::darkGreen), QColor(Qt::darkCyan), QColor(Qt::darkYellow)};
         panel.setConnectionColors(colors);
         QVERIFY(legend->isVisibleTo(&panel));
-        // Seven entries styled like the rows, plus the warning icon; the Key button folds them away.
-        QCOMPARE(legend->findChildren<QLabel *>().size(), 8);
+        // Nine entries styled like the rows, plus the warning and two connection-need icons; the Key button folds them
+        // away.
+        QCOMPARE(legend->findChildren<QLabel *>().size(), 12);
         auto *legendToggle = panel.findChild<QToolButton *>(QStringLiteral("joinsLegendToggle"));
         legendToggle->click();
         QVERIFY(!legend->isVisibleTo(&panel));
@@ -221,6 +227,8 @@ private slots:
         QVERIFY(!joinOnly.data(Qt::DecorationRole).value<QIcon>().isNull());
         QVERIFY(joinOnly.data(Qt::ToolTipRole).toString().contains(QStringLiteral("Validation")));
         QVERIFY(joined.data(Qt::DecorationRole).value<QIcon>().isNull());
+        // Without station positions the join-only row also says it needs them; its icon stays the rule warning.
+        QVERIFY(joinOnly.data(Qt::ToolTipRole).toString().contains(QStringLiteral("export database -fmt sql")));
 
         // Two scraps: opened as a pair, placed from computed station positions when they are available.
         QSignalSpy joinOnlySpy(&panel, &ProjectJoinsPanel::joinOnlyRequested);
@@ -228,6 +236,68 @@ private slots:
         QCOMPARE(joinOnlySpy.count(), 1);
         const auto group = joinOnlySpy.at(0).at(0).value<ProjectJoinGroup>();
         QCOMPARE(group.joinOnlyScraps.at(1).sourceFile, QStringLiteral("far.th2"));
+
+        // With positions whose legs fit no scrap, the drawn equate row is placed by its XVI only. This rebuilds the
+        // rows, so earlier indexes are not used after it.
+        panel.setConnectionData(QSet<QString>(), false);
+        const QModelIndex approximate = model->index(0, 0);
+        QVERIFY(!approximate.data(Qt::DecorationRole).value<QIcon>().isNull());
+        QVERIFY(approximate.data(Qt::ToolTipRole).toString().contains(QStringLiteral("placed by its XVI")));
+        panel.setConnectionData(QSet<QString>(), true);
+        QVERIFY(model->index(0, 0).data(Qt::ToolTipRole).toString().contains(QStringLiteral("out of date")));
+    }
+
+    void linesUpRowTextWithAndWithoutASymbol()
+    {
+        // The row with the rule warning and a plain row are given the same width for the same text.
+        QStandardItemModel model;
+        auto *withIcon = new QStandardItem(QStringLiteral("1@a = 2@b"));
+        withIcon->setIcon(QApplication::style()->standardIcon(QStyle::SP_MessageBoxWarning));
+        model.appendRow(withIcon);
+        model.appendRow(new QStandardItem(QStringLiteral("1@a = 2@b")));
+        ProjectJoinsPanel panel;
+        auto *tree = panel.findChild<QTreeView *>();
+        QStyleOptionViewItem option;
+        option.initFrom(tree);
+        option.widget = tree;
+        // As the view sets it: its icon size, the small icon size by default.
+        const int extent = tree->style()->pixelMetric(QStyle::PM_SmallIconSize, nullptr, tree);
+        option.decorationSize = QSize(extent, extent);
+        QAbstractItemDelegate *delegate = tree->itemDelegate();
+        QCOMPARE(delegate->sizeHint(option, model.index(1, 0)).width(),
+                 delegate->sizeHint(option, model.index(0, 0)).width());
+    }
+
+    void offersTheTargetConfigOnlyWhenNoneIsSelected()
+    {
+        ProjectJoinsPanel panel;
+        QSignalSpy requested(&panel, &ProjectJoinsPanel::targetConfigRequested);
+        auto *button = panel.findChild<QPushButton *>(QStringLiteral("connectionsTargetConfigButton"));
+        QVERIFY(button != nullptr);
+        QVERIFY(!button->isVisibleTo(&panel));
+        panel.setDataStatus(QStringLiteral("No target config"), true);
+        QVERIFY(button->isVisibleTo(&panel));
+        button->click();
+        QCOMPARE(requested.count(), 1);
+        panel.setDataStatus(QStringLiteral("Positions"), false);
+        QVERIFY(!button->isVisibleTo(&panel));
+    }
+
+    void showsRunProgressWithCancel()
+    {
+        ProjectJoinsPanel panel;
+        QSignalSpy cancelled(&panel, &ProjectJoinsPanel::runCancelRequested);
+        auto *bar = panel.findChild<QProgressBar *>();
+        QVERIFY(bar != nullptr);
+        QVERIFY(!bar->isVisibleTo(&panel));
+        panel.setRunInProgress(true);
+        QVERIFY(bar->isVisibleTo(&panel));
+        auto *cancel = panel.findChild<QPushButton *>(QStringLiteral("connectionsRunCancelButton"));
+        QVERIFY(cancel != nullptr);
+        cancel->click();
+        QCOMPARE(cancelled.count(), 1);
+        panel.setRunInProgress(false);
+        QVERIFY(!bar->isVisibleTo(&panel));
     }
 
     void keepsProjectionAndFiltersRows()

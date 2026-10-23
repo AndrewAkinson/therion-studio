@@ -12,6 +12,7 @@ drawing in each pane.
 Status: phase 1 implemented (slices 1–6 below). Phase 2 (options A-C and fixes D1-D5) implemented by 2026-10-22,
 pending review and the PR; items left for later are noted in their sections. Specification, architecture, user manual, worklog and translations are updated in the same
 changes that implement each slice. Not archived until phase 2 is done.
+Phase 3 (connections and compile data, E1-E4, and fixes E5a-E5c) implemented 2026-10-23, pending review and the PR.
 
 ## Current State
 
@@ -425,6 +426,102 @@ Still open:
 
 1. Check during C4 whether `export database` can leave out the shot tables. No longer wanted once D5 is done, since
    it reads the `SHOT` table.
+
+## Phase 3: Connections and Compile Data (planned 2026-10-23)
+
+Background Therion runs are expensive, so connection windows take Therion data from the user's own compile, as the
+planned structure info panel does (`plans/STRUCTURE_INFO_PANEL_PLAN.md` on `feature/structure-info-panel`). The
+shared code is on `feature/compile-results` (from `main`, `TherionCompileResultRecorder`), merged into this branch and
+into the info panel branch so neither depends on the other.
+
+What the SQL data is used for today:
+1. Scale and rotation of each drawing from measured legs between its station points. Used even when the station is
+   drawn in both drawings; without it the XVI is used, which may be turned by the declination (existing note).
+2. Lining up two drawings that share no station point (equates and Therion `join` rows alike).
+3. Choosing a drawing for an equate whose station has no station point in that projection (nearest scrap of its
+   survey).
+
+### E1. Terminology
+
+Status: done 2026-10-23. Kept as `join`: `Go to Join in Source`, the key entries, the row
+tooltips about `join` kinds and the Validation messages, since they name the Therion command.
+
+- "Connection" is the general word: the sidebar page becomes `Connections`, the Join view becomes the connection
+  window, and the join-related UI text follows. `join` and `equate` are kept for the Therion commands and their rows
+  (legend entries such as `Automatic Join` stay).
+- Specification, manual, worklog and translations updated in the same change. Internal type names are not renamed in
+  this slice.
+
+### E2. Compile data instead of the automatic run
+
+Status: done 2026-10-23. No new UI strings.
+
+- Merge `feature/compile-results`. Station positions and legs are read from the database export of the latest
+  compile (`TherionCompileResult::databasePaths`), with the existing queries (`TherionStationPositionExport`).
+- The automatic background run is removed: showing the Connections page or a project index refresh no longer starts
+  Therion.
+- A one-off run is kept only for opening a connection that cannot be lined up otherwise (uses 2 and 3) when there is
+  no compile data. Use 1 without compile data falls back to the XVI as now.
+- Compile data is out of date when a `.th` source was saved after the compile started. `.th2` saves do not make it
+  out of date, since positions and legs do not depend on drawings (as now).
+
+### E3. Status line above the list
+
+Status: done 2026-10-23 (`ProjectConnectionDataStatus`).
+
+One line for the whole list, since one compile serves every row. For example "Positions from the compile at 10:42",
+"Sources changed since the compile", or "No database export. Add `export database` to the thconfig". Nothing is shown
+per row for this.
+
+### E4. Row symbols
+
+Status: done 2026-10-23. Approximate uses Lucide `circle-dashed`. Measured on the test project:
+the fit of every scrap takes about 11 ms (555 legs, 180 scraps), so it runs on the UI thread when the positions or
+the index change. Without positions no row is marked approximate (the status line already says there are none).
+
+At most one symbol per row, for what that connection needs now. Tooltips and the legend explain each.
+
+| Symbol | Meaning |
+|---|---|
+| none | opens and lines up fully now |
+| approximate | opens, lined up from the XVI only (may be turned by the declination); compile data would improve it |
+| needs compile data | cannot be lined up (no shared station point, or an equated station not drawn); works after a compile with a database export |
+
+- `Cannot be opened` keeps its existing grey row; the rule warning icon is unchanged.
+- When compile data is out of date, rows that use it show their symbol faded; E3 says why.
+- Icons are Lucide, like the rest of the app. Proposed: `database` for needs compile data; the approximate icon is
+  chosen in the slice (not `compass`, which is the survey icon).
+- Working out "approximate" needs the legs fit per scrap; measure its cost on the test project before building it into
+  the list, and compute it off the UI thread if needed.
+
+Each slice is a separate commit with tests, doc and translation updates, checked in the app.
+
+### E5. Fixes found in use (2026-10-23)
+
+- **E5a Status line explains missing setup.** Without a target config most rows cannot be opened (6 of 43 plan rows
+  on the test project, 30 with its config), and nothing said why. The line now says so first, with a
+  `Select Target Config...` button (the Compiler pane's file dialog), and row tooltips name it. After a compile with
+  no database export it says that, and that opening a connection that needs positions runs Therion once.
+  Status: done 2026-10-23.
+- **E5b Symbols push row text right.** Only some rows have an icon, so their text starts further right. Reserve the
+  icon space on every row. Status: done with an item delegate (rows without a symbol keep no icon in the model).
+- **E5c Choose and show the one-off run.** The run takes about 1.3 s on the test project and many seconds on large
+  ones, it reran by itself when its positions were out of date, and the only sign of it was a line of text. Agreed
+  2026-10-23:
+  - A setting "When a connection needs station positions" with `Ask` (default), `Run Therion` and `Never`, stored
+    with the other settings.
+  - `Ask`: opening such a connection without positions asks "This connection needs station positions. Run Therion
+    now? On a large project this can take a while." with `Run Therion` and `Open Without Alignment`, and a
+    "Don't ask again" box that sets the setting to the choice made.
+  - Out-of-date positions from a run are used faded, like compile data, and are not rerun by themselves. Under `Ask`
+    the prompt offers updating them or using them as they are; `Run Therion` updates them; `Never` uses them.
+  - `Never`: opens without alignment (or with the out-of-date positions); compiling with `export database` provides
+    positions.
+  - While a run is going, the status line shows a busy bar, the seconds elapsed and `Cancel`.
+  - The requested connection opens by itself when the run finishes; after `Cancel` or a failed run it opens
+    without alignment.
+  - Status: done 2026-10-23 (`ConnectionPositionRunPolicy`, service `run`/`cancel`/
+    `attemptFailed` replacing the automatic `request`). A failed run now keeps the positions there were.
 
 ## Risks
 

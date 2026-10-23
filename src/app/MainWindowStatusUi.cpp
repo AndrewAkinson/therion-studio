@@ -87,7 +87,7 @@ void MainWindow::initializeDocumentStatusWidgets()
     statusMapJoinButton_->setPopupMode(QToolButton::InstantPopup);
     statusMapJoinButton_->setFont(statusMapModeLabel_->font());
     statusMapJoinButton_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
-    statusMapJoinButton_->setToolTip(tr("Drawings joined to this one through an equate"));
+    statusMapJoinButton_->setToolTip(tr("Drawings connected to this one"));
     statusMapJoinButton_->setMenu(new QMenu(statusMapJoinButton_));
     statusMapJoinButton_->setVisible(false);
     connect(statusMapJoinButton_->menu(), &QMenu::aboutToShow, this, [this]() {
@@ -206,7 +206,7 @@ void MainWindow::populateMapJoinMenu(QMenu *menu)
         showOutline->setCheckable(true);
         showOutline->setChecked(pair.outline->isOutlineVisible());
         connect(showOutline, &QAction::toggled, pair.outline, &TherionStudio::MapEditorJoinOutline::setOutlineVisible);
-        QAction *removeJoin = menu->addAction(tr("Remove Join"));
+        QAction *removeJoin = menu->addAction(tr("Remove Connection"));
         const QPointer<TherionStudio::MapEditorTab> host(mapTab);
         const QPointer<TherionStudio::MapEditorTab> partner(pair.partner);
         connect(removeJoin, &QAction::triggered, this, [this, host, partner]() {
@@ -258,9 +258,9 @@ void MainWindow::refreshMapJoinStatusButton(TherionStudio::MapEditorTab *mapTab)
     const QVector<TherionStudio::MapEditorJoinPair> pairs = TherionStudio::mapEditorJoinPairsFor(mapTab);
     statusMapJoinButton_->setVisible(!pairs.isEmpty());
     if (pairs.size() == 1) {
-        statusMapJoinButton_->setText(tr("Joined: %1").arg(pairs.first().partner->displayName()));
+        statusMapJoinButton_->setText(tr("Connected: %1").arg(pairs.first().partner->displayName()));
     } else if (pairs.size() > 1) {
-        statusMapJoinButton_->setText(tr("Joined: %1 drawings").arg(pairs.size()));
+        statusMapJoinButton_->setText(tr("Connected: %1 drawings").arg(pairs.size()));
     }
 }
 

@@ -28,6 +28,7 @@ public:
         bool mapAltitudeUnderlayEnabled = false;
         MapAppearanceSettings mapAppearance;
         bool joinOpensSeparateWindow = false;
+        QString connectionPositionRunMode = QStringLiteral("ask");
         bool troubleshootingLogsEnabled = false;
     };
 
@@ -55,6 +56,7 @@ private:
     QDoubleSpinBox *xviCenterlineWidthSpin_ = nullptr;
     QColor xviCenterlineColor_;
     QCheckBox *joinOpensSeparateWindowCheckBox_ = nullptr;
+    QComboBox *connectionPositionRunModeCombo_ = nullptr;
     QCheckBox *troubleshootingLogsCheckBox_ = nullptr;
     QPushButton *openLogFolderButton_ = nullptr;
     QPushButton *clearLogsButton_ = nullptr;

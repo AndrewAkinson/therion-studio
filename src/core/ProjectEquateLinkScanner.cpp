@@ -1,5 +1,6 @@
 #include "ProjectEquateLinkScanner.h"
 
+#include "Th2CentrelineAlignment.h"
 #include "TherionCommandLineModel.h"
 #include "TherionSourceLogicalDocument.h"
 #include "TherionStationNameRules.h"
@@ -138,7 +139,7 @@ ProjectEquateLinkScanResult scanProjectEquateLinks(const ProjectEquateLinkScanIn
                 continue;
             }
             result.stationPointsByScrapObjectId[scrapEntry.objectId].append(
-                ProjectScrapStationPoint{command.startLineNumber, station.stationKey});
+                ProjectScrapStationPoint{command.startLineNumber, station.stationKey, th2PointCommandPosition(command)});
             drawingPoints.append(ProjectStationDrawingPoint{station.stationKey,
                                                             sourceFile,
                                                             command.startLineNumber,

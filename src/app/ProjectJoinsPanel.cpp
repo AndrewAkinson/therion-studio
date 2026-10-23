@@ -1,5 +1,7 @@
 #include "ProjectJoinsPanel.h"
 
+#include "LucideIconFactory.h"
+
 #include <QComboBox>
 #include <QContextMenuEvent>
 #include <QFileInfo>
@@ -8,10 +10,14 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
+#include <QProgressBar>
+#include <QPushButton>
 #include <QSet>
 #include <QSortFilterProxyModel>
 #include <QStandardItemModel>
 #include <QStyle>
+#include <QStyledItemDelegate>
+#include <QTimer>
 #include <QToolButton>
 #include <QTreeView>
 #include <QVBoxLayout>
@@ -52,6 +58,26 @@ QString joinItemReferences(const ProjectJoinCommand &join)
     return QStringLiteral("(%1)").arg(references.join(QStringLiteral(" ~ ")));
 }
 
+// Every row keeps room for a symbol, so row text lines up whether a row shows one or not.
+class ReservedIconDelegate final : public QStyledItemDelegate
+{
+public:
+    using QStyledItemDelegate::QStyledItemDelegate;
+
+protected:
+    void initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const override
+    {
+        QStyledItemDelegate::initStyleOption(option, index);
+        if (!option->features.testFlag(QStyleOptionViewItem::HasDecoration)) {
+            const int extent = option->widget != nullptr
+                ? option->widget->style()->pixelMetric(QStyle::PM_SmallIconSize, nullptr, option->widget)
+                : 16;
+            option->features |= QStyleOptionViewItem::HasDecoration;
+            option->decorationSize = QSize(extent, extent);
+        }
+    }
+};
+
 QString fileLocation(const QString &sourceFile, int lineNumber)
 {
     return QStringLiteral("%1:%2").arg(QFileInfo(sourceFile).fileName(), QString::number(lineNumber));
@@ -65,12 +91,46 @@ ProjectJoinsPanel::ProjectJoinsPanel(QWidget *parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(6);
 
+    dataStatusLabel_ = new QLabel(this);
+    dataStatusLabel_->setObjectName(QStringLiteral("connectionsDataStatus"));
+    dataStatusLabel_->setTextFormat(Qt::PlainText);
+    dataStatusLabel_->setWordWrap(true);
+    layout->addWidget(dataStatusLabel_);
+    targetConfigButton_ = new QPushButton(tr("Select Target Config..."), this);
+    targetConfigButton_->setObjectName(QStringLiteral("connectionsTargetConfigButton"));
+    targetConfigButton_->setVisible(false);
+    connect(targetConfigButton_, &QPushButton::clicked, this, &ProjectJoinsPanel::targetConfigRequested);
+    layout->addWidget(targetConfigButton_, 0, Qt::AlignLeft);
+
+    runProgress_ = new QWidget(this);
+    auto *runProgressLayout = new QHBoxLayout(runProgress_);
+    runProgressLayout->setContentsMargins(0, 0, 0, 0);
+    runProgressLayout->setSpacing(6);
+    auto *runBar = new QProgressBar(runProgress_);
+    // No end is known, so the bar only shows that Therion is busy.
+    runBar->setRange(0, 0);
+    runBar->setTextVisible(false);
+    runElapsedLabel_ = new QLabel(runProgress_);
+    auto *cancelButton = new QPushButton(tr("Cancel"), runProgress_);
+    cancelButton->setObjectName(QStringLiteral("connectionsRunCancelButton"));
+    connect(cancelButton, &QPushButton::clicked, this, &ProjectJoinsPanel::runCancelRequested);
+    runProgressLayout->addWidget(runBar, 1);
+    runProgressLayout->addWidget(runElapsedLabel_);
+    runProgressLayout->addWidget(cancelButton);
+    runProgress_->setVisible(false);
+    layout->addWidget(runProgress_);
+    runElapsedTimer_ = new QTimer(this);
+    runElapsedTimer_->setInterval(1000);
+    connect(runElapsedTimer_, &QTimer::timeout, this, [this]() {
+        runElapsedLabel_->setText(tr("%1 s").arg(runElapsed_.elapsed() / 1000));
+    });
+
     auto *projectionRow = new QHBoxLayout;
     projectionRow->setContentsMargins(0, 0, 0, 0);
     projectionRow->setSpacing(6);
     auto *projectionLabel = new QLabel(tr("View:"), this);
     projectionCombo_ = new QComboBox(this);
-    projectionCombo_->setToolTip(tr("Scrap projection whose drawings are joined"));
+    projectionCombo_->setToolTip(tr("Scrap projection whose drawings are connected"));
     projectionLabel->setBuddy(projectionCombo_);
     projectionRow->addWidget(projectionLabel);
     projectionRow->addWidget(projectionCombo_, 1);
@@ -88,6 +148,7 @@ ProjectJoinsPanel::ProjectJoinsPanel(QWidget *parent)
     proxyModel_->setRecursiveFilteringEnabled(true);
 
     tree_ = new QTreeView(this);
+    tree_->setItemDelegate(new ReservedIconDelegate(tree_));
     tree_->setMinimumWidth(0);
     tree_->setModel(proxyModel_);
     tree_->setRootIsDecorated(true);
@@ -166,6 +227,37 @@ void ProjectJoinsPanel::setActivationOpensSeparateWindow(bool separateWindow)
     activationOpensSeparateWindow_ = separateWindow;
 }
 
+void ProjectJoinsPanel::setDataStatus(const QString &text, bool offerTargetConfig)
+{
+    dataStatusLabel_->setText(text);
+    targetConfigButton_->setVisible(offerTargetConfig);
+}
+
+void ProjectJoinsPanel::setRunInProgress(bool running)
+{
+    if (running == runProgress_->isVisibleTo(this)) {
+        return;
+    }
+    runProgress_->setVisible(running);
+    if (running) {
+        runElapsed_.start();
+        runElapsedLabel_->setText(tr("%1 s").arg(0));
+        runElapsedTimer_->start();
+    } else {
+        runElapsedTimer_->stop();
+    }
+}
+
+void ProjectJoinsPanel::setConnectionData(const std::optional<QSet<QString>> &fittedScraps, bool outOfDate)
+{
+    if (fittedScraps == fittedScraps_ && outOfDate == dataOutOfDate_) {
+        return;
+    }
+    fittedScraps_ = fittedScraps;
+    dataOutOfDate_ = outOfDate;
+    rebuildRows();
+}
+
 void ProjectJoinsPanel::setConnectionColors(const ConnectionColors &colors)
 {
     colors_ = colors;
@@ -206,6 +298,14 @@ void ProjectJoinsPanel::updateLegend()
     const int iconSize = style()->pixelMetric(QStyle::PM_SmallIconSize, nullptr, this);
     warning->setPixmap(ruleWarningIcon().pixmap(iconSize, iconSize));
     addEntry(tr("Joins not valid"), text, false, warning);
+    for (const ProjectConnectionNeed need : {ProjectConnectionNeed::Approximate, ProjectConnectionNeed::ComputedPositions}) {
+        auto *icon = new QLabel(legend_);
+        icon->setPixmap(connectionNeedIcon(need, false).pixmap(iconSize, iconSize));
+        addEntry(need == ProjectConnectionNeed::Approximate ? tr("Placed by its XVI only") : tr("Needs station positions"),
+                 text,
+                 false,
+                 icon);
+    }
     // Join-only rows are written `(A ~ B)`; the entry shows that form.
     addEntry(QStringLiteral("(A ~ B)  ") + tr("Join with no centreline tie"), text, false);
     legendBox_->setVisible(colors_.automaticScrapJoin.isValid());
@@ -225,6 +325,33 @@ void ProjectJoinsPanel::applyRuleWarning(QStandardItem *item,
     }
     item->setIcon(ruleWarningIcon());
     toolTip->append(tr("A join here breaks a join rule; see the Validation panel."));
+}
+
+QIcon ProjectJoinsPanel::connectionNeedIcon(ProjectConnectionNeed need, bool faded) const
+{
+    const QString name = need == ProjectConnectionNeed::Approximate ? QStringLiteral("circle-dashed")
+                                                                     : QStringLiteral("database");
+    const int extent = style()->pixelMetric(QStyle::PM_SmallIconSize, nullptr, this);
+    const QColor color = palette().color(faded ? QPalette::Disabled : QPalette::Active, QPalette::Text);
+    return QIcon(renderLucidePixmap(name, color, extent, devicePixelRatioF()));
+}
+
+void ProjectJoinsPanel::applyConnectionNeed(QStandardItem *item, ProjectConnectionNeed need, QStringList *toolTip) const
+{
+    if (need == ProjectConnectionNeed::None) {
+        return;
+    }
+    toolTip->append(need == ProjectConnectionNeed::Approximate
+                        ? tr("A drawing is placed by its XVI, as its scrap has too few measured legs between station "
+                             "points.")
+                        : tr("Lines up once there are station positions; compile with \"export database -fmt sql\" "
+                             "in the thconfig."));
+    if (dataOutOfDate_) {
+        toolTip->append(tr("The station positions are out of date."));
+    }
+    if (item->icon().isNull()) {
+        item->setIcon(connectionNeedIcon(need, dataOutOfDate_));
+    }
 }
 
 void ProjectJoinsPanel::rebuildRows()
@@ -259,6 +386,9 @@ void ProjectJoinsPanel::rebuildRows()
                 const ProjectJoinPair &pair = group.pairs.at(pairIndex);
                 if (!pair.ruleViolations.isEmpty() && groupItem->icon().isNull()) {
                     applyRuleWarning(groupItem, pair.ruleViolations, &toolTip);
+                }
+                if (groupItem->icon().isNull()) {
+                    applyConnectionNeed(groupItem, projectJoinPairNeed(pair, fittedScraps()), &toolTip);
                 }
                 groupItem->appendRow(pairItem(pair,
                                               stationReferences({pair.first.station, pair.second.station}),
@@ -297,6 +427,7 @@ QStandardItem *ProjectJoinsPanel::pairItem(const ProjectJoinPair &pair,
     toolTip += connectionDescription(pair.connection, pair.joins);
     applyConnectionStyle(item, pair.connection, true);
     applyRuleWarning(item, pair.ruleViolations, &toolTip);
+    applyConnectionNeed(item, projectJoinPairNeed(pair, fittedScraps()), &toolTip);
     if (!pair.canOpen()) {
         item->setForeground(palette().brush(QPalette::Disabled, QPalette::Text));
     }
@@ -312,6 +443,7 @@ QStandardItem *ProjectJoinsPanel::joinOnlyItem(const ProjectJoinGroup &group, in
     toolTip.append(tr("No equate or nosurvey leg links these surveys."));
     applyConnectionStyle(item, group.joinOnlyConnection, false);
     applyRuleWarning(item, group.joinOnlyRuleViolations, &toolTip);
+    applyConnectionNeed(item, projectJoinOnlyNeed(group, fittedScraps()), &toolTip);
     item->setToolTip(toolTip.join(QLatin1Char('\n')));
     return item;
 }
@@ -397,7 +529,11 @@ QString ProjectJoinsPanel::sideDescription(const ProjectJoinSide &side) const
     case ProjectJoinSideStatus::Unresolved:
         return tr("%1: station not found in any centreline").arg(side.station.reference);
     case ProjectJoinSideStatus::NotDrawn:
-        return tr("%1: no station point in a drawing that Therion reads").arg(side.station.reference);
+        return snapshot_.rootConfigPath.isEmpty()
+            ? tr("%1: no station point in a drawing that Therion reads; no target config is selected, so those "
+                 "drawings are unknown")
+                  .arg(side.station.reference)
+            : tr("%1: no station point in a drawing that Therion reads").arg(side.station.reference);
     case ProjectJoinSideStatus::NotDrawnInProjection:
         return tr("%1: not drawn in the %2 view").arg(side.station.reference, projectionCombo_->currentText());
     case ProjectJoinSideStatus::SurveyDrawnWithoutStation:
@@ -500,8 +636,8 @@ void ProjectJoinsPanel::showContextMenu(const QPoint &position)
     QMenu menu(this);
     if (pair.has_value()) {
         const bool separate = activationOpensSeparateWindow_;
-        QAction *openJoin = menu.addAction(tr("Open Join"));
-        QAction *openOther = menu.addAction(separate ? tr("Open Join in Tabs") : tr("Open Join with Separate Window"));
+        QAction *openJoin = menu.addAction(tr("Open Connection"));
+        QAction *openOther = menu.addAction(separate ? tr("Open Connection in Tabs") : tr("Open Connection with Separate Window"));
         openJoin->setEnabled(pair->canOpen());
         openOther->setEnabled(pair->canOpen());
         connect(openJoin, &QAction::triggered, this, [this, pair, separate]() { emit joinRequested(*pair, separate); });

@@ -723,9 +723,7 @@ void MainWindow::applyStructureSidebarIndex(const TherionStudio::ProjectIndexSna
     lastStructureSidebarProjectIndex_ = projectIndex;
     if (projectJoinsPanel_ != nullptr) {
         projectJoinsPanel_->setProjectIndex(projectIndex);
-        if (structureViewStack_ != nullptr && structureViewStack_->currentWidget() == projectJoinsPanel_) {
-            requestJoinStationPositions();
-        }
+        refreshConnectionDataStatus();
     }
     if (!firstProjectIndexLogged_ && !projectIndex.projectRootPath.isEmpty()) {
         firstProjectIndexLogged_ = true;

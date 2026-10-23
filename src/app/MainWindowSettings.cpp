@@ -23,6 +23,7 @@ void MainWindow::showSettingsDialog()
     initialSettings.automaticProjectValidationEnabled =
         sessionStore_->automaticProjectValidationEnabled();
     initialSettings.joinOpensSeparateWindow = sessionStore_->joinOpensSeparateWindow();
+    initialSettings.connectionPositionRunMode = sessionStore_->connectionPositionRunMode();
     initialSettings.troubleshootingLogsEnabled =
         sessionStore_->troubleshootingLogsEnabledUntilUtc().isValid()
         && sessionStore_->troubleshootingLogsEnabledUntilUtc() > QDateTime::currentDateTimeUtc();
@@ -50,6 +51,7 @@ void MainWindow::showSettingsDialog()
     updateMapAltitudeUnderlays();
     sessionStore_->setAutomaticProjectValidationEnabled(updatedSettings.automaticProjectValidationEnabled);
     sessionStore_->setJoinOpensSeparateWindow(updatedSettings.joinOpensSeparateWindow);
+    sessionStore_->setConnectionPositionRunMode(updatedSettings.connectionPositionRunMode);
     if (projectJoinsPanel_ != nullptr) {
         projectJoinsPanel_->setActivationOpensSeparateWindow(updatedSettings.joinOpensSeparateWindow);
     }

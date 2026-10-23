@@ -65,6 +65,12 @@ private slots:
         QCOMPARE(pairs.at(1).second.status, ProjectJoinSideStatus::NotDrawnInProjection);
         QVERIFY(!pairs.at(1).isAvailable());
         QCOMPARE(pairs.at(2).second.status, ProjectJoinSideStatus::NotDrawn);
+        // A drawn equate is placed at its station; anything else needs computed positions.
+        QVERIFY(!pairs.at(0).needsComputedPositions());
+        QVERIFY(pairs.at(1).needsComputedPositions());
+        ProjectJoinPair noSurvey = pairs.at(0);
+        noSurvey.linkKind = ProjectStationLinkKind::NoSurvey;
+        QVERIFY(noSurvey.needsComputedPositions());
 
         QCOMPARE(groups.at(1).pairs.size(), 1);
         QCOMPARE(groups.at(1).pairs.at(0).second.status, ProjectJoinSideStatus::Unresolved);
@@ -95,6 +101,7 @@ private slots:
         QCOMPARE(plan.first.surveyScraps.size(), 2);
         QVERIFY(!plan.isAvailable());
         QVERIFY(plan.canOpen());
+        QVERIFY(plan.needsComputedPositions());
         // No offset in extended, so such rows do not open there.
         snapshot.stationDrawingPointsByStationKey[b.stationKey] = {drawing(b, QStringLiteral("b-ee.th2"), QStringLiteral("extended"))};
         const ProjectJoinPair extended = projectJoinGroups(snapshot, QStringLiteral("extended")).at(0).pairs.at(0);
@@ -108,6 +115,54 @@ private slots:
                  QStringLiteral("near"));
         positions.remove(a.stationKey);
         QVERIFY(!nearestSurveyScrap(snapshot, plan.first, positions).has_value());
+    }
+
+    void fitsScrapsToMeasuredLegsAndSaysWhatRowsNeed()
+    {
+        // Scrap s draws three stations of two 5 m legs at twice the scale; t draws one station, so has no leg.
+        ProjectIndexSnapshot snapshot;
+        snapshot.scrapProjectionByObjectId = {{QStringLiteral("s"), QStringLiteral("plan")},
+                                              {QStringLiteral("t"), QStringLiteral("plan")}};
+        snapshot.stationPointsByScrapObjectId[QStringLiteral("s")] = {
+            ProjectScrapStationPoint{1, QStringLiteral("1@a"), QPointF(0.0, 0.0)},
+            ProjectScrapStationPoint{2, QStringLiteral("2@a"), QPointF(0.0, 10.0)},
+            ProjectScrapStationPoint{3, QStringLiteral("3@a"), QPointF(10.0, 10.0)}};
+        snapshot.stationPointsByScrapObjectId[QStringLiteral("t")] = {
+            ProjectScrapStationPoint{1, QStringLiteral("1@b"), QPointF(0.0, 0.0)}};
+        const QVector<Th2MeasuredLeg> legs = {
+            Th2MeasuredLeg{QStringLiteral("1@a"), QStringLiteral("2@a"), {0.0, 5.0, 0.0}},
+            Th2MeasuredLeg{QStringLiteral("2@a"), QStringLiteral("3@a"), {5.0, 0.0, 0.0}},
+            Th2MeasuredLeg{QStringLiteral("1@b"), QStringLiteral("9@b"), {5.0, 0.0, 0.0}}};
+        const QSet<QString> fitted = projectScrapsFittedByMeasuredLegs(snapshot, legs);
+        QCOMPARE(fitted, QSet<QString>({QStringLiteral("s")}));
+
+        ProjectJoinPair pair;
+        pair.projection = QStringLiteral("plan");
+        pair.first.status = ProjectJoinSideStatus::Drawn;
+        pair.first.drawing = ProjectStationDrawingPoint{QStringLiteral("1@a"), QStringLiteral("a.th2"), 1, {}, {}, pair.projection, QStringLiteral("s")};
+        pair.second.status = ProjectJoinSideStatus::Drawn;
+        pair.second.drawing = ProjectStationDrawingPoint{QStringLiteral("1@b"), QStringLiteral("b.th2"), 1, {}, {}, pair.projection, QStringLiteral("s")};
+        // A drawn equate needs nothing without positions (the status line covers that), nor when both scraps fit.
+        QCOMPARE(projectJoinPairNeed(pair, nullptr), ProjectConnectionNeed::None);
+        QCOMPARE(projectJoinPairNeed(pair, &fitted), ProjectConnectionNeed::None);
+        pair.second.drawing->scrapObjectId = QStringLiteral("t");
+        QCOMPARE(projectJoinPairNeed(pair, &fitted), ProjectConnectionNeed::Approximate);
+        pair.linkKind = ProjectStationLinkKind::NoSurvey;
+        QCOMPARE(projectJoinPairNeed(pair, nullptr), ProjectConnectionNeed::ComputedPositions);
+        // A row that cannot be opened shows no need.
+        pair.second.status = ProjectJoinSideStatus::NotDrawn;
+        QCOMPARE(projectJoinPairNeed(pair, nullptr), ProjectConnectionNeed::None);
+
+        ProjectJoinGroup joinOnly;
+        ProjectStructureEntry scrapS;
+        scrapS.objectId = QStringLiteral("s");
+        ProjectStructureEntry scrapT;
+        scrapT.objectId = QStringLiteral("t");
+        joinOnly.joinOnlyScraps = {scrapS, scrapS};
+        QCOMPARE(projectJoinOnlyNeed(joinOnly, nullptr), ProjectConnectionNeed::ComputedPositions);
+        QCOMPARE(projectJoinOnlyNeed(joinOnly, &fitted), ProjectConnectionNeed::None);
+        joinOnly.joinOnlyScraps = {scrapS, scrapT};
+        QCOMPARE(projectJoinOnlyNeed(joinOnly, &fitted), ProjectConnectionNeed::Approximate);
     }
 
     void classifiesPairsByJoinAndListsJoinOnlyConnections()

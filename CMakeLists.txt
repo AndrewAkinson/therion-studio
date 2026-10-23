@@ -314,6 +314,7 @@ set(THERION_BLOCK_EDITOR_QTEST_SUITES
     BlockEditorMoveSourceRewriterTest)
 
 set(THERION_RUNNER_SUPPORT_QTEST_SUITES
+    TherionCompileResultTest
     TherionExecutableSelectionControllerTest
     TherionRunnerConfigDisplayControllerTest
     TherionRunnerConfigResolverTest
@@ -429,6 +430,10 @@ set(THERION_APP_SOURCES
     src/app/ProjectScanCacheService.h
     src/app/ProjectFileDiscovery.cpp
     src/app/ProjectFileDiscovery.h
+    src/app/ConnectionPositionRunPolicy.cpp
+    src/app/ConnectionPositionRunPolicy.h
+    src/app/ProjectConnectionDataStatus.cpp
+    src/app/ProjectConnectionDataStatus.h
     src/app/ProjectJoinsPanel.cpp
     src/app/ProjectJoinsPanel.h
     src/app/ProjectFileWatchInventory.cpp
@@ -455,6 +460,8 @@ set(THERION_APP_SOURCES
     src/app/ValidationSummaryText.h
     src/app/ProjectStructureScanner.cpp
     src/app/ProjectStructureScanner.h
+    src/app/TherionCompileResult.cpp
+    src/app/TherionCompileResult.h
     src/app/TherionExecutableSelectionController.cpp
     src/app/TherionExecutableSelectionController.h
     src/app/TherionExecutableDetector.cpp
@@ -985,10 +992,12 @@ set(THERION_STUDIO_RESOURCE_FILES
     resources/project_templates/default/scraps/scrap1.th2
     resources/icons/lucide/LICENSE
     resources/icons/lucide/check.svg
+    resources/icons/lucide/circle-dashed.svg
     resources/icons/lucide/code.svg
     resources/icons/lucide/cog.svg
     resources/icons/lucide/compass.svg
     resources/icons/lucide/copy.svg
+    resources/icons/lucide/database.svg
     resources/icons/lucide/download.svg
     resources/icons/lucide/external-link.svg
     resources/icons/lucide/grip-vertical.svg
@@ -1571,6 +1580,7 @@ target_link_libraries(ValidationResultsMarkdownExporterTest PRIVATE therion_app 
 
 qt_add_executable(TherionRunnerSupportQTests
     tests/TherionRunnerSupportQTestMain.cpp
+    tests/TherionCompileResultTest.cpp
     tests/TherionExecutableSelectionControllerTest.cpp
     tests/TherionRunnerConfigDisplayControllerTest.cpp
     tests/TherionRunnerConfigResolverTest.cpp
@@ -1852,6 +1862,11 @@ endfunction()
 qt_add_executable(ProjectJoinsPanelTest
     tests/ProjectJoinsPanelTest.cpp)
 target_link_libraries(ProjectJoinsPanelTest PRIVATE therion_app Qt6::Test)
+qt_add_resources(ProjectJoinsPanelTest ProjectJoinsPanelTestResources
+    PREFIX "/"
+    FILES
+        resources/icons/lucide/circle-dashed.svg
+        resources/icons/lucide/database.svg)
 
 therion_add_map_editor_ui_test(MapEditorJoinTest
     tests/MapEditorJoinTest.cpp

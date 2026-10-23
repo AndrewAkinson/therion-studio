@@ -34,6 +34,11 @@ Active planning only. Completed history belongs in archive files. Stable archite
 - Manually review approximate passage outlines in representative projects;
   bounded fallback is intentionally incomplete and reports unfilled scraps.
 
+### Compile Results
+
+- `TherionCompileResultRecorder` records the user's latest compile and the database and xtherion files it wrote, for
+  views that show compiled data (the planned structure info panel and the Join Viewer). Nothing reads it yet.
+
 ### 2026.7.2 Planning
 
 - Keep the `2026.7.2` scope open for the focused performance sequence: Map runtime ownership R4-R5 and map refresh
@@ -340,6 +345,13 @@ Active planning only. Completed history belongs in archive files. Stable archite
 
 - Plan: `plans/JOIN_VIEWER_PLAN.md`. Phase 1 (Joins sidebar, centreline alignment, faded partner outline, linked views,
   `Joined` indicator) is implemented on `JoinViewer`.
+- Phase 3 (planned 2026-10-23): `Connections` naming, positions and legs from the user's compile instead of the
+  automatic background run (via `feature/compile-results`), a status line and row symbols (plan E1-E4). E2 (compile
+  data, one-off run only for joins that need positions) is committed; E1 (`Connections` naming in the UI, spec,
+  manuals and catalogs) is committed; E3 (status line) and E4 (row symbols) are
+  committed. E5 fixes found in use: E5a (status line explains a missing target config or database export) is
+  committed, as are E5b (row icon alignment) and E5c (a setting and prompt for the one-off run, with
+  progress and Cancel).
 - Phase 2 slice A (awaiting review): `Open Join with Separate Window` and the Settings option that makes it the
   activation default (SPECIFICATION 3.8.6, 3.12).
 - Specification review for the join work (2026-10-14): the `Survey`/`Map` "only surveys, maps, and scraps" rule is

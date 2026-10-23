@@ -219,9 +219,10 @@ Validation should be conservative and catalog-backed.
   scan, and the result feeds both the Validation warnings and the `Joins` row marker
 - every station point of every scrap with its resolved station key (`stationPointsByScrapObjectId`), so joined
   drawings can be fitted to Therion's measured legs and offset by its computed station positions. Both come from
-  `ProjectStationPositionService`, an application service composed by `MainWindow` that runs Therion on its own
-  `TherionRunnerService` instance in a temporary folder (never the project) and reads the SQL export through
-  `TherionSqlReportDatabase` off the UI thread; the config text and row-to-key rules are pure core functions
+  `ProjectStationPositionService`, an application service composed by `MainWindow` that reads the SQL export of the
+  user's latest compile (from `TherionCompileResultRecorder`), or else runs Therion once on its own
+  `TherionRunnerService` instance in a temporary folder (never the project) for a join that needs positions, and reads
+  the SQL export through `TherionSqlReportDatabase` off the UI thread; the config text and row-to-key rules are pure core functions
   (`TherionStationPositionExport`), and the fit and projection live in `Th2CentrelineAlignment`
 
 The project navigation sidebar displays file navigation and project structure projections. Its default `Survey` tree follows survey namespace and definition ownership; map composition references are graph relationships and must not reparent map or scrap definition nodes in that projection. A separate `Map` projection may display map composition using those graph relationships. Structure should not list general validation diagnostics. Validation-owned diagnostics should be surfaced in the Validation panel and may reference project-index objects when that improves navigation.
@@ -235,6 +236,12 @@ workflow service shall run that collector off the GUI thread, while `QFileSystem
 inventory application remain GUI-thread responsibilities.
 
 The Therion compiler remains authoritative for final export behavior. The project index is a lightweight navigation and early-feedback projection, not a compiler replacement.
+
+Views that show compiled data, such as survey statistics or station positions, read the files written by the user's
+latest compile. `TherionCompileResultRecorder` records that compile (working directory, start and finish time, result,
+the SQL database exports Therion reports writing, and `.xtherion.dat` when the compile used `-x`). Such views shall mark
+their data out of date when a source was saved after that compile started, rather than starting Therion runs of their
+own.
 
 Project-index namespace, reference, and duplicate-identifier behavior shall follow `docs/THERION_COMPATIBILITY.md`. In particular, survey/map/scrap names share their parent survey namespace, drawing object IDs share their containing scrap namespace, and identical object names in different survey namespaces are valid.
 
