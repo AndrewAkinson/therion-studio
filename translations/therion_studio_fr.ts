@@ -1425,6 +1425,11 @@ Si le fichier est ouvert, il sera d&apos;abord fermé.</translation>
         <translation>Sortie de la console effacée</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindowTherionRunner.cpp" line="549"/>
+        <source>A compile with a database export needs the config from Target Config, not from the command-line options.</source>
+        <translation>Une compilation avec export de base de données nécessite la configuration du champ Configuration cible, pas celle des options de ligne de commande.</translation>
+    </message>
+    <message>
         <location filename="../src/app/TherionExecutableSelectionController.cpp" line="34"/>
         <source>Select Therion Executable</source>
         <translation>Sélectionner l&apos;exécutable Therion</translation>
@@ -2186,6 +2191,11 @@ Les fichiers attendus sont `docs/USER_MANUAL.&lt;language&gt;.md` ou `docs/USER_
         <source>Defined in</source>
         <translation>Défini dans</translation>
     </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="258"/>
+        <source>Compile once with a database export, without changing the config</source>
+        <translation>Compiler une fois avec un export de base de données, sans modifier la configuration</translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>
@@ -2845,6 +2855,24 @@ Lignes de points : %1</translation>
         <location filename="../src/platform/DiagnosticLogging.cpp" line="270"/>
         <source>Could not remove log file `%1`.</source>
         <translation>Impossible de supprimer le fichier journal `%1`.</translation>
+    </message>
+</context>
+<context>
+    <name>TherionDatabaseExportCompile</name>
+    <message>
+        <location filename="../src/app/TherionDatabaseExportCompile.cpp" line="39"/>
+        <source>Could not read %1.</source>
+        <translation>Impossible de lire %1.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/TherionDatabaseExportCompile.cpp" line="46"/>
+        <source>Could not create a temporary folder for the database export.</source>
+        <translation>Impossible de créer un dossier temporaire pour l’export de base de données.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/TherionDatabaseExportCompile.cpp" line="54"/>
+        <source>Could not write %1.</source>
+        <translation>Impossible d’écrire %1.</translation>
     </message>
 </context>
 <context>

@@ -1,4 +1,4 @@
-#include "../src/app/TherionSurveyStatisticsLoader.h"
+#include "../src/app/TherionCompileFiguresLoader.h"
 
 #include <QSignalSpy>
 #include <memory>
@@ -23,7 +23,7 @@ TherionCompileResult compileResult(const QString &xtherionDataPath, bool succeed
     return result;
 }
 
-class TherionSurveyStatisticsLoaderTest : public QObject
+class TherionCompileFiguresLoaderTest : public QObject
 {
     Q_OBJECT
 
@@ -34,21 +34,22 @@ private slots:
     void keepsFiguresWhenLaterCompileWritesNoTree();
     void staysUnavailableAfterFirstCompileFails();
     void clearsOnInvalidResult();
+    void leavesDatabaseUnavailableWithoutExport();
 
 private:
     QString writeDataFile(const QString &name, const QString &text);
-    void loadAndWait(TherionSurveyStatisticsLoader &loader, const TherionCompileResult &result);
+    void loadAndWait(TherionCompileFiguresLoader &loader, const TherionCompileResult &result);
 
     std::unique_ptr<QTemporaryDir> dir_;
 };
 
-void TherionSurveyStatisticsLoaderTest::init()
+void TherionCompileFiguresLoaderTest::init()
 {
     dir_ = std::make_unique<QTemporaryDir>();
     QVERIFY(dir_->isValid());
 }
 
-QString TherionSurveyStatisticsLoaderTest::writeDataFile(const QString &name, const QString &text)
+QString TherionCompileFiguresLoaderTest::writeDataFile(const QString &name, const QString &text)
 {
     const QString path = dir_->filePath(name);
     QFile file(path);
@@ -59,73 +60,83 @@ QString TherionSurveyStatisticsLoaderTest::writeDataFile(const QString &name, co
     return path;
 }
 
-void TherionSurveyStatisticsLoaderTest::loadAndWait(TherionSurveyStatisticsLoader &loader,
+void TherionCompileFiguresLoaderTest::loadAndWait(TherionCompileFiguresLoader &loader,
                                                     const TherionCompileResult &result)
 {
-    QSignalSpy spy(&loader, &TherionSurveyStatisticsLoader::statisticsChanged);
+    QSignalSpy spy(&loader, &TherionCompileFiguresLoader::figuresChanged);
     loader.updateFromCompile(result);
     QVERIFY(spy.count() > 0 || spy.wait());
 }
 
-void TherionSurveyStatisticsLoaderTest::loadsSurveysOfGoodCompile()
+void TherionCompileFiguresLoaderTest::loadsSurveysOfGoodCompile()
 {
-    TherionSurveyStatisticsLoader loader;
+    TherionCompileFiguresLoader loader;
     const TherionCompileResult result = compileResult(writeDataFile(QStringLiteral("a.dat"), kSurveyLine), true);
     loadAndWait(loader, result);
 
-    const TherionSurveyStatistics &statistics = loader.statistics();
+    const TherionCompileFigures &statistics = loader.figures();
     QVERIFY(statistics.isAvailable());
     QVERIFY(!statistics.laterCompileFailed);
     QCOMPARE(statistics.compile.startedAt, result.startedAt);
     QCOMPARE(statistics.surveysByFullName.value(QStringLiteral("inner.cave")).title, QStringLiteral("Inner"));
 }
 
-void TherionSurveyStatisticsLoaderTest::keepsFiguresWhenLaterCompileFails()
+void TherionCompileFiguresLoaderTest::keepsFiguresWhenLaterCompileFails()
 {
-    TherionSurveyStatisticsLoader loader;
+    TherionCompileFiguresLoader loader;
     loadAndWait(loader, compileResult(writeDataFile(QStringLiteral("a.dat"), kSurveyLine), true));
     loadAndWait(loader, compileResult(QString(), false));
 
-    QVERIFY(loader.statistics().isAvailable());
-    QVERIFY(loader.statistics().laterCompileFailed);
-    QVERIFY(loader.statistics().surveysByFullName.contains(QStringLiteral("inner.cave")));
+    QVERIFY(loader.figures().isAvailable());
+    QVERIFY(loader.figures().laterCompileFailed);
+    QVERIFY(loader.figures().surveysByFullName.contains(QStringLiteral("inner.cave")));
 }
 
-void TherionSurveyStatisticsLoaderTest::keepsFiguresWhenLaterCompileWritesNoTree()
+void TherionCompileFiguresLoaderTest::keepsFiguresWhenLaterCompileWritesNoTree()
 {
-    TherionSurveyStatisticsLoader loader;
+    TherionCompileFiguresLoader loader;
     loadAndWait(loader, compileResult(writeDataFile(QStringLiteral("a.dat"), kSurveyLine), true));
     loadAndWait(loader, compileResult(writeDataFile(QStringLiteral("b.dat"), QStringLiteral("xth_cp_data_tree_create\n")), true));
 
-    QVERIFY(loader.statistics().laterCompileFailed);
-    QVERIFY(loader.statistics().surveysByFullName.contains(QStringLiteral("inner.cave")));
+    QVERIFY(loader.figures().laterCompileFailed);
+    QVERIFY(loader.figures().surveysByFullName.contains(QStringLiteral("inner.cave")));
 }
 
-void TherionSurveyStatisticsLoaderTest::staysUnavailableAfterFirstCompileFails()
+void TherionCompileFiguresLoaderTest::staysUnavailableAfterFirstCompileFails()
 {
-    TherionSurveyStatisticsLoader loader;
-    QSignalSpy spy(&loader, &TherionSurveyStatisticsLoader::statisticsChanged);
+    TherionCompileFiguresLoader loader;
+    QSignalSpy spy(&loader, &TherionCompileFiguresLoader::figuresChanged);
     loader.updateFromCompile(compileResult(QString(), false));
 
     QCOMPARE(spy.count(), 0);
-    QVERIFY(!loader.statistics().isAvailable());
+    QVERIFY(!loader.figures().isAvailable());
 }
 
-void TherionSurveyStatisticsLoaderTest::clearsOnInvalidResult()
+void TherionCompileFiguresLoaderTest::clearsOnInvalidResult()
 {
-    TherionSurveyStatisticsLoader loader;
+    TherionCompileFiguresLoader loader;
     loadAndWait(loader, compileResult(writeDataFile(QStringLiteral("a.dat"), kSurveyLine), true));
     loadAndWait(loader, TherionCompileResult());
 
-    QVERIFY(!loader.statistics().isAvailable());
-    QVERIFY(loader.statistics().surveysByFullName.isEmpty());
+    QVERIFY(!loader.figures().isAvailable());
+    QVERIFY(loader.figures().surveysByFullName.isEmpty());
+}
+void TherionCompileFiguresLoaderTest::leavesDatabaseUnavailableWithoutExport()
+{
+    TherionCompileFiguresLoader loader;
+    TherionCompileResult result = compileResult(writeDataFile(QStringLiteral("a.dat"), kSurveyLine), true);
+    result.databasePaths = {dir_->filePath(QStringLiteral("missing.sql"))};
+    loadAndWait(loader, result);
+
+    QVERIFY(loader.figures().isAvailable());
+    QVERIFY(!loader.figures().database.isAvailable());
 }
 }
 
-int runTherionSurveyStatisticsLoaderTest(int argc, char **argv)
+int runTherionCompileFiguresLoaderTest(int argc, char **argv)
 {
-    TherionSurveyStatisticsLoaderTest test;
+    TherionCompileFiguresLoaderTest test;
     return QTest::qExec(&test, argc, argv);
 }
 
-#include "TherionSurveyStatisticsLoaderTest.moc"
+#include "TherionCompileFiguresLoaderTest.moc"

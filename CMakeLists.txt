@@ -226,6 +226,7 @@ set(THERION_MAIN_WINDOW_QTEST_SUITES
     MainWindowSessionStateServiceTest
     MainWindowSessionWindowRestoreServiceTest
     MainWindowStructureInfoPresenterTest
+    TherionCompileDatabaseFiguresTest
     MainWindowStructureNameOverridesServiceTest
     TherionSqlReportDatabaseTest
     TherionSqlReportWorkerTest)
@@ -281,7 +282,8 @@ set(THERION_RUNNER_SUPPORT_QTEST_SUITES
     TherionRunnerConfigResolverTest
     TherionRunnerOutputLinkerTest
     TherionRunnerPresenterTest
-    TherionSurveyStatisticsLoaderTest)
+    TherionCompileFiguresLoaderTest
+    TherionDatabaseExportCompileTest)
 
 set(THERION_PLATFORM_SOURCES
     src/platform/ApplicationIdentity.cpp
@@ -414,8 +416,10 @@ set(THERION_APP_SOURCES
     src/app/ProjectStructureScanner.h
     src/app/TherionCompileResult.cpp
     src/app/TherionCompileResult.h
-    src/app/TherionSurveyStatisticsLoader.cpp
-    src/app/TherionSurveyStatisticsLoader.h
+    src/app/TherionCompileFiguresLoader.cpp
+    src/app/TherionCompileFiguresLoader.h
+    src/app/TherionDatabaseExportCompile.cpp
+    src/app/TherionDatabaseExportCompile.h
     src/app/TherionExecutableSelectionController.cpp
     src/app/TherionExecutableSelectionController.h
     src/app/TherionExecutableDetector.cpp
@@ -434,6 +438,8 @@ set(THERION_APP_SOURCES
     src/app/TherionRunnerStartResultPresenter.h
     src/app/TherionRunnerStartSuccessPresenter.cpp
     src/app/TherionRunnerStartSuccessPresenter.h
+    src/app/reports/TherionCompileDatabaseFigures.cpp
+    src/app/reports/TherionCompileDatabaseFigures.h
     src/app/reports/TherionSqlReportDatabase.cpp
     src/app/reports/TherionSqlReportDatabase.h
     src/app/reports/TherionSqlReportCsvExporter.cpp
@@ -1471,7 +1477,8 @@ qt_add_executable(TherionRunnerSupportQTests
     tests/TherionRunnerConfigResolverTest.cpp
     tests/TherionRunnerOutputLinkerTest.cpp
     tests/TherionRunnerPresenterTest.cpp
-    tests/TherionSurveyStatisticsLoaderTest.cpp)
+    tests/TherionCompileFiguresLoaderTest.cpp
+    tests/TherionDatabaseExportCompileTest.cpp)
 
 target_link_libraries(TherionRunnerSupportQTests PRIVATE therion_app Qt6::Test)
 
@@ -1522,6 +1529,7 @@ qt_add_executable(MainWindowServiceQTests
     tests/MainWindowSessionStateServiceTest.cpp
     tests/MainWindowSessionWindowRestoreServiceTest.cpp
     tests/MainWindowStructureInfoPresenterTest.cpp
+    tests/TherionCompileDatabaseFiguresTest.cpp
     tests/MainWindowStructureNameOverridesServiceTest.cpp
     tests/TherionSqlReportDatabaseTest.cpp
     tests/TherionSqlReportWorkerTest.cpp

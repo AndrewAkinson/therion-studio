@@ -1,5 +1,6 @@
 #include "../src/app/MainWindowStructureInfoPresenter.h"
 #include "../src/core/ProjectStructureIndex.h"
+#include "../src/app/reports/TherionCompileDatabaseFigures.h"
 #include "../src/core/TherionXtherionData.h"
 
 #include <QtTest/QtTest>
@@ -48,11 +49,87 @@ private slots:
     void notesSurveyMissingFromCompile();
     void notesOutOfDateStatistics();
     void omitsStatisticsForMaps();
+    void presentsMapFigures();
+    void presentsScrapFigures();
+    void notesMissingDatabaseExport();
+    void notesMapMissingFromCompile();
+    void offersDatabaseExportCompileOnlyWithoutExport();
 };
 
-MainWindowStructureInfoPresenter::SurveyStatisticsInput compiledInput(const TherionXtherionSurvey *survey)
+
+MainWindowStructureInfoPresenter::CompileFiguresInput databaseInput()
 {
-    MainWindowStructureInfoPresenter::SurveyStatisticsInput input;
+    MainWindowStructureInfoPresenter::CompileFiguresInput input;
+    input.available = true;
+    input.databaseAvailable = true;
+    return input;
+}
+
+void MainWindowStructureInfoPresenterTest::presentsMapFigures()
+{
+    const ProjectStructureEntry entry = makeEntry(QStringLiteral("Maps"), QStringLiteral("MC"), QStringLiteral("cave"));
+    TherionMapFigures map;
+    map.title = QStringLiteral("Cave plan");
+    map.length = 18.0;
+    map.depth = 5.394;
+    map.items = {{4, true, QStringLiteral("MI"), QStringLiteral("inner.cave")},
+                 {4, false, QStringLiteral("SC"), QStringLiteral("cave")},
+                 {2, true, QStringLiteral("MI"), QStringLiteral("inner.cave")}};
+    auto input = databaseInput();
+    input.map = &map;
+    const auto presentation = MainWindowStructureInfoPresenter::present(&entry, QString(), input);
+
+    QCOMPARE(fieldValue(presentation, QStringLiteral("Title")), QStringLiteral("Cave plan"));
+    QCOMPARE(fieldValue(presentation, QStringLiteral("Length")), QStringLiteral("18.00 m"));
+    QCOMPARE(fieldValue(presentation, QStringLiteral("Depth")), QStringLiteral("5.39 m"));
+    QCOMPARE(presentation.contents,
+             QStringList({QStringLiteral("map MI@inner.cave"),
+                          QStringLiteral("scrap SC@cave"),
+                          QStringLiteral("map MI@inner.cave (preview above)")}));
+    QVERIFY(presentation.notes.isEmpty());
+    QVERIFY(MainWindowStructureInfoPresenter::html(presentation).contains(QStringLiteral("scrap SC@cave<br>")));
+}
+
+void MainWindowStructureInfoPresenterTest::presentsScrapFigures()
+{
+    const ProjectStructureEntry entry = makeEntry(QStringLiteral("Scraps"), QStringLiteral("SI"), QStringLiteral("inner.cave"));
+    TherionScrapFigures scrap{2.75729, 30.77453};
+    auto input = databaseInput();
+    input.scrap = &scrap;
+    const auto presentation = MainWindowStructureInfoPresenter::present(&entry, QString(), input);
+
+    QCOMPARE(fieldValue(presentation, QStringLiteral("Average distortion")), QStringLiteral("2.76 %"));
+    QCOMPARE(fieldValue(presentation, QStringLiteral("Maximum distortion")), QStringLiteral("30.77 %"));
+    QVERIFY(presentation.contents.isEmpty());
+}
+
+void MainWindowStructureInfoPresenterTest::notesMissingDatabaseExport()
+{
+    const ProjectStructureEntry entry = makeEntry(QStringLiteral("Scraps"), QStringLiteral("SI"), QStringLiteral("inner.cave"));
+    auto input = databaseInput();
+    input.databaseAvailable = false;
+
+    QCOMPARE(MainWindowStructureInfoPresenter::present(&entry, QString(), input).notes,
+             QStringList{QStringLiteral(
+                 "Map and scrap details need a database export. Add export database -fmt sql to the config.")});
+    QCOMPARE(MainWindowStructureInfoPresenter::present(&entry, QString()).notes,
+             QStringList{QStringLiteral("Map and scrap details appear after a successful compile.")});
+}
+
+void MainWindowStructureInfoPresenterTest::notesMapMissingFromCompile()
+{
+    const ProjectStructureEntry entry = makeEntry(QStringLiteral("Maps"), QStringLiteral("MC"), QStringLiteral("cave"));
+    auto input = databaseInput();
+    input.sourcesChanged = true;
+
+    QCOMPARE(MainWindowStructureInfoPresenter::present(&entry, QString(), input).notes,
+             QStringList({QStringLiteral("This map is not in the last successful compile."),
+                          QStringLiteral("Out of date because sources changed after the last compile.")}));
+}
+
+MainWindowStructureInfoPresenter::CompileFiguresInput compiledInput(const TherionXtherionSurvey *survey)
+{
+    MainWindowStructureInfoPresenter::CompileFiguresInput input;
     input.available = true;
     input.survey = survey;
     return input;
@@ -113,7 +190,7 @@ void MainWindowStructureInfoPresenterTest::omitsStatisticsForMaps()
     const auto presentation = MainWindowStructureInfoPresenter::present(&entry, QString(), compiledInput(&survey));
 
     QVERIFY(presentation.statistics.isEmpty());
-    QVERIFY(presentation.notes.isEmpty());
+    QVERIFY(!presentation.notes.contains(QStringLiteral("Survey statistics appear after a successful compile.")));
 }
 
 void MainWindowStructureInfoPresenterTest::presentsSurvey()
@@ -204,6 +281,20 @@ void MainWindowStructureInfoPresenterTest::htmlEscapesAndLinksSource()
     QVERIFY(html.contains(QStringLiteral("href=\"%1\"").arg(MainWindowStructureInfoPresenter::sourceLinkTarget())));
     QVERIFY(html.contains(QStringLiteral("cave/cave.th, line 12")));
 }
+void MainWindowStructureInfoPresenterTest::offersDatabaseExportCompileOnlyWithoutExport()
+{
+    const ProjectStructureEntry entry = makeEntry(QStringLiteral("Maps"), QStringLiteral("MC"), QStringLiteral("cave"));
+    auto input = databaseInput();
+    QVERIFY(!MainWindowStructureInfoPresenter::present(&entry, QString(), input).offerDatabaseExportCompile);
+
+    input.databaseAvailable = false;
+    const auto presentation = MainWindowStructureInfoPresenter::present(&entry, QString(), input);
+    QVERIFY(presentation.offerDatabaseExportCompile);
+    QVERIFY(MainWindowStructureInfoPresenter::html(presentation).contains(
+        QStringLiteral("href=\"%1\"").arg(MainWindowStructureInfoPresenter::databaseExportCompileLinkTarget())));
+    QVERIFY(!MainWindowStructureInfoPresenter::present(&entry, QString()).offerDatabaseExportCompile);
+}
+
 }
 
 int runMainWindowStructureInfoPresenterTest(int argc, char **argv)

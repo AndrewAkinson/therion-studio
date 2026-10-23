@@ -1,4 +1,4 @@
-#include "TherionSurveyStatisticsLoader.h"
+#include "TherionCompileFiguresLoader.h"
 
 #include <QFile>
 #include <QFutureWatcher>
@@ -6,19 +6,19 @@
 
 namespace TherionStudio
 {
-TherionSurveyStatisticsLoader::TherionSurveyStatisticsLoader(QObject *parent)
+TherionCompileFiguresLoader::TherionCompileFiguresLoader(QObject *parent)
     : QObject(parent)
     , loadWatcher_(new QFutureWatcher<Loaded>(this))
 {
-    connect(loadWatcher_, &QFutureWatcher<Loaded>::finished, this, &TherionSurveyStatisticsLoader::handleLoadFinished);
+    connect(loadWatcher_, &QFutureWatcher<Loaded>::finished, this, &TherionCompileFiguresLoader::handleLoadFinished);
 }
 
-void TherionSurveyStatisticsLoader::updateFromCompile(const TherionCompileResult &result)
+void TherionCompileFiguresLoader::updateFromCompile(const TherionCompileResult &result)
 {
     const quint64 generation = ++generation_;
     if (!result.isValid()) {
-        statistics_ = TherionSurveyStatistics();
-        emit statisticsChanged();
+        figures_ = TherionCompileFigures();
+        emit figuresChanged();
         return;
     }
     if (!result.succeeded || result.xtherionDataPath.isEmpty()) {
@@ -34,16 +34,19 @@ void TherionSurveyStatisticsLoader::updateFromCompile(const TherionCompileResult
         if (file.open(QIODevice::ReadOnly)) {
             loaded.surveys = parseTherionXtherionSurveys(QString::fromUtf8(file.readAll()));
         }
+        if (!loaded.surveys.isEmpty()) {
+            loaded.database = readTherionCompileDatabaseFigures(result.databasePaths);
+        }
         return loaded;
     }));
 }
 
-const TherionSurveyStatistics &TherionSurveyStatisticsLoader::statistics() const
+const TherionCompileFigures &TherionCompileFiguresLoader::figures() const
 {
-    return statistics_;
+    return figures_;
 }
 
-void TherionSurveyStatisticsLoader::handleLoadFinished()
+void TherionCompileFiguresLoader::handleLoadFinished()
 {
     const Loaded loaded = loadWatcher_->result();
     if (loaded.generation != generation_) {
@@ -55,21 +58,22 @@ void TherionSurveyStatisticsLoader::handleLoadFinished()
         return;
     }
 
-    TherionSurveyStatistics statistics;
-    statistics.compile = loaded.compile;
+    TherionCompileFigures figures;
+    figures.compile = loaded.compile;
+    figures.database = loaded.database;
     for (const TherionXtherionSurvey &survey : loaded.surveys) {
-        statistics.surveysByFullName.insert(survey.fullName, survey);
+        figures.surveysByFullName.insert(survey.fullName, survey);
     }
-    statistics_ = statistics;
-    emit statisticsChanged();
+    figures_ = figures;
+    emit figuresChanged();
 }
 
-void TherionSurveyStatisticsLoader::markLaterCompileFailed()
+void TherionCompileFiguresLoader::markLaterCompileFailed()
 {
-    if (!statistics_.isAvailable() || statistics_.laterCompileFailed) {
+    if (!figures_.isAvailable() || figures_.laterCompileFailed) {
         return;
     }
-    statistics_.laterCompileFailed = true;
-    emit statisticsChanged();
+    figures_.laterCompileFailed = true;
+    emit figuresChanged();
 }
 }

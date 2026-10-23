@@ -6,13 +6,14 @@
 #include "MainWindowTherionConsoleWiring.h"
 #include "MainWindowTherionRunnerController.h"
 #include "TherionCompileResult.h"
+#include "TherionDatabaseExportCompile.h"
 #include "TherionRunnerConfigDisplayController.h"
 #include "TherionRunnerLifecyclePresenter.h"
 #include "TherionRunnerOutputLinker.h"
 #include "TherionRunnerService.h"
 #include "TherionRunnerStartResultPresenter.h"
 #include "TherionRunnerStartSuccessPresenter.h"
-#include "TherionSurveyStatisticsLoader.h"
+#include "TherionCompileFiguresLoader.h"
 #include "text_editor/TextEditorTab.h"
 #include "text_editor/map_editor/MapEditorTab.h"
 
@@ -27,6 +28,8 @@
 #include <QStringList>
 #include <QTextBrowser>
 #include <QUrl>
+
+#include <utility>
 
 namespace
 {
@@ -70,12 +73,12 @@ void MainWindow::buildConsole()
 
     therionRunnerService_ = new TherionStudio::TherionRunnerService(this);
     compileResultRecorder_ = new TherionStudio::TherionCompileResultRecorder(this);
-    surveyStatisticsLoader_ = new TherionStudio::TherionSurveyStatisticsLoader(this);
+    compileFiguresLoader_ = new TherionStudio::TherionCompileFiguresLoader(this);
     connect(compileResultRecorder_, &TherionStudio::TherionCompileResultRecorder::latestChanged, this, [this]() {
-        surveyStatisticsLoader_->updateFromCompile(compileResultRecorder_->latest());
+        compileFiguresLoader_->updateFromCompile(compileResultRecorder_->latest());
     });
-    connect(surveyStatisticsLoader_, &TherionStudio::TherionSurveyStatisticsLoader::statisticsChanged, this, [this]() {
-        updateSurveyStatisticsSourcesChanged();
+    connect(compileFiguresLoader_, &TherionStudio::TherionCompileFiguresLoader::figuresChanged, this, [this]() {
+        updateCompileFiguresSourcesChanged();
         refreshStructureInfoBox();
     });
     TherionStudio::MainWindowTherionConsoleWiring::WiringInput wiringInput;
@@ -539,13 +542,34 @@ void MainWindow::runTherion()
         activeTherionRunStandardError_.clear();
     }
 
-    const QStringList compileArguments = TherionStudio::therionCompileArguments(state.runArguments);
+    // One-off compile from the Structure info box: the same config with a database export added.
+    QStringList runArguments = state.runArguments;
+    bool usesTemporaryConfig = false;
+    if (std::exchange(nextCompileAddsDatabaseExport_, false) && !therionRunnerService_->isRunning()) {
+        QString message = tr("A compile with a database export needs the config from Target Config, not from the "
+                             "command-line options.");
+        const QString temporaryConfigPath = state.hasExplicitConfigArgument
+            ? QString()
+            : databaseExportCompile_.prepare(state.resolvedConfigPath, &message);
+        if (temporaryConfigPath.isEmpty()) {
+            QMessageBox::warning(this, tr("Run Therion"), message);
+            setCompilerStatusResult(false, message);
+            return;
+        }
+        // Without an explicit config argument the config path is the last argument.
+        runArguments.last() = temporaryConfigPath;
+        usesTemporaryConfig = true;
+    }
+    const QStringList compileArguments = TherionStudio::therionCompileArguments(runArguments);
     const TherionStudio::TherionRunnerService::StartResult startResult =
         therionRunnerService_->start(state.executableInput, state.resolvedWorkingDirectory, compileArguments);
     const TherionStudio::TherionRunnerStartResultPresenter::Presentation startPresentation =
         TherionStudio::TherionRunnerStartResultPresenter::present(startResult.code, state.executableInput);
 
     if (startPresentation.isHandled) {
+        if (usesTemporaryConfig) {
+            databaseExportCompile_.removeTemporaryConfig();
+        }
         if (startPresentation.showWarningDialog) {
             QMessageBox::warning(this,
                                  startPresentation.warningDialogTitle,
@@ -575,6 +599,13 @@ void MainWindow::runTherion()
     setCompilerStatusRunning(activeTherionRunConfigPath_);
 
     updateTherionRunnerState();
+}
+
+void MainWindow::runTherionWithDatabaseExport()
+{
+    nextCompileAddsDatabaseExport_ = true;
+    runTherion();
+    nextCompileAddsDatabaseExport_ = false;
 }
 
 void MainWindow::runTherionProjectConfig()
@@ -656,6 +687,7 @@ void MainWindow::handleTherionRunnerFinished(int exitCode, QProcess::ExitStatus 
                                                                         activeTherionRunStandardError_);
     setCompilerStatusResult(eventPresentation.succeeded, eventPresentation.statusText);
     compileResultRecorder_->finish(eventPresentation.succeeded);
+    databaseExportCompile_.removeTemporaryConfig();
     activeTherionRunConfigPath_.clear();
     activeTherionRunWorkingDirectory_.clear();
     activeTherionRunStandardError_.clear();
@@ -669,6 +701,7 @@ void MainWindow::handleTherionRunnerError(const QString &errorText)
         TherionStudio::TherionRunnerLifecyclePresenter::presentError(errorText);
     setCompilerStatusResult(false, eventPresentation.statusText);
     compileResultRecorder_->abandon();
+    databaseExportCompile_.removeTemporaryConfig();
     activeTherionRunConfigPath_.clear();
     activeTherionRunWorkingDirectory_.clear();
     activeTherionRunStandardError_.clear();

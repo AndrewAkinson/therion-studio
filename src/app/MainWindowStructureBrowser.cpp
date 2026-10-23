@@ -3,7 +3,7 @@
 #include "MainWindowDocumentHelpers.h"
 #include "MainWindowStructureInfoPresenter.h"
 #include "MainWindowStructureRoles.h"
-#include "TherionSurveyStatisticsLoader.h"
+#include "TherionCompileFiguresLoader.h"
 #include "three_d_viewer/ThreeDViewerTab.h"
 #include "../core/TherionFileTypes.h"
 
@@ -707,7 +707,7 @@ void MainWindow::applyStructureSidebarIndex(const TherionStudio::ProjectIndexSna
     lastStructureSidebarProjectIndex_ = projectIndex;
     // Entries change on every apply, so the info box is refreshed on each exit path.
     const auto refreshInfoBoxOnExit = qScopeGuard([this]() {
-        updateSurveyStatisticsSourcesChanged();
+        updateCompileFiguresSourcesChanged();
         refreshStructureInfoBox();
     });
 
@@ -1038,6 +1038,9 @@ void MainWindow::applyStructureSidebarIndex(const TherionStudio::ProjectIndexSna
 
     if (hasExpansionState) {
         restoreStructureNodeExpansion(structureTree_, expandedNodeKeys);
+    } else if (structureViewMode_ == StructureViewMode::Survey) {
+        // Top-level surveys open with their child surveys, maps and scraps listed but collapsed.
+        structureTree_->expandToDepth(0);
     } else {
         structureTree_->expandAll();
     }
@@ -1311,7 +1314,11 @@ void MainWindow::updateStructureSelectionFromEditorLocation(const QString &fileP
 
 const TherionStudio::ProjectStructureEntry *MainWindow::structureEntryForIndex(const QModelIndex &index) const
 {
-    const QString objectId = index.isValid() ? index.data(ObjectIdRole).toString() : QString();
+    return structureEntryForObjectId(index.isValid() ? index.data(ObjectIdRole).toString() : QString());
+}
+
+const TherionStudio::ProjectStructureEntry *MainWindow::structureEntryForObjectId(const QString &objectId) const
+{
     if (objectId.isEmpty()) {
         return nullptr;
     }
@@ -1331,36 +1338,49 @@ void MainWindow::refreshStructureInfoBox()
 
     const TherionStudio::ProjectStructureEntry *entry = structureEntryForIndex(structureTree_->currentIndex());
     const QString sourcePath = entry != nullptr ? relativeStructurePath(projectRootPath_, entry->sourceFile) : QString();
-    TherionStudio::MainWindowStructureInfoPresenter::SurveyStatisticsInput statisticsInput;
-    if (entry != nullptr && surveyStatisticsLoader_ != nullptr) {
-        const TherionStudio::TherionSurveyStatistics &statistics = surveyStatisticsLoader_->statistics();
-        statisticsInput.available = statistics.isAvailable();
-        const auto survey = statistics.surveysByFullName.constFind(
-            TherionStudio::ProjectStructureIndex::surveyFullName(*entry));
-        statisticsInput.survey = survey != statistics.surveysByFullName.constEnd() ? &survey.value() : nullptr;
-        statisticsInput.sourcesChanged = surveyStatisticsSourcesChanged_;
-        statisticsInput.laterCompileFailed = statistics.laterCompileFailed;
+    TherionStudio::MainWindowStructureInfoPresenter::CompileFiguresInput figuresInput;
+    if (entry != nullptr && compileFiguresLoader_ != nullptr) {
+        const TherionStudio::TherionCompileFigures &figures = compileFiguresLoader_->figures();
+        figuresInput.available = figures.isAvailable();
+        figuresInput.databaseAvailable = figures.database.isAvailable();
+        figuresInput.sourcesChanged = compileFiguresSourcesChanged_;
+        figuresInput.laterCompileFailed = figures.laterCompileFailed;
+        if (entry->kind == TherionStudio::ProjectStructureEntryKind::Survey) {
+            const auto survey = figures.surveysByFullName.constFind(
+                TherionStudio::ProjectStructureIndex::surveyFullName(*entry));
+            figuresInput.survey = survey != figures.surveysByFullName.constEnd() ? &survey.value() : nullptr;
+        } else {
+            // Therion files maps and scraps under the survey block they are in, also with -namespace off.
+            const TherionStudio::ProjectStructureEntry *survey = structureEntryForObjectId(entry->parentObjectId);
+            const QString key = TherionStudio::therionCompiledObjectKey(
+                entry->name,
+                survey != nullptr ? TherionStudio::ProjectStructureIndex::surveyFullName(*survey) : QString());
+            const auto map = figures.database.mapsByKey.constFind(key);
+            figuresInput.map = map != figures.database.mapsByKey.constEnd() ? &map.value() : nullptr;
+            const auto scrap = figures.database.scrapsByKey.constFind(key);
+            figuresInput.scrap = scrap != figures.database.scrapsByKey.constEnd() ? &scrap.value() : nullptr;
+        }
     }
     structureInfoBox_->setHtml(TherionStudio::MainWindowStructureInfoPresenter::html(
-        TherionStudio::MainWindowStructureInfoPresenter::present(entry, sourcePath, statisticsInput)));
+        TherionStudio::MainWindowStructureInfoPresenter::present(entry, sourcePath, figuresInput)));
 }
 
-void MainWindow::updateSurveyStatisticsSourcesChanged()
+void MainWindow::updateCompileFiguresSourcesChanged()
 {
-    if (surveyStatisticsLoader_ == nullptr || !surveyStatisticsLoader_->statistics().isAvailable()) {
-        surveyStatisticsSourcesChanged_ = false;
+    if (compileFiguresLoader_ == nullptr || !compileFiguresLoader_->figures().isAvailable()) {
+        compileFiguresSourcesChanged_ = false;
         return;
     }
 
-    QSet<QString> sourceFiles{surveyStatisticsLoader_->statistics().compile.configPath};
+    QSet<QString> sourceFiles{compileFiguresLoader_->figures().compile.configPath};
     if (!lastStructureSidebarProjectIndex_.rootConfigPath.isEmpty()) {
         sourceFiles.insert(lastStructureSidebarProjectIndex_.rootConfigPath);
     }
     for (const TherionStudio::ProjectStructureEntry &entry : lastStructureSidebarProjectIndex_.entries) {
         sourceFiles.insert(entry.sourceFile);
     }
-    surveyStatisticsSourcesChanged_ = TherionStudio::therionCompileResultIsOutOfDate(
-        surveyStatisticsLoader_->statistics().compile, sourceFiles.values());
+    compileFiguresSourcesChanged_ = TherionStudio::therionCompileResultIsOutOfDate(
+        compileFiguresLoader_->figures().compile, sourceFiles.values());
 }
 
 QModelIndex MainWindow::findMapObjectIndexForSourceLocation(const QString &filePath, int lineNumber) const

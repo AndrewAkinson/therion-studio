@@ -1465,6 +1465,11 @@ Pokud je soubor otevřený, nejprve se zavře.</translation>
         <translation>Výstup konzole vymazán</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindowTherionRunner.cpp" line="549"/>
+        <source>A compile with a database export needs the config from Target Config, not from the command-line options.</source>
+        <translation>Překlad s exportem databáze potřebuje konfiguraci z pole Cílová konfigurace, ne z voleb příkazové řádky.</translation>
+    </message>
+    <message>
         <location filename="../src/app/TherionExecutableSelectionController.cpp" line="34"/>
         <source>Select Therion Executable</source>
         <translation>Vyberte spustitelný soubor Therion</translation>
@@ -2238,6 +2243,11 @@ Očekávané soubory jsou `docs/USER_MANUAL.&lt;language&gt;.md` nebo `docs/USER
         <source>Defined in</source>
         <translation>Definováno v</translation>
     </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="258"/>
+        <source>Compile once with a database export, without changing the config</source>
+        <translation>Přeložit jednou s exportem databáze, bez změny konfigurace</translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>
@@ -2901,6 +2911,24 @@ Line-point options: %1</translation>
     <message>
         <source>Line %1: %2: %3%4</source>
         <translation type="obsolete">Řádek %1: %2: %3%4</translation>
+    </message>
+</context>
+<context>
+    <name>TherionDatabaseExportCompile</name>
+    <message>
+        <location filename="../src/app/TherionDatabaseExportCompile.cpp" line="39"/>
+        <source>Could not read %1.</source>
+        <translation>Nelze přečíst %1.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/TherionDatabaseExportCompile.cpp" line="46"/>
+        <source>Could not create a temporary folder for the database export.</source>
+        <translation>Nelze vytvořit dočasnou složku pro export databáze.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/TherionDatabaseExportCompile.cpp" line="54"/>
+        <source>Could not write %1.</source>
+        <translation>Nelze zapsat %1.</translation>
     </message>
 </context>
 <context>

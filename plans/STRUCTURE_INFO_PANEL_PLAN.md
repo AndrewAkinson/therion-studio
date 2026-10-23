@@ -98,10 +98,17 @@ run.
 
 - Read the compile's database export with the existing SQL import code (`TherionSqlReportDatabase` or a shared part
   of it, not a second importer). Only an export written by that compile is used.
-- Map: title, projection, length, depth (sign confirmed first) and contents (maps and scraps, preview above/below).
-- Scrap: projection, average and maximum distortion.
+- Map: title, length, depth and contents (maps and scraps, preview above/below).
+- Scrap: average and maximum distortion.
+- Found while implementing: the export has only a numeric `PROJID`, so the projection is not shown. `DEPTH` is
+  bottom minus top (`thmapstat::get_depth`), while the PDF legend prints top minus bottom, so the box shows it
+  positive like the legend. Therion files a map or scrap under the survey block it is in (`SURVEY_ID`), also inside a
+  `-namespace off` survey, so rows are matched by name and the enclosing survey's full name.
 - Shown on both pages for map and scrap rows.
 - The manual explains that `export database -fmt sql` in the thconfig is needed for these details.
+- Added at the user's request: when the compile wrote no database export, the box offers a one-off compile that adds
+  the export without changing the config. It runs a temporary copy of the config, next to it with the export line
+  added, through the normal compile, so all figures come from one compile. The next compile is the normal one again.
 - Tests: queries against a small hand-written SQL fixture, matching map and scrap names with their survey.
 
 ### 4. Survey extras from the SQL export
@@ -136,4 +143,3 @@ run.
 ## Open Points
 
 - Measure used for the worst adjustment (slice 4).
-- Whether the map depth sign is a Therion convention or needs reporting upstream (slice 3).

@@ -414,10 +414,12 @@ void MainWindow::buildStructureSidebar()
     structureSplitter_->setCollapsible(0, false);
     structureSplitter_->setStretchFactor(0, 1);
     structureSplitter_->setStretchFactor(1, 0);
-    structureSplitter_->setSizes({400, 120});
+    structureSplitter_->setSizes({400, 240});
     connect(structureInfoBox_, &QTextBrowser::anchorClicked, this, [this](const QUrl &url) {
         if (url.toString() == TherionStudio::MainWindowStructureInfoPresenter::sourceLinkTarget()) {
             openStructureSourceIndex(structureTree_->currentIndex(), structureTree_);
+        } else if (url.toString() == TherionStudio::MainWindowStructureInfoPresenter::databaseExportCompileLinkTarget()) {
+            runTherionWithDatabaseExport();
         }
     });
     connect(structureTree_->selectionModel(), &QItemSelectionModel::currentChanged, this, [this]() {
