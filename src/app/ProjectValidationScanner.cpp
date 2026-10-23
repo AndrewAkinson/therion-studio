@@ -245,6 +245,30 @@ TherionSourceDiagnostic diagnosticForProjectIndexDiagnostic(const ProjectIndexDi
         diagnostic.message = QObject::tr("Map `%1` has a different projection from the first item of this map, or from the map's `-projection`.")
                                  .arg(indexDiagnostic.referencedName);
         break;
+    case ProjectIndexDiagnosticKind::ShiftedScrap:
+        diagnostic.code = QStringLiteral("shifted-scrap");
+        diagnostic.title = QObject::tr("Shifted scrap");
+        diagnostic.message = QObject::tr("Scrap `%1` is shifted, which Therion allows only for maps and for the first scrap of a map.")
+                                 .arg(indexDiagnostic.referencedName);
+        break;
+    case ProjectIndexDiagnosticKind::NoProjectionForSurvey:
+        diagnostic.code = QStringLiteral("no-projection-for-survey");
+        diagnostic.title = QObject::tr("No projection for survey");
+        diagnostic.message = QObject::tr("Survey `%1` is the first item of a map without `-projection`. Give the map a projection to draw the survey's centreline in.")
+                                 .arg(indexDiagnostic.referencedName);
+        break;
+    case ProjectIndexDiagnosticKind::UnsupportedSurveyProjection:
+        diagnostic.code = QStringLiteral("unsupported-survey-projection");
+        diagnostic.title = QObject::tr("Unsupported projection for survey");
+        diagnostic.message = QObject::tr("Survey `%1` cannot be drawn in this map's projection. A survey needs plan, extended, or elevation.")
+                                 .arg(indexDiagnostic.referencedName);
+        break;
+    case ProjectIndexDiagnosticKind::PreviewNotMap:
+        diagnostic.code = QStringLiteral("preview-not-map");
+        diagnostic.title = QObject::tr("Preview is not a map");
+        diagnostic.message = QObject::tr("Preview `%1` is not a map. A preview must name a map.")
+                                 .arg(indexDiagnostic.referencedName);
+        break;
     case ProjectIndexDiagnosticKind::AmbiguousMapScrapReference:
         diagnostic.code = QStringLiteral("ambiguous-map-scrap-reference");
         diagnostic.title = QObject::tr("Ambiguous map scrap reference");

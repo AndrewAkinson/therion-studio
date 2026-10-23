@@ -43,7 +43,7 @@ QVector<ProjectIndexDiagnostic> checkMapCompositionProjections(
     QHash<QString, QString> projectionByMapKey;
 
     std::function<QString(const QString &)> mapProjection = [&](const QString &mapKey) -> QString {
-        if (projectionByMapKey.contains(mapKey)) {
+        if (projectionByMapKey.contains(mapKey) || inProgress.contains(mapKey)) {
             return projectionByMapKey.value(mapKey);
         }
         const auto compositionIt = compositionsByMapKey.constFind(mapKey);
@@ -52,6 +52,9 @@ QVector<ProjectIndexDiagnostic> checkMapCompositionProjections(
         }
         const ProjectMapComposition &composition = compositionIt.value();
         const QString explicitProjection = therionProjectionIdentity(composition.projection);
+        auto report = [&](ProjectIndexDiagnosticKind kind, const ProjectMapCompositionItem &item) {
+            diagnostics.append(itemDiagnostic(kind, composition, item));
+        };
 
         inProgress.insert(mapKey);
         QString contentProjection;
@@ -60,50 +63,67 @@ QVector<ProjectIndexDiagnostic> checkMapCompositionProjections(
         bool projectionReported = false;
         for (const ProjectMapCompositionItem &item : composition.items) {
             if (item.kind == ProjectMapCompositionItemKind::Map && inProgress.contains(item.key)) {
-                diagnostics.append(
-                    itemDiagnostic(ProjectIndexDiagnosticKind::RecursiveMapReference, composition, item));
+                report(ProjectIndexDiagnosticKind::RecursiveMapReference, item);
                 continue;
             }
 
-            QString itemProjection;
-            if (item.kind == ProjectMapCompositionItemKind::Map) {
-                itemProjection = mapProjection(item.key);
-            } else if (item.kind == ProjectMapCompositionItemKind::Scrap) {
-                itemProjection = therionProjectionIdentity(
-                    scrapProjectionsByKey.value(item.key, QStringLiteral("plan")));
-            } else {
-                // A survey is drawn in the map's own projection.
-                itemProjection = explicitProjection;
-            }
-
-            if (!contentKnown) {
+            const bool isFirst = !contentKnown;
+            if (isFirst) {
                 firstHoldsScraps = holdsScraps(item.kind);
             } else if (holdsScraps(item.kind) != firstHoldsScraps) {
                 continue;
             }
-            if (itemProjection.isEmpty() || projectionReported) {
-                contentKnown = true;
+            contentKnown = true;
+
+            // A survey is drawn in the projection the map already has, or in its `-projection` when it comes first.
+            if (item.kind == ProjectMapCompositionItemKind::Survey) {
+                if (isFirst && explicitProjection.isEmpty()) {
+                    report(ProjectIndexDiagnosticKind::NoProjectionForSurvey, item);
+                    continue;
+                }
+                if (isFirst) {
+                    contentProjection = explicitProjection;
+                }
+                if (contentProjection.startsWith(QStringLiteral("none:"))) {
+                    report(ProjectIndexDiagnosticKind::UnsupportedSurveyProjection, item);
+                }
                 continue;
             }
 
-            const bool differsFromContent = !contentProjection.isEmpty() && itemProjection != contentProjection;
-            const bool differsFromMap = !explicitProjection.isEmpty() && itemProjection != explicitProjection;
-            if (differsFromContent || differsFromMap) {
-                diagnostics.append(itemDiagnostic(holdsScraps(item.kind)
-                                                      ? ProjectIndexDiagnosticKind::IncompatibleScrapProjection
-                                                      : ProjectIndexDiagnosticKind::IncompatibleMapProjection,
-                                                  composition,
-                                                  item));
-                projectionReported = true;
-            } else if (contentProjection.isEmpty()) {
-                contentProjection = itemProjection;
+            const QString itemProjection = item.kind == ProjectMapCompositionItemKind::Map
+                ? mapProjection(item.key)
+                : therionProjectionIdentity(scrapProjectionsByKey.value(item.key, QStringLiteral("plan")));
+            bool reportedHere = false;
+            if (!itemProjection.isEmpty() && !projectionReported) {
+                const bool differsFromContent =
+                    !contentProjection.isEmpty() && itemProjection != contentProjection;
+                const bool differsFromMap = !explicitProjection.isEmpty() && itemProjection != explicitProjection;
+                if (differsFromContent || differsFromMap) {
+                    report(holdsScraps(item.kind) ? ProjectIndexDiagnosticKind::IncompatibleScrapProjection
+                                                  : ProjectIndexDiagnosticKind::IncompatibleMapProjection,
+                           item);
+                    projectionReported = true;
+                    reportedHere = true;
+                } else if (contentProjection.isEmpty()) {
+                    contentProjection = itemProjection;
+                }
             }
-            contentKnown = true;
+            // Therion reads a shift on the first scrap of a map but rejects it on any later one.
+            if (item.kind == ProjectMapCompositionItemKind::Scrap && item.shifted && !isFirst && !reportedHere) {
+                report(ProjectIndexDiagnosticKind::ShiftedScrap, item);
+            }
         }
         inProgress.remove(mapKey);
 
         const QString projection = explicitProjection.isEmpty() ? contentProjection : explicitProjection;
         projectionByMapKey.insert(mapKey, projection);
+
+        for (const ProjectMapCompositionItem &preview : composition.previews) {
+            const QString previewProjection = mapProjection(preview.key);
+            if (!previewProjection.isEmpty() && !projection.isEmpty() && previewProjection != projection) {
+                report(ProjectIndexDiagnosticKind::IncompatibleMapProjection, preview);
+            }
+        }
         return projection;
     };
 

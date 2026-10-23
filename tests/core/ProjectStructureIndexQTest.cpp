@@ -331,6 +331,96 @@ private slots:
         QCOMPARE(findings, expected);
     }
 
+    void reportsShiftsSurveysAndPreviewsTherionRejects()
+    {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        QDir projectDir(tempDir.path());
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("root.th")),
+                              QStringLiteral(
+                                  "survey top\n"
+                                  "  survey branch\n"
+                                  "  endsurvey branch\n"
+                                  "  input map.th2\n"
+                                  "  map mP\n"
+                                  "    sP\n"
+                                  "  endmap\n"
+                                  "  map mE\n"
+                                  "    sE\n"
+                                  "  endmap\n"
+                                  "  map firstShift\n"
+                                  "    sP [1 2 m] above\n"
+                                  "  endmap\n"
+                                  "  map laterShift\n"
+                                  "    sP\n"
+                                  "    sP2 [0 0 m] none\n"
+                                  "  endmap\n"
+                                  "  map surveyFirst\n"
+                                  "    branch\n"
+                                  "  endmap\n"
+                                  "  map surveyPlan -projection plan\n"
+                                  "    branch\n"
+                                  "  endmap\n"
+                                  "  map surveyNone -projection none\n"
+                                  "    branch\n"
+                                  "  endmap\n"
+                                  "  map surveyLater\n"
+                                  "    mP\n"
+                                  "    branch\n"
+                                  "  endmap\n"
+                                  "  map mN\n"
+                                  "    sN\n"
+                                  "  endmap\n"
+                                  "  map surveyAfterNone\n"
+                                  "    mN\n"
+                                  "    branch\n"
+                                  "  endmap\n"
+                                  "  map previews\n"
+                                  "    sP\n"
+                                  "    preview above nothing\n"
+                                  "    preview above sE\n"
+                                  "    preview above branch\n"
+                                  "    preview above mE\n"
+                                  "    preview below mP\n"
+                                  "  endmap\n"
+                                  "  map shiftedMaps\n"
+                                  "    mP [1 2 m] above\n"
+                                  "    mP [3 4 m] below\n"
+                                  "  endmap\n"
+                                  "endsurvey top\n")));
+        QVERIFY(writeTextFile(projectDir.filePath(QStringLiteral("map.th2")),
+                              QStringLiteral(
+                                  "scrap sP -projection plan\n"
+                                  "endscrap\n"
+                                  "scrap sP2\n"
+                                  "endscrap\n"
+                                  "scrap sE -projection extended\n"
+                                  "endscrap\n"
+                                  "scrap sN -projection none\n"
+                                  "endscrap\n")));
+
+        QString errorMessage;
+        const ProjectIndexSnapshot snapshot =
+            ProjectStructureIndex::scanProjectIndex(projectDir.path(), &errorMessage);
+        QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage));
+
+        QStringList findings = diagnosticSummaries(snapshot.diagnostics);
+        findings.sort();
+        QStringList expected = {
+            QStringLiteral("shifted:sP2:16"),
+            QStringLiteral("no-projection:branch:19"),
+            QStringLiteral("survey-projection:branch:25"),
+            QStringLiteral("survey-projection:branch:36"),
+            QStringLiteral("unknown-item:nothing:40"),
+            QStringLiteral("preview-not-map:sE:41"),
+            QStringLiteral("preview-not-map:branch:42"),
+            QStringLiteral("map-projection:mE:43"),
+        };
+        expected.sort();
+        QCOMPARE(findings, expected);
+    }
+
 private:
     static QStringList diagnosticSummaries(const QVector<ProjectIndexDiagnostic> &diagnostics)
     {
@@ -346,6 +436,11 @@ private:
             {ProjectIndexDiagnosticKind::RecursiveMapReference, QStringLiteral("recursive")},
             {ProjectIndexDiagnosticKind::IncompatibleScrapProjection, QStringLiteral("scrap-projection")},
             {ProjectIndexDiagnosticKind::IncompatibleMapProjection, QStringLiteral("map-projection")},
+            {ProjectIndexDiagnosticKind::ShiftedScrap, QStringLiteral("shifted")},
+            {ProjectIndexDiagnosticKind::NoProjectionForSurvey, QStringLiteral("no-projection")},
+            {ProjectIndexDiagnosticKind::UnsupportedSurveyProjection, QStringLiteral("survey-projection")},
+            {ProjectIndexDiagnosticKind::PreviewNotMap, QStringLiteral("preview-not-map")},
+            {ProjectIndexDiagnosticKind::UnknownMapItemReference, QStringLiteral("unknown-item")},
         };
         QStringList summaries;
         for (const ProjectIndexDiagnostic &diagnostic : diagnostics) {

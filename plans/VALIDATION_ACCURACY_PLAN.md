@@ -2,7 +2,7 @@
 
 Date: 2026-10-15
 
-Status: V1a, V1b, V2a, V2b, V3, V4, V4b, V5, V5b, V6, and V6b done; V6c done; V6d groups 1 and 2 (checks 1, 2, 3, 4, 5, 9, 10) done, checks 6, 7, 8 planned (2026-10-23). Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
+Status: V1a, V1b, V2a, V2b, V3, V4, V4b, V5, V5b, V6, and V6b done; V6c and V6d done (2026-10-23). Updated 2026-10-21 with GitHub issues #49 and #50, help linking, bracketed
 values, Therion's line splitting (`thsplit_args`) first in two parts (V1a, V1b), code blocks as a potential slice,
 and slices renumbered.
 
@@ -450,7 +450,10 @@ in `scanMapReferences`. Group 2 (checks 5 and 2) done (2026-10-23) in `ProjectMa
 projection reading and identity shared with V6b in `TherionProjectionRules.cpp` (which also makes V6b read `-proj`).
 Each message checked against Therion 6.4.0. Therion reports a loop of two or more maps as `recursive map reference`
 without a line, and a map that lists itself as `map cannot contain only previews`; the validator reports both as a
-recursive map reference at the item. Checks 6, 7, 8 planned.
+recursive map reference at the item. Group 3 (checks 6, 7, 8) done (2026-10-23) in the same walk. Therion reads
+a shift on the first scrap of a map but rejects it on any later scrap, even `[0 0 m] none`, and the validator
+follows that. A preview that is missing gets the V6c `does not exist` finding; one naming a scrap, survey, or
+drawing object gets `preview-not-map`.
 
 Therion checks every map in the files it reads, used or not, in
 `thdb2d::process_map_references` and `thdb2d::postprocess_map_references` (`src/therion-core/thdb2d.cxx`), and the
@@ -492,9 +495,10 @@ How:
 - Documentation: `SPECIFICATION.md` (validation list, and the Structure warning row for mixed content),
   `docs/THERION_COMPATIBILITY.md`, the four manuals, cs/fr/sk translations, WORKLOG.
 
-Needs approval before coding: check 1 makes mixed content an error instead of a warning, and
-`tests/ProjectValidationScannerTest.cpp` (around line 678) asserts the warning. The evidence is Therion's
-`not a scrap reference` and `not a map reference` errors; the test would be changed to expect an error.
+Approved (2026-10-23): check 1 makes mixed content an error instead of a warning, so
+`tests/ProjectValidationScannerTest.cpp` now expects an error (Therion's `not a scrap reference` and `not a map
+reference`). The ambiguous-reference fixture in `tests/ProjectStructureIndexTest.cpp` has two empty maps, which now
+also give two empty-map errors (Therion's `empty map not allowed`).
 
 Order: 1, 3, 4, 9 and 10 are small and go first; then 5 and 2 (they share the projection walk); then 6, 7 and 8.
 One commit per group, each with its tests and documentation.

@@ -2790,6 +2790,46 @@ Line-point options: %1</translation>
         <translation>Mapa `%1` má inú projekciu ako prvá položka tejto mapy alebo ako `-projection` mapy.</translation>
     </message>
     <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="250"/>
+        <source>Shifted scrap</source>
+        <translation>Posunutý scrap</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="251"/>
+        <source>Scrap `%1` is shifted, which Therion allows only for maps and for the first scrap of a map.</source>
+        <translation>Scrap `%1` je posunutý, čo Therion dovoľuje len pri mapách a pri prvom scrape mapy.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="256"/>
+        <source>No projection for survey</source>
+        <translation>Chýba projekcia pre survey</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="257"/>
+        <source>Survey `%1` is the first item of a map without `-projection`. Give the map a projection to draw the survey's centreline in.</source>
+        <translation>Survey `%1` je prvou položkou mapy bez `-projection`. Dajte mape projekciu, v ktorej sa má polygón survey vykresliť.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="262"/>
+        <source>Unsupported projection for survey</source>
+        <translation>Nepodporovaná projekcia pre survey</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="263"/>
+        <source>Survey `%1` cannot be drawn in this map's projection. A survey needs plan, extended, or elevation.</source>
+        <translation>Survey `%1` nemožno vykresliť v projekcii tejto mapy. Survey potrebuje plan, extended alebo elevation.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="268"/>
+        <source>Preview is not a map</source>
+        <translation>Náhľad nie je mapa</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectValidationScanner.cpp" line="269"/>
+        <source>Preview `%1` is not a map. A preview must name a map.</source>
+        <translation>Náhľad `%1` nie je mapa. Náhľad musí uvádzať mapu.</translation>
+    </message>
+    <message>
         <location filename="../src/app/ProjectValidationScanner.cpp" line="227"/>
         <source>`-survey %1` does not name a survey.</source>
         <translation>`-survey %1` neuvádza žiadny survey.</translation>

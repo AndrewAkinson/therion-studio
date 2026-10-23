@@ -1694,6 +1694,13 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
     const ReferenceKeyIndex surveyKeysByName = surveyKeysByReferenceName(entries);
     // Only needed for a map item that is not a map, scrap or survey, so read on first use.
     std::optional<ReferenceKeyIndex> drawingObjectKeysByName;
+    auto drawingObjectKeys = [&]() -> const ReferenceKeyIndex & {
+        if (!drawingObjectKeysByName.has_value()) {
+            drawingObjectKeysByName =
+                drawingObjectIdKeysByReferenceName(entries, cache, inMemoryFileContentsByPath);
+        }
+        return *drawingObjectKeysByName;
+    };
     QHash<QString, ProjectMapComposition> compositionsByMapKey;
 
     QHash<QString, QVector<ProjectStructureEntry>> mapsBySourceFile;
@@ -1832,15 +1839,43 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
                 }
 
                 if (isPreview) {
+                    const QString &previewName = itemSyntax.name;
+                    const TherionSourcePhysicalRange previewRange = parsedLineTokenPhysicalRange(parsedLine, 2);
                     const ReferenceResolution previewResolution = resolveReferenceKey(mapKeysByName,
-                                                                                      itemSyntax.name,
+                                                                                      previewName,
                                                                                       mapEntry.namespacePath);
                     if (previewResolution.state == ReferenceResolutionState::Unique) {
                         const QString owningMapKey = ProjectStructureIndex::structureEntryNodeKey(mapEntry);
                         if (previewResolution.key != owningMapKey) {
                             previewReferences.insert(previewResolution.key);
+                            composition.previews.append({ProjectMapCompositionItemKind::Map,
+                                                         previewResolution.key,
+                                                         previewName,
+                                                         parsedLine.lineNumber,
+                                                         previewRange.columnNumber,
+                                                         previewRange.columnLength});
                         }
                     }
+                    if (previewResolution.state != ReferenceResolutionState::Missing) {
+                        continue;
+                    }
+                    // Therion rejects a preview that is not a map, and one that does not exist.
+                    const bool namesOtherObject =
+                        resolveReferenceKey(scrapKeysByName, previewName, mapEntry.namespacePath).state
+                            != ReferenceResolutionState::Missing
+                        || resolveReferenceKey(surveyKeysByName, previewName, mapEntry.namespacePath).state
+                            != ReferenceResolutionState::Missing
+                        || resolveReferenceKey(drawingObjectKeys(), previewName, mapEntry.namespacePath).state
+                            != ReferenceResolutionState::Missing;
+                    appendMapReferenceDiagnostic(&result.diagnostics,
+                                                 namesOtherObject ? ProjectIndexDiagnosticKind::PreviewNotMap
+                                                                  : ProjectIndexDiagnosticKind::UnknownMapItemReference,
+                                                 mapEntry,
+                                                 fileIt.key(),
+                                                 parsedLine.lineNumber,
+                                                 previewRange.columnNumber,
+                                                 previewRange.columnLength,
+                                                 previewName);
                     continue;
                 }
 
@@ -1852,7 +1887,8 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
                                               candidate,
                                               parsedLine.lineNumber,
                                               candidateRange.columnNumber,
-                                              candidateRange.columnLength});
+                                              candidateRange.columnLength,
+                                              mapsOffset && parsedLine.tokens.size() == 3});
                 };
 
                 const ReferenceResolution childMapResolution = resolveReferenceKey(mapKeysByName, candidate, mapEntry.namespacePath);
@@ -1911,12 +1947,7 @@ MapReferenceScanResult scanMapReferences(const QVector<ProjectStructureEntry> &e
                     continue;
                 }
 
-                if (!drawingObjectKeysByName.has_value()) {
-                    drawingObjectKeysByName = drawingObjectIdKeysByReferenceName(entries,
-                                                                                 cache,
-                                                                                 inMemoryFileContentsByPath);
-                }
-                if (resolveReferenceKey(*drawingObjectKeysByName, candidate, mapEntry.namespacePath).state
+                if (resolveReferenceKey(drawingObjectKeys(), candidate, mapEntry.namespacePath).state
                     != ReferenceResolutionState::Missing) {
                     appendMapReferenceDiagnostic(&result.diagnostics,
                                                  ProjectIndexDiagnosticKind::InvalidMapObject,
