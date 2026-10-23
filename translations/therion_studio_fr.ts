@@ -2141,9 +2141,59 @@ Les fichiers attendus sont `docs/USER_MANUAL.&lt;language&gt;.md` ou `docs/USER_
         <translation>La dernière compilation a échoué, ces chiffres proviennent d’une compilation antérieure.</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="50"/>
+        <source>%1 m</source>
+        <translation>%1 m</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="55"/>
+        <source>%1 %</source>
+        <translation>%1 %</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="46"/>
         <source>Out of date because sources changed after the last compile.</source>
         <translation>Périmé, car les sources ont changé après la dernière compilation.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="93"/>
+        <source>Map and scrap details appear after a successful compile.</source>
+        <translation>Les détails des cartes et des scraps apparaissent après une compilation réussie.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="97"/>
+        <source>Map and scrap details need a database export. Add export database -fmt sql to the config.</source>
+        <translation>Les détails des cartes et des scraps nécessitent un export de base de données. Ajoutez export database -fmt sql à la configuration.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="113"/>
+        <source>This map is not in the last successful compile.</source>
+        <translation>Cette carte ne figure pas dans la dernière compilation réussie.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="121"/>
+        <source>Length</source>
+        <translation>Longueur</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="124"/>
+        <source>Depth</source>
+        <translation>Profondeur</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="142"/>
+        <source>This scrap is not in the last successful compile.</source>
+        <translation>Ce scrap ne figure pas dans la dernière compilation réussie.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="146"/>
+        <source>Average distortion</source>
+        <translation>Distorsion moyenne</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="149"/>
+        <source>Maximum distortion</source>
+        <translation>Distorsion maximale</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="47"/>

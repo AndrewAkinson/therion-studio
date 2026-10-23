@@ -2193,9 +2193,59 @@ Očekávané soubory jsou `docs/USER_MANUAL.&lt;language&gt;.md` nebo `docs/USER
         <translation>Poslední překlad selhal, tyto údaje jsou z dřívějšího překladu.</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="50"/>
+        <source>%1 m</source>
+        <translation>%1 m</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="55"/>
+        <source>%1 %</source>
+        <translation>%1 %</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="46"/>
         <source>Out of date because sources changed after the last compile.</source>
         <translation>Zastaralé, protože se zdroje po posledním překladu změnily.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="93"/>
+        <source>Map and scrap details appear after a successful compile.</source>
+        <translation>Podrobnosti o mapách a scrapech se zobrazí po úspěšném překladu.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="97"/>
+        <source>Map and scrap details need a database export. Add export database -fmt sql to the config.</source>
+        <translation>Podrobnosti o mapách a scrapech vyžadují export databáze. Přidejte do konfigurace export database -fmt sql.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="113"/>
+        <source>This map is not in the last successful compile.</source>
+        <translation>Tato mapa není v posledním úspěšném překladu.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="121"/>
+        <source>Length</source>
+        <translation>Délka</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="124"/>
+        <source>Depth</source>
+        <translation>Hloubka</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="142"/>
+        <source>This scrap is not in the last successful compile.</source>
+        <translation>Tento scrap není v posledním úspěšném překladu.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="146"/>
+        <source>Average distortion</source>
+        <translation>Průměrné zkreslení</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="149"/>
+        <source>Maximum distortion</source>
+        <translation>Největší zkreslení</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="47"/>
