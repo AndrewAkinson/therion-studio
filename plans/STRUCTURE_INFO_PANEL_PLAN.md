@@ -9,8 +9,10 @@ Scope: add an info box at the bottom of the `Survey` and `Map` Structure views, 
 xtherion output, then map and scrap details and further survey details come from Therion's SQL database export,
 both written by the user's compile.
 
-Status: plan only, not implemented. Specification, architecture, user manual, worklog and translations are updated in
-the same changes that implement each slice.
+Status: slices 1 to 3 done and committed (5770d13, 37f66dc, eb2a00d, local, not pushed), after merging
+`feature/compile-results` (460d843). Slice 4 not started; it waits for the worst-adjustment measure to be agreed.
+The optional fix at the end is open. Specification, architecture, user manual, worklog and translations are updated
+in the same changes that implement each slice.
 
 ## Current State
 
@@ -36,7 +38,12 @@ the same changes that implement each slice.
 - SQL `MAPS` has `LENGTH`, `DEPTH`, `PROJID` and title. `MAPITEMS` has the map contents with item type.
   `SCRAPS` has `PROJID`, `AVG_DISTORTION` and `MAX_DISTORTION`. Distortion is filled with only `export database`
   in the config (no map export needed).
-- `MAPS.DEPTH` came out negative (−5.39) with a positive length. The sign is checked before display.
+- `MAPS.DEPTH` is bottom minus top (`thmapstat::get_depth`), so it is negative, while the PDF legend prints top minus
+  bottom. The box shows it positive like the legend.
+- The SQL export has no projection names, only a numeric `PROJID`.
+- A `-namespace off` survey still has its own full name (`flat.cave`) in both files, and its maps and scraps are filed
+  under it (`SURVEY_ID`), not under the namespace they belong to.
+- When reading fails, Therion prints `writing xtherion file` straight after `reading ...` on the same line.
 - Map team, dates and copyright (`thmapstat`) are written only to the PDF legend and are not available.
 - `export survey-list` has explored and approximate lengths but rounds to whole metres and identifies surveys only by
   title and tree level, so it is not used.
@@ -54,7 +61,8 @@ run.
   it in git.
 - Map, scrap and survey extras (slices 3 and 4) come from the database export of the same compile, found with the
   existing database-output rules (`isTherionDatabaseOutputFileName`). The user adds `export database -fmt sql` to the
-  thconfig for these. Without it the box says so.
+  thconfig for these. Without it the box says so and offers a one-off compile that adds the export without changing
+  the config (see slice 3).
 - Figures follow the user's config, including its `select` lines.
 - Before the first compile the box shows the slice 1 source details and a line saying statistics appear after a
   compile. After a source change the last figures stay, marked out of date. If the compile fails, the box says so and
@@ -64,7 +72,9 @@ run.
 
 - A box under the Structure tree on both the `Survey` and `Map` pages, in a vertical `QSplitter` so it can be resized
   or collapsed. The splitter position is kept for the session.
-- Since the tree is shared between the pages, the box is shared too and moves with it.
+- Since the tree is shared between the pages, the box is shared too and moves with it. It starts 240 pixels high.
+- Without saved expansion state the `Survey` view opens one level deep (top-level surveys open, their children
+  collapsed); the `Map` view opens fully expanded.
 - The box shows only what fits the selected row.
   - Survey row (Survey page): survey details.
   - Map row (either page): map details.
@@ -74,7 +84,7 @@ run.
 
 ## Slices
 
-### 1. Info box with source details
+### 1. Info box with source details (done, 5770d13)
 
 - Add the splitter and box to both Structure pages. Selection in the tree updates it.
 - Show what the project index already knows without Therion: name, full name (namespace path) and where it is defined.
@@ -83,7 +93,7 @@ run.
   without the GUI.
 - Tests: presenter output for survey, map, scrap and empty selection.
 
-### 2. Survey statistics from `.xtherion.dat`
+### 2. Survey statistics from `.xtherion.dat` (done, 37f66dc)
 
 - Add `-x` to compiles and read `.xtherion.dat` from the working folder when the compile finishes, off the UI thread.
   Only a file written by that compile is used.
@@ -94,7 +104,7 @@ run.
 - Show title and the statistics text as Therion writes it (metres, as xtherion).
 - Tests: parser on hand-written lines (quoting, empty title, survey without stations), name matching, staleness.
 
-### 3. Map and scrap details from the SQL export
+### 3. Map and scrap details from the SQL export (done, eb2a00d)
 
 - Read the compile's database export with the existing SQL import code (`TherionSqlReportDatabase` or a shared part
   of it, not a second importer). Only an export written by that compile is used.
@@ -111,7 +121,7 @@ run.
   added, through the normal compile, so all figures come from one compile. The next compile is the normal one again.
 - Tests: queries against a small hand-written SQL fixture, matching map and scrap names with their survey.
 
-### 4. Survey extras from the SQL export
+### 4. Survey extras from the SQL export (not started)
 
 - Flagged stations: number and names of entrances, continuations and fixed stations (other flags if useful), with
   coordinates. Activating one opens its source where it can be found.
@@ -142,4 +152,6 @@ run.
 
 ## Open Points
 
-- Measure used for the worst adjustment (slice 4).
+- Measure used for the worst adjustment (slice 4). Suggested: the shot whose end moved furthest, as the distance in
+  metres between the measured and adjusted leg, shown with its `ERR_LENGTH`, `ERR_BEARING` and `ERR_GRADIENT`.
+  Alternatives are the error relative to shot length, or one chosen column. Not yet agreed.
