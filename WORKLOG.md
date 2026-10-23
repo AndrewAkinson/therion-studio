@@ -15,6 +15,12 @@ Active planning only. Completed history belongs in archive files. Stable archite
 
 ## Active Work
 
+### Structure Info Panel
+
+- Planned in `plans/STRUCTURE_INFO_PANEL_PLAN.md`: an info box under the `Survey` and `Map` Structure trees, with
+  survey statistics from Therion's xtherion output first, then map and scrap details and survey extras from the SQL
+  export, all read from the user's compile. Not implemented.
+
 ### 2026.7.2 Planning
 
 - Keep the `2026.7.2` scope open for the focused performance sequence: Map runtime ownership R4-R5 and map refresh
