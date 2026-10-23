@@ -2219,6 +2219,39 @@ Les fichiers attendus sont `docs/USER_MANUAL.&lt;language&gt;.md` ou `docs/USER_
     </message>
 </context>
 <context>
+    <name>ProjectConnectionDataStatus</name>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="20"/>
+        <source>Computing station positions with Therion...</source>
+        <translation>Therion calcule les positions des stations...</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="25"/>
+        <source>Positions from the compile at %1. Sources changed since; compile to update them.</source>
+        <translation>Positions issues de la compilation de %1. Les sources ont changé depuis ; compilez pour les mettre à jour.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="26"/>
+        <source>Positions from the compile at %1.</source>
+        <translation>Positions issues de la compilation de %1.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="28"/>
+        <source>Positions from a Therion run at %1. Sources changed since.</source>
+        <translation>Positions issues d’une exécution de Therion de %1. Les sources ont changé depuis.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="29"/>
+        <source>Positions from a Therion run at %1.</source>
+        <translation>Positions issues d’une exécution de Therion de %1.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="33"/>
+        <source>No station positions. Add &quot;export database -fmt sql&quot; to the thconfig and compile.</source>
+        <translation>Aucune position de station. Ajoutez "export database -fmt sql" à la configuration et compilez.</translation>
+    </message>
+</context>
+<context>
     <name>QObject</name>
     <message>
         <location filename="../src/app/MainWindow.cpp" line="191"/>

@@ -1,9 +1,11 @@
+#include "../src/app/ProjectConnectionDataStatus.h"
 #include "../src/app/ProjectStationPositionService.h"
 #include "../src/core/ProjectStructureIndex.h"
 
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
+#include <QLocale>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest/QtTest>
@@ -90,6 +92,7 @@ private slots:
         QCOMPARE(failed.count(), 0);
         QVERIFY(!service.isRunning());
         QCOMPARE(service.positions().size(), 2);
+        QCOMPARE(service.dataSource(), ProjectStationPositionService::DataSource::Run);
         const Th2StationPosition station =
             service.positions().value(ProjectStructureIndex::stationKey(QStringLiteral("1"), QStringLiteral("a.cave")));
         QCOMPARE(station.y, 20.0);
@@ -136,11 +139,14 @@ private slots:
 
         ProjectStationPositionService service(temporaryBase.path());
         QSignalSpy ready(&service, &ProjectStationPositionService::positionsReady);
-        service.loadCompileExport(exportPath);
+        const QDateTime compileStartedAt = QDateTime::currentDateTime();
+        service.loadCompileExport(exportPath, compileStartedAt);
         QVERIFY(!service.isRunning());
         QVERIFY(ready.wait(10000));
         QCOMPARE(service.positions().size(), 2);
         QCOMPARE(service.legs().size(), 1);
+        QCOMPARE(service.dataSource(), ProjectStationPositionService::DataSource::Compile);
+        QCOMPARE(service.dataTakenAt(), compileStartedAt);
 
         // A newer .th does not start a run: compile data is kept until the next compile.
         QFile source(QDir(project.path()).filePath(QStringLiteral("cave.th")));
@@ -149,6 +155,37 @@ private slots:
         service.request(ProjectStationPositionRequest{QCoreApplication::applicationFilePath(), configPath, {source.fileName()}});
         QVERIFY(!service.isRunning());
         QCOMPARE(service.positions().size(), 2);
+        QVERIFY(service.isOutOfDate({source.fileName()}));
+        // Saving a drawing does not make them out of date.
+        QFile drawing(QDir(project.path()).filePath(QStringLiteral("cave.th2")));
+        QVERIFY(drawing.open(QIODevice::WriteOnly));
+        QVERIFY(drawing.setFileTime(QDateTime::currentDateTime().addSecs(60), QFileDevice::FileModificationTime));
+        QVERIFY(!service.isOutOfDate({drawing.fileName()}));
+    }
+
+    void describesWhereStationPositionsComeFrom()
+    {
+        using Status = ProjectConnectionDataStatus;
+        const QDateTime now(QDate(2026, 10, 23), QTime(15, 0));
+        Status::State state;
+        QVERIFY(Status::text(state, now).contains(QStringLiteral("export database -fmt sql")));
+
+        state.source = ProjectStationPositionService::DataSource::Compile;
+        state.takenAt = QDateTime(QDate(2026, 10, 23), QTime(10, 42));
+        const QString time = QLocale().toString(state.takenAt.time(), QLocale::ShortFormat);
+        QCOMPARE(Status::text(state, now), QStringLiteral("Positions from the compile at %1.").arg(time));
+        state.outOfDate = true;
+        QVERIFY(Status::text(state, now).contains(QStringLiteral("Sources changed since")));
+
+        // An earlier day shows the date too.
+        state.takenAt = QDateTime(QDate(2026, 10, 20), QTime(10, 42));
+        QVERIFY(Status::text(state, now).contains(QLocale().toString(state.takenAt, QLocale::ShortFormat)));
+
+        state.source = ProjectStationPositionService::DataSource::Run;
+        state.outOfDate = false;
+        QVERIFY(Status::text(state, now).startsWith(QStringLiteral("Positions from a Therion run")));
+        state.running = true;
+        QCOMPARE(Status::text(state, now), QStringLiteral("Computing station positions with Therion..."));
     }
 
     void compileExportReplacesARunInProgress()
@@ -164,7 +201,7 @@ private slots:
         QSignalSpy ready(&service, &ProjectStationPositionService::positionsReady);
         service.request(ProjectStationPositionRequest{QCoreApplication::applicationFilePath(), configPath, {}});
         QVERIFY(service.isRunning());
-        service.loadCompileExport(exportPath);
+        service.loadCompileExport(exportPath, QDateTime::currentDateTime());
         QVERIFY(!service.isRunning());
         QVERIFY(ready.wait(10000));
         QCOMPARE(ready.count(), 1);

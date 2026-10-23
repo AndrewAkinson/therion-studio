@@ -36,6 +36,13 @@ class ProjectStationPositionService final : public QObject
     Q_OBJECT
 
 public:
+    enum class DataSource
+    {
+        None,
+        Compile,
+        Run,
+    };
+
     // `temporaryBasePath` holds the temporary folder (chosen at the composition boundary).
     explicit ProjectStationPositionService(const QString &temporaryBasePath, QObject *parent = nullptr);
     ~ProjectStationPositionService() override;
@@ -44,11 +51,16 @@ public:
     // file other than a drawing. Positions from a compile are kept until the next compile.
     void request(const ProjectStationPositionRequest &request);
     // Reads positions from the database export of the user's compile, replacing any from a run.
-    void loadCompileExport(const QString &sqlPath);
+    void loadCompileExport(const QString &sqlPath, const QDateTime &compileStartedAt);
     // Forgets positions and stops a run, for example when the project closes.
     void clear();
 
     [[nodiscard]] bool isRunning() const;
+    [[nodiscard]] DataSource dataSource() const;
+    // When the compile or run that produced the positions started.
+    [[nodiscard]] QDateTime dataTakenAt() const;
+    // A source file other than a drawing was saved after the positions were taken.
+    [[nodiscard]] bool isOutOfDate(const QStringList &sourceFiles) const;
     [[nodiscard]] const QHash<QString, Th2StationPosition> &positions() const;
     // From the same export as positions(), so both are present or both empty.
     [[nodiscard]] const QVector<Th2MeasuredLeg> &legs() const;
@@ -65,6 +77,7 @@ private:
         QVector<Th2MeasuredLeg> legs;
         QString errorMessage;
         quint64 generation = 0;
+        QDateTime takenAt;
     };
 
     [[nodiscard]] bool isCurrent(const ProjectStationPositionRequest &request) const;
@@ -85,7 +98,8 @@ private:
     QDateTime attemptStartedAt_;
     QHash<QString, Th2StationPosition> positions_;
     QVector<Th2MeasuredLeg> legs_;
-    bool fromCompile_ = false;
+    DataSource dataSource_ = DataSource::None;
+    QDateTime dataTakenAt_;
     bool running_ = false;
     quint64 generation_ = 0;
 };

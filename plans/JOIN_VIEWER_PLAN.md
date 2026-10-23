@@ -467,6 +467,8 @@ Status: implemented 2026-10-23, awaiting review. No new UI strings.
 
 ### E3. Status line above the list
 
+Status: implemented 2026-10-23, awaiting review (`ProjectConnectionDataStatus`).
+
 One line for the whole list, since one compile serves every row. For example "Positions from the compile at 10:42",
 "Sources changed since the compile", or "No database export. Add `export database` to the thconfig". Nothing is shown
 per row for this.

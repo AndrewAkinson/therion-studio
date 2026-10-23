@@ -254,6 +254,7 @@ private:
     // project sources.
     void requestJoinStationPositions();
     void loadJoinStationPositionsFromCompile();
+    void refreshConnectionDataStatus();
     // Computed station positions, or none while Therion is running or before it has run.
     [[nodiscard]] const QHash<QString, TherionStudio::Th2StationPosition> *currentStationPositions() const;
     [[nodiscard]] TherionStudio::MapEditorJoinPlacement joinPlacement(const QString &firstScrapObjectId,

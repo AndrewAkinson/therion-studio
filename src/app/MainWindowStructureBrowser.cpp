@@ -718,6 +718,7 @@ void MainWindow::applyStructureSidebarIndex(const TherionStudio::ProjectIndexSna
     lastStructureSidebarProjectIndex_ = projectIndex;
     if (projectJoinsPanel_ != nullptr) {
         projectJoinsPanel_->setProjectIndex(projectIndex);
+        refreshConnectionDataStatus();
     }
 
     const QString currentExpansionProjectRootPath = normalizedStructurePathKey(projectRootPath_);

@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 
+#include "ProjectConnectionDataStatus.h"
 #include "ProjectJoinsPanel.h"
 #include "ProjectStationPositionService.h"
 #include "TherionCompileResult.h"
@@ -22,6 +23,18 @@ QHash<int, QString> stationKeysByLine(const TherionStudio::ProjectIndexSnapshot 
         keys.insert(point.lineNumber, point.stationKey);
     }
     return keys;
+}
+
+// The project's sources that station positions depend on (the export ignores drawings itself).
+QStringList stationPositionSourceFiles(const TherionStudio::ProjectIndexSnapshot &snapshot)
+{
+    QSet<QString> sourceFiles = {snapshot.rootConfigPath};
+    for (const TherionStudio::ProjectStructureEntry &entry : snapshot.entries) {
+        if (!entry.sourceFile.isEmpty()) {
+            sourceFiles.insert(entry.sourceFile);
+        }
+    }
+    return QStringList(sourceFiles.cbegin(), sourceFiles.cend());
 }
 
 struct JoinDrawing
@@ -58,18 +71,27 @@ void MainWindow::setupJoinStationPositions()
         } else {
             statusBar()->clearMessage();
         }
+        refreshConnectionDataStatus();
     });
     connect(stationPositionService_,
             &TherionStudio::ProjectStationPositionService::positionsFailed,
             this,
-            [this](const QString &message) { statusBar()->showMessage(message, 8000); });
+            [this](const QString &message) {
+                statusBar()->showMessage(message, 8000);
+                refreshConnectionDataStatus();
+            });
+    connect(stationPositionService_,
+            &TherionStudio::ProjectStationPositionService::positionsReady,
+            this,
+            &MainWindow::refreshConnectionDataStatus);
+    refreshConnectionDataStatus();
 }
 
 void MainWindow::loadJoinStationPositionsFromCompile()
 {
     const TherionStudio::TherionCompileResult &result = compileResultRecorder_->latest();
     if (stationPositionService_ != nullptr && result.isValid() && !result.databasePaths.isEmpty()) {
-        stationPositionService_->loadCompileExport(result.databasePaths.first());
+        stationPositionService_->loadCompileExport(result.databasePaths.first(), result.startedAt);
     }
 }
 
@@ -80,17 +102,24 @@ void MainWindow::requestJoinStationPositions()
         || (snapshot.equateLinks.isEmpty() && snapshot.joinCommands.isEmpty())) {
         return;
     }
-    QSet<QString> sourceFiles = {snapshot.rootConfigPath};
-    for (const TherionStudio::ProjectStructureEntry &entry : snapshot.entries) {
-        if (!entry.sourceFile.isEmpty()) {
-            sourceFiles.insert(entry.sourceFile);
-        }
-    }
     const QString executable = therionExecutableInput();
     stationPositionService_->request(TherionStudio::ProjectStationPositionRequest{
         executable.isEmpty() ? QStringLiteral("therion") : executable,
         snapshot.rootConfigPath,
-        QStringList(sourceFiles.cbegin(), sourceFiles.cend())});
+        stationPositionSourceFiles(snapshot)});
+}
+
+void MainWindow::refreshConnectionDataStatus()
+{
+    if (projectJoinsPanel_ == nullptr || stationPositionService_ == nullptr) {
+        return;
+    }
+    TherionStudio::ProjectConnectionDataStatus::State state;
+    state.source = stationPositionService_->dataSource();
+    state.takenAt = stationPositionService_->dataTakenAt();
+    state.running = stationPositionService_->isRunning();
+    state.outOfDate = stationPositionService_->isOutOfDate(stationPositionSourceFiles(lastStructureSidebarProjectIndex_));
+    projectJoinsPanel_->setDataStatus(TherionStudio::ProjectConnectionDataStatus::text(state, QDateTime::currentDateTime()));
 }
 
 TherionStudio::MapEditorJoinPlacement MainWindow::joinPlacement(const QString &firstScrapObjectId,

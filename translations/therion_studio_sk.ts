@@ -2271,6 +2271,39 @@ Očakávané súbory sú `docs/USER_MANUAL.&lt;language&gt;.md` alebo `docs/USER
     </message>
 </context>
 <context>
+    <name>ProjectConnectionDataStatus</name>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="20"/>
+        <source>Computing station positions with Therion...</source>
+        <translation>Therion počíta polohy staníc...</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="25"/>
+        <source>Positions from the compile at %1. Sources changed since; compile to update them.</source>
+        <translation>Polohy z kompilácie o %1. Zdroje sa odvtedy zmenili; na aktualizáciu projekt skompilujte.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="26"/>
+        <source>Positions from the compile at %1.</source>
+        <translation>Polohy z kompilácie o %1.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="28"/>
+        <source>Positions from a Therion run at %1. Sources changed since.</source>
+        <translation>Polohy z behu Therionu o %1. Zdroje sa odvtedy zmenili.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="29"/>
+        <source>Positions from a Therion run at %1.</source>
+        <translation>Polohy z behu Therionu o %1.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="33"/>
+        <source>No station positions. Add &quot;export database -fmt sql&quot; to the thconfig and compile.</source>
+        <translation>Žiadne polohy staníc. Pridajte do konfigurácie "export database -fmt sql" a projekt skompilujte.</translation>
+    </message>
+</context>
+<context>
     <name>QObject</name>
     <message>
         <location filename="../src/platform/DiagnosticLogging.cpp" line="270"/>

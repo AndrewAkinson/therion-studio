@@ -65,6 +65,12 @@ ProjectJoinsPanel::ProjectJoinsPanel(QWidget *parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(6);
 
+    dataStatusLabel_ = new QLabel(this);
+    dataStatusLabel_->setObjectName(QStringLiteral("connectionsDataStatus"));
+    dataStatusLabel_->setTextFormat(Qt::PlainText);
+    dataStatusLabel_->setWordWrap(true);
+    layout->addWidget(dataStatusLabel_);
+
     auto *projectionRow = new QHBoxLayout;
     projectionRow->setContentsMargins(0, 0, 0, 0);
     projectionRow->setSpacing(6);
@@ -164,6 +170,11 @@ bool ProjectJoinsPanel::eventFilter(QObject *watched, QEvent *event)
 void ProjectJoinsPanel::setActivationOpensSeparateWindow(bool separateWindow)
 {
     activationOpensSeparateWindow_ = separateWindow;
+}
+
+void ProjectJoinsPanel::setDataStatus(const QString &text)
+{
+    dataStatusLabel_->setText(text);
 }
 
 void ProjectJoinsPanel::setConnectionColors(const ConnectionColors &colors)

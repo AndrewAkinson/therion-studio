@@ -2271,6 +2271,39 @@ Očekávané soubory jsou `docs/USER_MANUAL.&lt;language&gt;.md` nebo `docs/USER
     </message>
 </context>
 <context>
+    <name>ProjectConnectionDataStatus</name>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="20"/>
+        <source>Computing station positions with Therion...</source>
+        <translation>Therion počítá polohy stanic...</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="25"/>
+        <source>Positions from the compile at %1. Sources changed since; compile to update them.</source>
+        <translation>Polohy z kompilace v %1. Zdroje se od té doby změnily; pro aktualizaci projekt zkompilujte.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="26"/>
+        <source>Positions from the compile at %1.</source>
+        <translation>Polohy z kompilace v %1.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="28"/>
+        <source>Positions from a Therion run at %1. Sources changed since.</source>
+        <translation>Polohy z běhu Therionu v %1. Zdroje se od té doby změnily.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="29"/>
+        <source>Positions from a Therion run at %1.</source>
+        <translation>Polohy z běhu Therionu v %1.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/ProjectConnectionDataStatus.cpp" line="33"/>
+        <source>No station positions. Add &quot;export database -fmt sql&quot; to the thconfig and compile.</source>
+        <translation>Žádné polohy stanic. Přidejte do konfigurace "export database -fmt sql" a projekt zkompilujte.</translation>
+    </message>
+</context>
+<context>
     <name>QObject</name>
     <message>
         <location filename="../src/platform/DiagnosticLogging.cpp" line="270"/>

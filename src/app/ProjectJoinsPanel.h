@@ -39,6 +39,8 @@ public:
     // other choice.
     void setActivationOpensSeparateWindow(bool separateWindow);
     void setConnectionColors(const ConnectionColors &colors);
+    // The line above the list saying where station positions come from.
+    void setDataStatus(const QString &text);
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
@@ -73,6 +75,7 @@ private:
 
     ProjectIndexSnapshot snapshot_;
     QVector<ProjectJoinGroup> groups_;
+    QLabel *dataStatusLabel_ = nullptr;
     QComboBox *projectionCombo_ = nullptr;
     QLineEdit *filterEdit_ = nullptr;
     // Key below the list: what each row colour, font and marker means; the header button folds it away.

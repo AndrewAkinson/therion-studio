@@ -401,6 +401,8 @@ set(THERION_APP_SOURCES
     src/app/ProjectScanCacheService.h
     src/app/ProjectFileDiscovery.cpp
     src/app/ProjectFileDiscovery.h
+    src/app/ProjectConnectionDataStatus.cpp
+    src/app/ProjectConnectionDataStatus.h
     src/app/ProjectJoinsPanel.cpp
     src/app/ProjectJoinsPanel.h
     src/app/ProjectFileWatchInventory.cpp

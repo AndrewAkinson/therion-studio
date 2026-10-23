@@ -337,6 +337,7 @@ void MainWindow::resetProjectTherionRunContext()
 {
     if (stationPositionService_ != nullptr) {
         stationPositionService_->clear();
+        refreshConnectionDataStatus();
     }
     if (therionWorkingDirectoryEdit_ != nullptr) {
         const QSignalBlocker blocker(therionWorkingDirectoryEdit_);
