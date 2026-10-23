@@ -198,7 +198,9 @@ The `Structure` activity opens the project navigation pane with a compact `Files
 
 Select a row to inspect it in the tree. Double-click a source row, or select it and press `Enter`, to open its source document and navigate to the matching line.
 
-An info box under the `Survey` and `Map` trees shows details of the selected survey, map or scrap. It gives the Therion full name (for example `inner.cave` for a survey or `MP1@inner.cave` for a map), or says that the survey namespace is off, and the file and line where the object is defined. Click the file and line to open the source there. The text can be selected and copied. Drag the divider above the box to resize it, or drag it to the bottom to hide the box.
+An info box under the `Survey` and `Map` trees shows details of the selected survey, map or scrap. It gives the Therion full name (for example `inner.cave` for a survey or `MP1@inner.cave` for a map), says when a survey namespace is off, and gives the file and line where the object is defined. Click the file and line to open the source there. The text can be selected and copied. Drag the divider above the box to resize it, or drag it to the bottom to hide the box.
+
+For a survey the box also shows its title and the statistics Therion calculates for it, the same as the xtherion `Survey info` panel. They give the length, the vertical, north-south and east-west range with their end stations, and the number of shots and stations. These come from your last successful compile, so compile once to see them. Therion Studio adds Therion's `-x` option to each compile for this, and Therion leaves a hidden `.xtherion.dat` file in the working folder, as it does for xtherion. You may want to add `.xtherion.dat` to your project's `.gitignore`. When you save a change after the compile, the figures stay but are marked out of date. When a compile fails, the figures from the earlier compile stay with a note.
 
 Within each parent, rows are grouped as surveys, maps, then scraps, and each group is sorted alphabetically by the displayed name. Warning rows appear after the project objects they relate to.
 

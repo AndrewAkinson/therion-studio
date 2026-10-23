@@ -172,7 +172,9 @@ Panel `Štruktúra` je ľahký navigačný index otvoreného projektu. Popis v b
 
 Kliknutím riadok iba vyberiete v strome. Dvojklikom na zdrojový riadok, alebo jeho výberom a stlačením `Enter`, otvoríte zdrojový dokument a prejdete na zodpovedajúci riadok.
 
-Informačné okno pod stromami `Survey` a `Map` zobrazuje podrobnosti o vybranom survey, mape alebo scrape. Uvádza úplný názov podľa Therionu (napríklad `inner.cave` pre survey alebo `MP1@inner.cave` pre mapu), prípadne že menný priestor survey je vypnutý, a súbor a riadok, kde je objekt definovaný. Kliknutím na súbor a riadok otvoríte zdroj na tomto mieste. Text možno vybrať a skopírovať. Potiahnutím oddeľovača nad oknom zmeníte jeho veľkosť, potiahnutím úplne nadol okno skryjete.
+Informačné okno pod stromami `Survey` a `Map` zobrazuje podrobnosti o vybranom survey, mape alebo scrape. Uvádza úplný názov podľa Therionu (napríklad `inner.cave` pre survey alebo `MP1@inner.cave` pre mapu), uvedie, keď je menný priestor survey vypnutý, a súbor a riadok, kde je objekt definovaný. Kliknutím na súbor a riadok otvoríte zdroj na tomto mieste. Text možno vybrať a skopírovať. Potiahnutím oddeľovača nad oknom zmeníte jeho veľkosť, potiahnutím úplne nadol okno skryjete.
+
+Pri survey okno zobrazuje aj jeho titulok a štatistiku, ktorú preň vypočíta Therion, rovnako ako panel `Survey info` v xtherione. Uvádza dĺžku, zvislý rozsah, rozsah sever-juh a východ-západ s krajnými bodmi a počet meraní a bodov. Údaje pochádzajú z posledného úspešného prekladu, preto ich uvidíte až po prvom preklade. Therion Studio na to pridáva ku každému prekladu voľbu `-x` a Therion ponechá v pracovnom priečinku skrytý súbor `.xtherion.dat`, rovnako ako pre xtherion. Súbor `.xtherion.dat` môžete pridať do `.gitignore` projektu. Keď po preklade uložíte zmenu, údaje zostanú, ale budú označené ako zastarané. Keď preklad zlyhá, zostanú údaje z predchádzajúceho prekladu s poznámkou.
 
 Pohľady `Survey` a `Mapa` si pri otvorenom rovnakom projekte pamätajú svoj stav rozbalenia/zbalenia oddelene.
 

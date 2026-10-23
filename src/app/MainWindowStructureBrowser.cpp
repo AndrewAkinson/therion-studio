@@ -3,6 +3,7 @@
 #include "MainWindowDocumentHelpers.h"
 #include "MainWindowStructureInfoPresenter.h"
 #include "MainWindowStructureRoles.h"
+#include "TherionSurveyStatisticsLoader.h"
 #include "three_d_viewer/ThreeDViewerTab.h"
 #include "../core/TherionFileTypes.h"
 
@@ -706,6 +707,7 @@ void MainWindow::applyStructureSidebarIndex(const TherionStudio::ProjectIndexSna
     lastStructureSidebarProjectIndex_ = projectIndex;
     // Entries change on every apply, so the info box is refreshed on each exit path.
     const auto refreshInfoBoxOnExit = qScopeGuard([this]() {
+        updateSurveyStatisticsSourcesChanged();
         refreshStructureInfoBox();
     });
 
@@ -1329,8 +1331,36 @@ void MainWindow::refreshStructureInfoBox()
 
     const TherionStudio::ProjectStructureEntry *entry = structureEntryForIndex(structureTree_->currentIndex());
     const QString sourcePath = entry != nullptr ? relativeStructurePath(projectRootPath_, entry->sourceFile) : QString();
+    TherionStudio::MainWindowStructureInfoPresenter::SurveyStatisticsInput statisticsInput;
+    if (entry != nullptr && surveyStatisticsLoader_ != nullptr) {
+        const TherionStudio::TherionSurveyStatistics &statistics = surveyStatisticsLoader_->statistics();
+        statisticsInput.available = statistics.isAvailable();
+        const auto survey = statistics.surveysByFullName.constFind(
+            TherionStudio::ProjectStructureIndex::surveyFullName(*entry));
+        statisticsInput.survey = survey != statistics.surveysByFullName.constEnd() ? &survey.value() : nullptr;
+        statisticsInput.sourcesChanged = surveyStatisticsSourcesChanged_;
+        statisticsInput.laterCompileFailed = statistics.laterCompileFailed;
+    }
     structureInfoBox_->setHtml(TherionStudio::MainWindowStructureInfoPresenter::html(
-        TherionStudio::MainWindowStructureInfoPresenter::present(entry, sourcePath)));
+        TherionStudio::MainWindowStructureInfoPresenter::present(entry, sourcePath, statisticsInput)));
+}
+
+void MainWindow::updateSurveyStatisticsSourcesChanged()
+{
+    if (surveyStatisticsLoader_ == nullptr || !surveyStatisticsLoader_->statistics().isAvailable()) {
+        surveyStatisticsSourcesChanged_ = false;
+        return;
+    }
+
+    QSet<QString> sourceFiles{surveyStatisticsLoader_->statistics().compile.configPath};
+    if (!lastStructureSidebarProjectIndex_.rootConfigPath.isEmpty()) {
+        sourceFiles.insert(lastStructureSidebarProjectIndex_.rootConfigPath);
+    }
+    for (const TherionStudio::ProjectStructureEntry &entry : lastStructureSidebarProjectIndex_.entries) {
+        sourceFiles.insert(entry.sourceFile);
+    }
+    surveyStatisticsSourcesChanged_ = TherionStudio::therionCompileResultIsOutOfDate(
+        surveyStatisticsLoader_->statistics().compile, sourceFiles.values());
 }
 
 QModelIndex MainWindow::findMapObjectIndexForSourceLocation(const QString &filePath, int lineNumber) const

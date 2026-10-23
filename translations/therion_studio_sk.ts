@@ -2168,6 +2168,31 @@ Očakávané súbory sú `docs/USER_MANUAL.&lt;language&gt;.md` alebo `docs/USER
 <context>
     <name>MainWindowStructureInfoPresenter</name>
     <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="31"/>
+        <source>Survey statistics appear after a successful compile.</source>
+        <translation>Štatistika survey sa zobrazí po úspešnom preklade.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="35"/>
+        <source>This survey is not in the last successful compile.</source>
+        <translation>Tento survey nie je v poslednom úspešnom preklade.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="38"/>
+        <source>Title</source>
+        <translation>Titulok</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="43"/>
+        <source>The last compile failed, so these figures are from an earlier compile.</source>
+        <translation>Posledný preklad zlyhal, tieto údaje sú z predchádzajúceho prekladu.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="46"/>
+        <source>Out of date because sources changed after the last compile.</source>
+        <translation>Zastarané, pretože sa zdroje po poslednom preklade zmenili.</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="47"/>
         <source>Select a survey, map or scrap to see its details.</source>
         <translation>Vyberte survey, mapu alebo scrap a zobrazia sa jeho podrobnosti.</translation>

@@ -1,5 +1,6 @@
 #include "../src/app/MainWindowStructureInfoPresenter.h"
 #include "../src/core/ProjectStructureIndex.h"
+#include "../src/core/TherionXtherionData.h"
 
 #include <QtTest/QtTest>
 
@@ -42,7 +43,78 @@ private slots:
     void promptsForOtherRows();
     void omitsLocationWithoutLine();
     void htmlEscapesAndLinksSource();
+    void notesSurveyStatisticsBeforeCompile();
+    void presentsSurveyStatistics();
+    void notesSurveyMissingFromCompile();
+    void notesOutOfDateStatistics();
+    void omitsStatisticsForMaps();
 };
+
+MainWindowStructureInfoPresenter::SurveyStatisticsInput compiledInput(const TherionXtherionSurvey *survey)
+{
+    MainWindowStructureInfoPresenter::SurveyStatisticsInput input;
+    input.available = true;
+    input.survey = survey;
+    return input;
+}
+
+void MainWindowStructureInfoPresenterTest::notesSurveyStatisticsBeforeCompile()
+{
+    const ProjectStructureEntry entry = makeEntry(QStringLiteral("Surveys"), QStringLiteral("inner"), QStringLiteral("inner.cave"));
+    const auto presentation = MainWindowStructureInfoPresenter::present(&entry, QStringLiteral("cave/cave.th"));
+
+    QVERIFY(presentation.statistics.isEmpty());
+    QCOMPARE(presentation.notes, QStringList{QStringLiteral("Survey statistics appear after a successful compile.")});
+}
+
+void MainWindowStructureInfoPresenterTest::presentsSurveyStatistics()
+{
+    const ProjectStructureEntry entry = makeEntry(QStringLiteral("Surveys"), QStringLiteral("inner"), QStringLiteral("inner.cave"));
+    TherionXtherionSurvey survey;
+    survey.title = QStringLiteral("Inner Series");
+    survey.statistics = QStringLiteral("length: 15.00m\nnumber of shots: 2");
+    const auto presentation = MainWindowStructureInfoPresenter::present(&entry, QStringLiteral("cave/cave.th"), compiledInput(&survey));
+
+    QCOMPARE(fieldValue(presentation, QStringLiteral("Title")), QStringLiteral("Inner Series"));
+    QCOMPARE(presentation.statistics, QStringList({QStringLiteral("length: 15.00m"), QStringLiteral("number of shots: 2")}));
+    QVERIFY(presentation.notes.isEmpty());
+    QVERIFY(MainWindowStructureInfoPresenter::html(presentation).contains(QStringLiteral("length: 15.00m<br>number of shots: 2")));
+}
+
+void MainWindowStructureInfoPresenterTest::notesSurveyMissingFromCompile()
+{
+    const ProjectStructureEntry entry = makeEntry(QStringLiteral("Surveys"), QStringLiteral("inner"), QStringLiteral("inner.cave"));
+    const auto presentation = MainWindowStructureInfoPresenter::present(&entry, QStringLiteral("cave/cave.th"), compiledInput(nullptr));
+
+    QVERIFY(presentation.statistics.isEmpty());
+    QCOMPARE(presentation.notes, QStringList{QStringLiteral("This survey is not in the last successful compile.")});
+}
+
+void MainWindowStructureInfoPresenterTest::notesOutOfDateStatistics()
+{
+    const ProjectStructureEntry entry = makeEntry(QStringLiteral("Surveys"), QStringLiteral("inner"), QStringLiteral("inner.cave"));
+    TherionXtherionSurvey survey;
+    survey.statistics = QStringLiteral("length: 15.00m");
+    auto input = compiledInput(&survey);
+    input.sourcesChanged = true;
+    QCOMPARE(MainWindowStructureInfoPresenter::present(&entry, QString(), input).notes,
+             QStringList{QStringLiteral("Out of date because sources changed after the last compile.")});
+
+    input.laterCompileFailed = true;
+    QCOMPARE(MainWindowStructureInfoPresenter::present(&entry, QString(), input).notes,
+             QStringList{QStringLiteral("The last compile failed, so these figures are from an earlier compile.")});
+}
+
+void MainWindowStructureInfoPresenterTest::omitsStatisticsForMaps()
+{
+    const ProjectStructureEntry entry = makeEntry(QStringLiteral("Maps"), QStringLiteral("MP1"), QStringLiteral("cave"));
+    TherionXtherionSurvey survey;
+    survey.statistics = QStringLiteral("length: 15.00m");
+    const auto presentation = MainWindowStructureInfoPresenter::present(&entry, QString(), compiledInput(&survey));
+
+    QVERIFY(presentation.statistics.isEmpty());
+    QVERIFY(presentation.notes.isEmpty());
+}
 
 void MainWindowStructureInfoPresenterTest::presentsSurvey()
 {
@@ -61,7 +133,8 @@ void MainWindowStructureInfoPresenterTest::presentsSurveyWithNamespaceOff()
     entry.createsNamespace = false;
     const auto presentation = MainWindowStructureInfoPresenter::present(&entry, QStringLiteral("cave/cave.th"));
 
-    QVERIFY(fieldValue(presentation, QStringLiteral("Full name")).isEmpty());
+    // Therion still names a -namespace off survey child.parent.
+    QCOMPARE(fieldValue(presentation, QStringLiteral("Full name")), QStringLiteral("flat.cave"));
     QCOMPARE(fieldValue(presentation, QStringLiteral("Namespace")), QStringLiteral("off"));
 }
 

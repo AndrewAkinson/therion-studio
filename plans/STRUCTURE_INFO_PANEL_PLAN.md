@@ -124,6 +124,15 @@ run.
 - `WORKLOG.md`.
 - Translations: insert only the new strings into the `.ts` catalogs.
 
+## Optional Fix At The End
+
+- Survey statistics did not show when the Compiler `Target Config` was set explicitly, even to the same `thconfig`
+  that is found by default. The box said the survey was not in the last successful compile. Clearing the target
+  config and compiling again showed the statistics. Outside the app the index gives the same survey full names with
+  and without the explicit target config, and the compile output, `.xtherion.dat` and name matching are the same, so
+  the difference is in how the running app connects the target config to the compile result or the index snapshot.
+  Reproduce in the app first (project folder `LongwoodValleySink`, target config set to its `thconfig`).
+
 ## Open Points
 
 - Measure used for the worst adjustment (slice 4).

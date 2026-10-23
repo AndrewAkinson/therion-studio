@@ -104,6 +104,8 @@ set(THERION_CORE_SOURCES
     src/core/PocketTopoImport.h
     src/core/TherionBackgroundMetadata.cpp
     src/core/TherionBackgroundMetadata.h
+    src/core/TherionXtherionData.cpp
+    src/core/TherionXtherionData.h
     src/core/TherionXviParser.cpp
     src/core/TherionXviParser.h
     src/core/TherionFileTypes.h
@@ -182,6 +184,7 @@ set(THERION_CORE_QTEST_SUITES
     TherionFileTypesTest
     TherionBackgroundMetadataTest
     TherionDocumentParserTest
+    TherionXtherionDataTest
     TherionXviParserTest
     TherionXviPassageTest
     TherionXviAreaAdjustTest
@@ -277,7 +280,8 @@ set(THERION_RUNNER_SUPPORT_QTEST_SUITES
     TherionRunnerConfigDisplayControllerTest
     TherionRunnerConfigResolverTest
     TherionRunnerOutputLinkerTest
-    TherionRunnerPresenterTest)
+    TherionRunnerPresenterTest
+    TherionSurveyStatisticsLoaderTest)
 
 set(THERION_PLATFORM_SOURCES
     src/platform/ApplicationIdentity.cpp
@@ -410,6 +414,8 @@ set(THERION_APP_SOURCES
     src/app/ProjectStructureScanner.h
     src/app/TherionCompileResult.cpp
     src/app/TherionCompileResult.h
+    src/app/TherionSurveyStatisticsLoader.cpp
+    src/app/TherionSurveyStatisticsLoader.h
     src/app/TherionExecutableSelectionController.cpp
     src/app/TherionExecutableSelectionController.h
     src/app/TherionExecutableDetector.cpp
@@ -1211,6 +1217,7 @@ therion_add_core_qtest_runner(TherionCoreQTests
     tests/core/TherionFileTypesTest.cpp
     tests/core/TherionBackgroundMetadataTest.cpp
     tests/core/TherionDocumentParserTest.cpp
+    tests/core/TherionXtherionDataTest.cpp
     tests/core/TherionXviParserTest.cpp
     tests/core/TherionXviPassageTest.cpp
     tests/core/TherionXviAreaAdjustTest.cpp
@@ -1463,7 +1470,8 @@ qt_add_executable(TherionRunnerSupportQTests
     tests/TherionRunnerConfigDisplayControllerTest.cpp
     tests/TherionRunnerConfigResolverTest.cpp
     tests/TherionRunnerOutputLinkerTest.cpp
-    tests/TherionRunnerPresenterTest.cpp)
+    tests/TherionRunnerPresenterTest.cpp
+    tests/TherionSurveyStatisticsLoaderTest.cpp)
 
 target_link_libraries(TherionRunnerSupportQTests PRIVATE therion_app Qt6::Test)
 

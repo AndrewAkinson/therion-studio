@@ -9,6 +9,7 @@ int runTherionRunnerConfigDisplayControllerTest(int argc, char **argv);
 int runTherionRunnerConfigResolverTest(int argc, char **argv);
 int runTherionRunnerOutputLinkerTest(int argc, char **argv);
 int runTherionRunnerPresenterTest(int argc, char **argv);
+int runTherionSurveyStatisticsLoaderTest(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
@@ -20,5 +21,6 @@ int main(int argc, char **argv)
         {"TherionRunnerConfigDisplayControllerTest", runTherionRunnerConfigDisplayControllerTest},
         {"TherionRunnerConfigResolverTest", runTherionRunnerConfigResolverTest},
         {"TherionRunnerOutputLinkerTest", runTherionRunnerOutputLinkerTest},
-        {"TherionRunnerPresenterTest", runTherionRunnerPresenterTest}});
+        {"TherionRunnerPresenterTest", runTherionRunnerPresenterTest},
+        {"TherionSurveyStatisticsLoaderTest", runTherionSurveyStatisticsLoaderTest}});
 }

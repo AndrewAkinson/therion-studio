@@ -12,6 +12,7 @@
 #include "TherionRunnerService.h"
 #include "TherionRunnerStartResultPresenter.h"
 #include "TherionRunnerStartSuccessPresenter.h"
+#include "TherionSurveyStatisticsLoader.h"
 #include "text_editor/TextEditorTab.h"
 #include "text_editor/map_editor/MapEditorTab.h"
 
@@ -69,6 +70,14 @@ void MainWindow::buildConsole()
 
     therionRunnerService_ = new TherionStudio::TherionRunnerService(this);
     compileResultRecorder_ = new TherionStudio::TherionCompileResultRecorder(this);
+    surveyStatisticsLoader_ = new TherionStudio::TherionSurveyStatisticsLoader(this);
+    connect(compileResultRecorder_, &TherionStudio::TherionCompileResultRecorder::latestChanged, this, [this]() {
+        surveyStatisticsLoader_->updateFromCompile(compileResultRecorder_->latest());
+    });
+    connect(surveyStatisticsLoader_, &TherionStudio::TherionSurveyStatisticsLoader::statisticsChanged, this, [this]() {
+        updateSurveyStatisticsSourcesChanged();
+        refreshStructureInfoBox();
+    });
     TherionStudio::MainWindowTherionConsoleWiring::WiringInput wiringInput;
     wiringInput.context = this;
     wiringInput.therionRunButton = therionRunButton_;
@@ -530,8 +539,9 @@ void MainWindow::runTherion()
         activeTherionRunStandardError_.clear();
     }
 
+    const QStringList compileArguments = TherionStudio::therionCompileArguments(state.runArguments);
     const TherionStudio::TherionRunnerService::StartResult startResult =
-        therionRunnerService_->start(state.executableInput, state.resolvedWorkingDirectory, state.runArguments);
+        therionRunnerService_->start(state.executableInput, state.resolvedWorkingDirectory, compileArguments);
     const TherionStudio::TherionRunnerStartResultPresenter::Presentation startPresentation =
         TherionStudio::TherionRunnerStartResultPresenter::present(startResult.code, state.executableInput);
 
@@ -559,7 +569,7 @@ void MainWindow::runTherion()
     compileResultRecorder_->begin(state.resolvedConfigPath, state.resolvedWorkingDirectory);
     const TherionStudio::TherionRunnerStartSuccessPresenter::Presentation successPresentation =
         TherionStudio::TherionRunnerStartSuccessPresenter::present(startResult,
-                                                                   state.runArguments.join(QLatin1Char(' ')),
+                                                                   compileArguments.join(QLatin1Char(' ')),
                                                                    state.resolvedWorkingDirectory);
     therionConsoleController_.appendConsoleLine(successPresentation.consoleMessage);
     setCompilerStatusRunning(activeTherionRunConfigPath_);

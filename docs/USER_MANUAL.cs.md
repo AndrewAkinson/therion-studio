@@ -172,7 +172,9 @@ Panel `Struktura` je lehký navigační index otevřeného projektu. Popis v pos
 
 Kliknutím řádek pouze vyberete ve stromu. Dvojklikem na zdrojový řádek, nebo jeho výběrem a stiskem `Enter`, otevřete zdrojový dokument a přejdete na odpovídající řádek.
 
-Informační okno pod stromy `Survey` a `Map` zobrazuje podrobnosti o vybraném survey, mapě nebo scrapu. Uvádí úplný název podle Therionu (například `inner.cave` pro survey nebo `MP1@inner.cave` pro mapu), případně že je jmenný prostor survey vypnutý, a soubor a řádek, kde je objekt definován. Kliknutím na soubor a řádek otevřete zdroj na tomto místě. Text lze vybrat a zkopírovat. Přetažením oddělovače nad oknem změníte jeho velikost, přetažením úplně dolů okno skryjete.
+Informační okno pod stromy `Survey` a `Map` zobrazuje podrobnosti o vybraném survey, mapě nebo scrapu. Uvádí úplný název podle Therionu (například `inner.cave` pro survey nebo `MP1@inner.cave` pro mapu), uvede, když je jmenný prostor survey vypnutý, a soubor a řádek, kde je objekt definován. Kliknutím na soubor a řádek otevřete zdroj na tomto místě. Text lze vybrat a zkopírovat. Přetažením oddělovače nad oknem změníte jeho velikost, přetažením úplně dolů okno skryjete.
+
+U survey okno zobrazuje také jeho titulek a statistiku, kterou pro něj vypočítá Therion, stejně jako panel `Survey info` v xtherionu. Uvádí délku, svislý rozsah, rozsah sever-jih a východ-západ s krajními body a počet měření a bodů. Údaje pocházejí z posledního úspěšného překladu, proto je uvidíte až po prvním překladu. Therion Studio k tomu přidává ke každému překladu volbu `-x` a Therion ponechá v pracovní složce skrytý soubor `.xtherion.dat`, stejně jako pro xtherion. Soubor `.xtherion.dat` můžete přidat do `.gitignore` projektu. Když po překladu uložíte změnu, údaje zůstanou, ale budou označeny jako zastaralé. Když překlad selže, zůstanou údaje z předchozího překladu s poznámkou.
 
 Pohledy `Survey` a `Mapa` si při otevřeném stejném projektu pamatují svůj stav rozbalení/sbalení odděleně.
 

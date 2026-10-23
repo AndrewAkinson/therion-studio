@@ -61,6 +61,7 @@ class ThreeDViewerTab;
 class TherionSqlReportTab;
 class TherionRunnerService;
 class TherionCompileResultRecorder;
+class TherionSurveyStatisticsLoader;
 class ProjectScanCacheService;
 }
 
@@ -229,6 +230,7 @@ private:
     void handleStructureItemActivated(const QModelIndex &index, QTreeView *sourceTree);
     const TherionStudio::ProjectStructureEntry *structureEntryForIndex(const QModelIndex &index) const;
     void refreshStructureInfoBox();
+    void updateSurveyStatisticsSourcesChanged();
     bool confirmCloseTab(int index);
     bool closeOpenDocumentForFilePath(const QString &filePath);
     bool confirmCloseDirtyDocuments();
@@ -461,6 +463,8 @@ private:
     QStringList projectFileWatcherFailedPaths_;
     TherionStudio::TherionRunnerService *therionRunnerService_ = nullptr;
     TherionStudio::TherionCompileResultRecorder *compileResultRecorder_ = nullptr;
+    TherionStudio::TherionSurveyStatisticsLoader *surveyStatisticsLoader_ = nullptr;
+    bool surveyStatisticsSourcesChanged_ = false;
     TherionStudio::MainWindowTherionConsoleController therionConsoleController_;
     QLabel *statusHintLabel_ = nullptr;
     QLabel *statusMapZoomLabel_ = nullptr;

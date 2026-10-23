@@ -2116,6 +2116,31 @@ Les fichiers attendus sont `docs/USER_MANUAL.&lt;language&gt;.md` ou `docs/USER_
 <context>
     <name>MainWindowStructureInfoPresenter</name>
     <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="31"/>
+        <source>Survey statistics appear after a successful compile.</source>
+        <translation>Les statistiques de la topographie apparaissent après une compilation réussie.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="35"/>
+        <source>This survey is not in the last successful compile.</source>
+        <translation>Cette topographie ne figure pas dans la dernière compilation réussie.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="38"/>
+        <source>Title</source>
+        <translation>Titre</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="43"/>
+        <source>The last compile failed, so these figures are from an earlier compile.</source>
+        <translation>La dernière compilation a échoué, ces chiffres proviennent d’une compilation antérieure.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="46"/>
+        <source>Out of date because sources changed after the last compile.</source>
+        <translation>Périmé, car les sources ont changé après la dernière compilation.</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindowStructureInfoPresenter.cpp" line="47"/>
         <source>Select a survey, map or scrap to see its details.</source>
         <translation>Sélectionnez une topographie, une carte ou un scrap pour afficher ses détails.</translation>
