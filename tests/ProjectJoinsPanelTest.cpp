@@ -7,8 +7,11 @@
 #include <QLineEdit>
 #include <QMenu>
 #include <QPushButton>
-#include <QTimer>
 #include <QSignalSpy>
+#include <QStandardItemModel>
+#include <QStyle>
+#include <QStyleOptionViewItem>
+#include <QTimer>
 #include <QToolButton>
 #include <QTreeView>
 #include <QtTest/QtTest>
@@ -241,6 +244,27 @@ private slots:
         QVERIFY(approximate.data(Qt::ToolTipRole).toString().contains(QStringLiteral("placed by its XVI")));
         panel.setConnectionData(QSet<QString>(), true);
         QVERIFY(model->index(0, 0).data(Qt::ToolTipRole).toString().contains(QStringLiteral("out of date")));
+    }
+
+    void linesUpRowTextWithAndWithoutASymbol()
+    {
+        // The row with the rule warning and a plain row are given the same width for the same text.
+        QStandardItemModel model;
+        auto *withIcon = new QStandardItem(QStringLiteral("1@a = 2@b"));
+        withIcon->setIcon(QApplication::style()->standardIcon(QStyle::SP_MessageBoxWarning));
+        model.appendRow(withIcon);
+        model.appendRow(new QStandardItem(QStringLiteral("1@a = 2@b")));
+        ProjectJoinsPanel panel;
+        auto *tree = panel.findChild<QTreeView *>();
+        QStyleOptionViewItem option;
+        option.initFrom(tree);
+        option.widget = tree;
+        // As the view sets it: its icon size, the small icon size by default.
+        const int extent = tree->style()->pixelMetric(QStyle::PM_SmallIconSize, nullptr, tree);
+        option.decorationSize = QSize(extent, extent);
+        QAbstractItemDelegate *delegate = tree->itemDelegate();
+        QCOMPARE(delegate->sizeHint(option, model.index(1, 0)).width(),
+                 delegate->sizeHint(option, model.index(0, 0)).width());
     }
 
     void offersTheTargetConfigOnlyWhenNoneIsSelected()

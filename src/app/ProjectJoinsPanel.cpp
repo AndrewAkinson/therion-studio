@@ -15,6 +15,7 @@
 #include <QSortFilterProxyModel>
 #include <QStandardItemModel>
 #include <QStyle>
+#include <QStyledItemDelegate>
 #include <QToolButton>
 #include <QTreeView>
 #include <QVBoxLayout>
@@ -54,6 +55,26 @@ QString joinItemReferences(const ProjectJoinCommand &join)
     // Brackets make join-only rows stand apart from `A = B` equate rows.
     return QStringLiteral("(%1)").arg(references.join(QStringLiteral(" ~ ")));
 }
+
+// Every row keeps room for a symbol, so row text lines up whether a row shows one or not.
+class ReservedIconDelegate final : public QStyledItemDelegate
+{
+public:
+    using QStyledItemDelegate::QStyledItemDelegate;
+
+protected:
+    void initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const override
+    {
+        QStyledItemDelegate::initStyleOption(option, index);
+        if (!option->features.testFlag(QStyleOptionViewItem::HasDecoration)) {
+            const int extent = option->widget != nullptr
+                ? option->widget->style()->pixelMetric(QStyle::PM_SmallIconSize, nullptr, option->widget)
+                : 16;
+            option->features |= QStyleOptionViewItem::HasDecoration;
+            option->decorationSize = QSize(extent, extent);
+        }
+    }
+};
 
 QString fileLocation(const QString &sourceFile, int lineNumber)
 {
@@ -101,6 +122,7 @@ ProjectJoinsPanel::ProjectJoinsPanel(QWidget *parent)
     proxyModel_->setRecursiveFilteringEnabled(true);
 
     tree_ = new QTreeView(this);
+    tree_->setItemDelegate(new ReservedIconDelegate(tree_));
     tree_->setMinimumWidth(0);
     tree_->setModel(proxyModel_);
     tree_->setRootIsDecorated(true);

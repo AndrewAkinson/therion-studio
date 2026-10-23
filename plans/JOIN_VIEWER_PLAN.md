@@ -504,7 +504,8 @@ Each slice is a separate commit with tests, doc and translation updates, checked
   no database export it says that, and that opening a connection that needs positions runs Therion once.
   Status: implemented, awaiting review.
 - **E5b Symbols push row text right.** Only some rows have an icon, so their text starts further right. Reserve the
-  icon space on every row.
+  icon space on every row. Status: implemented with an item delegate (rows without a symbol keep no icon in the
+  model), awaiting review.
 - **E5c Choose and show the one-off run.** The run takes about 1.3 s on the test project and many seconds on large
   ones, it reran by itself when its positions were out of date, and the only sign of it was a line of text. Agreed
   2026-10-23:
