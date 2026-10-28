@@ -10,6 +10,7 @@
 #include <QProcess>
 #include <QSet>
 
+#include <functional>
 #include <memory>
 
 #include "ConnectionPositionRunPolicy.h"
@@ -345,6 +346,9 @@ private:
     void populateMapJoinMenu(QMenu *menu);
     void refreshMapJoinLinkIcons();
     void applyJoinConnectionColors();
+    void refreshMapPointerStatusLabel();
+    void forEachOpenMapEditorTab(const std::function<void(TherionStudio::MapEditorTab *)> &action);
+    void connectMapEditorTabStatusSignals(TherionStudio::MapEditorTab *tab);
     void updateDocumentMenuActionState();
     void setCompilerStatusIdle();
     void setCompilerStatusRunning(const QString &configPath);
@@ -520,6 +524,7 @@ private:
     bool nextCompileAddsDatabaseExport_ = false;
     TherionStudio::MainWindowTherionConsoleController therionConsoleController_;
     QLabel *statusHintLabel_ = nullptr;
+    QLabel *statusMapPointerLabel_ = nullptr;
     QLabel *statusMapZoomLabel_ = nullptr;
     QLabel *statusMapModeLabel_ = nullptr;
     QToolButton *statusCompilerButton_ = nullptr;

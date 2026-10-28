@@ -1347,6 +1347,11 @@ Ak je súbor otvorený, najprv sa zavrie.</translation>
         <translation>Odstrániť spojenie</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="50"/>
+        <source>Map pointer position</source>
+        <translation>Poloha ukazovateľa na mape</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="139"/>
         <source>M: Select</source>
         <translation>M: Vybrať</translation>
@@ -2769,6 +2774,11 @@ Zdroj: %2:%3</translation>
         <translation>Vrátiť mapu</translation>
     </message>
     <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorDetachedPaneWindow.cpp" line="181"/>
+        <source>Map pointer position</source>
+        <translation>Poloha ukazovateľa na mape</translation>
+    </message>
+    <message>
         <location filename="../src/app/text_editor/map_editor/MapEditorDetachedPaneWindow.cpp" line="204"/>
         <source>%1%</source>
         <translation>%1 %</translation>
@@ -4117,6 +4127,31 @@ Line-point options: %1</translation>
         <location filename="../src/app/MainWindowSettingsDialog.cpp" line="86"/>
         <source>Default .th / config editor</source>
         <translation>Predvolený editor pre .th / konfiguráciu</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="89"/>
+        <source>Show pointer coordinates in the map status bar</source>
+        <translation>Zobraziť súradnice ukazovateľa v stavovom riadku mapy</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="92"/>
+        <source>Shows the pointer position in TH2 drawing coordinates, as in the map magnifier.</source>
+        <translation>Zobrazuje polohu ukazovateľa v súradniciach výkresu TH2, rovnako ako lupa mapy.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="93"/>
+        <source>Map status bar</source>
+        <translation>Stavový riadok mapy</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="96"/>
+        <source>Show XVI station names in the map status bar</source>
+        <translation>Zobraziť názvy staníc XVI v stavovom riadku mapy</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="99"/>
+        <source>Shows the name of the station in a visible .xvi background under the pointer.</source>
+        <translation>Zobrazuje názov stanice viditeľného pozadia .xvi pod ukazovateľom.</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowSettingsDialog.cpp" line="89"/>
@@ -6065,6 +6100,11 @@ Napriek tomu bod zmazať?</translation>
         <location filename="../src/app/text_editor/map_editor/MapEditorTabControllers.cpp" line="290"/>
         <source>x %1  y %2</source>
         <translation>x %1  y %2</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorTabControllers.cpp" line="332"/>
+        <source>Station: %1</source>
+        <translation>Stanica: %1</translation>
     </message>
     <message>
         <location filename="../src/app/text_editor/map_editor/MapEditorTabDetachedPaneDelegates.cpp" line="21"/>

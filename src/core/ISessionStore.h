@@ -84,6 +84,11 @@ public:
     virtual MapAppearanceSettings therionMapAppearance() const = 0;
     virtual void setTherionMapAppearance(const MapAppearanceSettings &appearance) = 0;
 
+    virtual bool therionMapPointerCoordinatesInStatusBarEnabled() const = 0;
+    virtual void setTherionMapPointerCoordinatesInStatusBarEnabled(bool enabled) = 0;
+    virtual bool therionMapXviStationNamesInStatusBarEnabled() const = 0;
+    virtual void setTherionMapXviStationNamesInStatusBarEnabled(bool enabled) = 0;
+
     virtual bool therionMapObjectsAutoCollapseExpandScrapsEnabled() const = 0;
     virtual void setTherionMapObjectsAutoCollapseExpandScrapsEnabled(bool enabled) = 0;
 

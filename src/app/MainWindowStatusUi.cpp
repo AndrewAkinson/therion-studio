@@ -26,6 +26,7 @@ void MainWindow::initializeDocumentStatusWidgets()
 {
     if (statusBar() == nullptr
         || statusHintLabel_ != nullptr
+        || statusMapPointerLabel_ != nullptr
         || statusMapZoomLabel_ != nullptr
         || statusMapModeLabel_ != nullptr
         || statusCompilerButton_ != nullptr
@@ -45,6 +46,13 @@ void MainWindow::initializeDocumentStatusWidgets()
     statusDocumentEncodingLabel_->setTextInteractionFlags(Qt::TextSelectableByMouse);
     statusDocumentEncodingLabel_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     statusDocumentEncodingLabel_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+
+    statusMapPointerLabel_ = new QLabel(statusBar());
+    statusMapPointerLabel_->setTextInteractionFlags(Qt::NoTextInteraction);
+    statusMapPointerLabel_->setAlignment(Qt::AlignCenter);
+    statusMapPointerLabel_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+    statusMapPointerLabel_->setToolTip(tr("Map pointer position"));
+    statusMapPointerLabel_->setVisible(false);
 
     statusMapZoomLabel_ = new QLabel(statusBar());
     statusMapZoomLabel_->setTextInteractionFlags(Qt::NoTextInteraction);
@@ -96,6 +104,7 @@ void MainWindow::initializeDocumentStatusWidgets()
 
     statusBar()->addWidget(statusHintLabel_, 1);
     statusBar()->addPermanentWidget(statusMapJoinButton_, 0);
+    statusBar()->addPermanentWidget(statusMapPointerLabel_, 0);
     statusBar()->addPermanentWidget(statusMapZoomLabel_, 0);
     statusBar()->addPermanentWidget(statusMapModeLabel_, 0);
     statusBar()->addPermanentWidget(statusCompilerButton_, 0);
@@ -167,6 +176,7 @@ void MainWindow::refreshDocumentStatusWidgets()
         statusMapModeLabel_->setVisible(true);
     }
 
+    refreshMapPointerStatusLabel();
     updateDocumentMenuActionState();
 }
 
@@ -262,6 +272,29 @@ void MainWindow::refreshMapJoinStatusButton(TherionStudio::MapEditorTab *mapTab)
     } else if (pairs.size() > 1) {
         statusMapJoinButton_->setText(tr("Connected: %1 drawings").arg(pairs.size()));
     }
+}
+
+void MainWindow::connectMapEditorTabStatusSignals(TherionStudio::MapEditorTab *tab)
+{
+    connect(tab, &TherionStudio::MapEditorTab::statusHintChanged, this,
+            [this, tab]() { if (currentDocumentWidget() == tab) { refreshDocumentStatusWidgets(); } });
+    connect(tab, &TherionStudio::MapEditorTab::pointerStatusChanged, this,
+            [this, tab]() { if (currentDocumentWidget() == tab) { refreshMapPointerStatusLabel(); } });
+}
+
+void MainWindow::refreshMapPointerStatusLabel()
+{
+    if (statusMapPointerLabel_ == nullptr) {
+        return;
+    }
+
+    auto *mapTab = qobject_cast<TherionStudio::MapEditorTab *>(currentDocumentWidget());
+    const bool visible = mapTab != nullptr && !mapTab->isMapPaneDetached() && mapTab->isPointerStatusEnabled();
+    statusMapPointerLabel_->setText(visible ? mapTab->pointerStatusText() : QString());
+    if (visible) {
+        statusMapPointerLabel_->setMinimumWidth(mapTab->pointerStatusMinimumWidth(statusMapPointerLabel_->fontMetrics()));
+    }
+    statusMapPointerLabel_->setVisible(visible);
 }
 
 void MainWindow::updateStatusHintLabel(const QString &text)

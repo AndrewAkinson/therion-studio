@@ -66,7 +66,6 @@
 #include "MainWindowDocumentOpenController.h"
 #include "MainWindowDocumentTabOpenController.h"
 #include "MainWindowHelpDialog.h"
-#include "MainWindowSettingsDialog.h"
 #include "TherionExecutableDetector.h"
 #include "MainWindowSessionDocumentController.h"
 #include "MainWindowSessionController.h"
@@ -81,7 +80,6 @@
 #include "../core/PocketTopoImport.h"
 #include "../core/SessionStore.h"
 #include "../core/TherionFileTypes.h"
-#include "../platform/ApplicationLanguageOverride.h"
 #include "../platform/DiagnosticLogging.h"
 
 namespace
@@ -1604,8 +1602,7 @@ void MainWindow::connectMapEditorTabUiSignals(TherionStudio::MapEditorTab *tab)
                     refreshViewMenuActions();
                 }
             });
-    connect(tab, &TherionStudio::MapEditorTab::statusHintChanged, this,
-            [this, tab]() { if (currentDocumentWidget() == tab) { refreshDocumentStatusWidgets(); } });
+    connectMapEditorTabStatusSignals(tab);
     connect(tab, &TherionStudio::MapEditorTab::commandSurfaceStateChanged, this, [this, tab]() {
         if (currentDocumentWidget() == tab) {
             refreshWorkspaceModeSwitcher();
@@ -1614,19 +1611,24 @@ void MainWindow::connectMapEditorTabUiSignals(TherionStudio::MapEditorTab *tab)
     });
 }
 
-void MainWindow::setMapMagnifierEnabledForOpenTabs(bool enabled)
+void MainWindow::forEachOpenMapEditorTab(const std::function<void(TherionStudio::MapEditorTab *)> &action)
 {
     for (int index = 0; index < editorTabs_->count(); ++index) {
         if (auto *mapTab = qobject_cast<TherionStudio::MapEditorTab *>(editorTabs_->widget(index))) {
-            mapTab->setMagnifierEnabled(enabled);
+            action(mapTab);
         }
     }
 
     for (TherionStudio::MapEditorTab *detachedTab : detachedMapEditorTabs()) {
         if (detachedTab != nullptr) {
-            detachedTab->setMagnifierEnabled(enabled);
+            action(detachedTab);
         }
     }
+}
+
+void MainWindow::setMapMagnifierEnabledForOpenTabs(bool enabled)
+{
+    forEachOpenMapEditorTab([enabled](TherionStudio::MapEditorTab *mapTab) { mapTab->setMagnifierEnabled(enabled); });
 }
 
 TherionStudio::MapEditorTab *MainWindow::openMapEditorTab(const QString &filePath,

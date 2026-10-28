@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "MainWindowSettingsDialog.h"
 #include "ProjectJoinsPanel.h"
+#include "text_editor/map_editor/MapEditorTab.h"
 #include "../core/ISessionStore.h"
 #include "../platform/ApplicationLanguageOverride.h"
 
@@ -20,6 +21,10 @@ void MainWindow::showSettingsDialog()
     initialSettings.defaultTextEditorMode = sessionStore_->defaultTextEditorMode();
     initialSettings.mapAltitudeUnderlayEnabled = sessionStore_->therionMapAltitudeUnderlayEnabled();
     initialSettings.mapAppearance = sessionStore_->therionMapAppearance();
+    initialSettings.mapPointerCoordinatesInStatusBarEnabled =
+        sessionStore_->therionMapPointerCoordinatesInStatusBarEnabled();
+    initialSettings.mapXviStationNamesInStatusBarEnabled =
+        sessionStore_->therionMapXviStationNamesInStatusBarEnabled();
     initialSettings.automaticProjectValidationEnabled =
         sessionStore_->automaticProjectValidationEnabled();
     initialSettings.joinOpensSeparateWindow = sessionStore_->joinOpensSeparateWindow();
@@ -49,6 +54,12 @@ void MainWindow::showSettingsDialog()
     sessionStore_->setTherionMapAppearance(updatedSettings.mapAppearance);
     updateMapAppearance();
     updateMapAltitudeUnderlays();
+    sessionStore_->setTherionMapPointerCoordinatesInStatusBarEnabled(
+        updatedSettings.mapPointerCoordinatesInStatusBarEnabled);
+    sessionStore_->setTherionMapXviStationNamesInStatusBarEnabled(
+        updatedSettings.mapXviStationNamesInStatusBarEnabled);
+    forEachOpenMapEditorTab([](TherionStudio::MapEditorTab *mapTab) { mapTab->refreshPointerStatusOptions(); });
+    refreshDocumentStatusWidgets();
     sessionStore_->setAutomaticProjectValidationEnabled(updatedSettings.automaticProjectValidationEnabled);
     sessionStore_->setJoinOpensSeparateWindow(updatedSettings.joinOpensSeparateWindow);
     sessionStore_->setConnectionPositionRunMode(updatedSettings.connectionPositionRunMode);
