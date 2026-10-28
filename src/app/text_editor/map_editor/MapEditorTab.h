@@ -144,6 +144,9 @@ public:
     QString statusModeText() const;
     QString statusHintText() const;
     int zoomPercent() const;
+    QString pointerStatusText() const;
+    static QString pointerCoordinateText(const QPointF &sourcePosition);
+    static QString pointerStatusWidthSampleText();
     MapEditorUndoOwner nextUndoOwner() const;
     MapEditorUndoOwner nextRedoOwner() const;
     bool isMagnifierEnabled() const;
@@ -259,6 +262,10 @@ public:
         const QGraphicsPixmapItem *item = backgroundLayerItemAt(index);
         return item != nullptr ? item->sceneBoundingRect() : QRectF();
     }
+    QPointF sourcePointFromScenePositionForTest(const QPointF &scenePosition) const
+    {
+        return sourcePointFromScenePosition(scenePosition);
+    }
 #endif
     void removeSelectedBackgroundLayer();
     void moveSelectedBackgroundLayerUp();
@@ -294,6 +301,7 @@ signals:
     void workspaceModeChanged(TherionStudio::MapEditorTab::WorkspaceMode mode);
     void mapPaneDetachStateChanged(bool detached);
     void zoomStatusChanged(int zoomPercent);
+    void pointerStatusChanged();
     void commandSurfaceStateChanged();
     void openDedicatedWindowRequested(TherionStudio::MapEditorTab *tab);
 
@@ -556,11 +564,13 @@ private:
     void refreshToolbarSummary();
     void adjustMapZoom(qreal factor);
     void updateMagnifierOverlayGeometry();
-    void updateMagnifierOverlayFromViewportPosition(const QPoint &viewportPosition, bool active);
-    void scheduleMagnifierOverlayUpdateFromViewportPosition(const QPoint &viewportPosition);
-    void refreshVisibleMagnifierOverlay();
+    void updatePointerReadoutFromViewportPosition(const QPoint &viewportPosition);
+    void schedulePointerReadoutUpdate(const QPoint &viewportPosition);
+    void refreshPointerReadout();
     void hideMagnifierOverlay();
-    QString magnifierCoordinateTextForScenePosition(const QPointF &scenePosition) const;
+    void clearPointerReadout();
+    void setPointerStatusText(const QString &text);
+    QString pointerCoordinateTextForScenePosition(const QPointF &scenePosition) const;
     QRectF mapGeometryFitBounds() const;
     QRectF mapBackgroundFitBounds() const;
     QRectF mapPreviewBounds() const;
@@ -769,12 +779,13 @@ private:
     TextEditorTab *textEditor_ = nullptr;
     QGraphicsView *mapView_ = nullptr;
     MapEditorMagnifierOverlay *mapMagnifierOverlay_ = nullptr;
-    QPoint magnifierPendingViewportPosition_;
-    QPoint magnifierLastViewportPosition_;
-    QElapsedTimer magnifierLastUpdateElapsed_;
-    bool magnifierUpdatePending_ = false;
-    bool magnifierHasViewportPosition_ = false;
-    bool magnifierThrottleActive_ = false;
+    QPoint pointerPendingViewportPosition_;
+    QPoint pointerLastViewportPosition_;
+    QElapsedTimer pointerLastUpdateElapsed_;
+    bool pointerUpdatePending_ = false;
+    bool pointerHasViewportPosition_ = false;
+    bool pointerThrottleActive_ = false;
+    QString pointerStatusText_;
     bool magnifierEnabled_ = true;
     bool mapInspectorCollapsed_ = false;
     int mapInspectorPanelExtent_ = 320;

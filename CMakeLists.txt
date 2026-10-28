@@ -251,7 +251,8 @@ set(THERION_MAP_EDITOR_QTEST_SUITES
     MapEditorUndoArbitrationServiceTest)
 
 set(THERION_MAP_EDITOR_BACKGROUND_UI_QTEST_SUITES
-    MapEditorBackgroundRoundTripTest)
+    MapEditorBackgroundRoundTripTest
+    MapEditorPointerStatusTest)
 
 set(THERION_TEXT_EDITOR_DOCUMENT_QTEST_SUITES
     TextEditorDocumentIoServiceTest
@@ -1747,7 +1748,8 @@ therion_add_map_editor_ui_test(MapEditorSelectionPanelTypeOptionsTest
 
 qt_add_executable(MapEditorBackgroundUiQTests
     tests/MapEditorBackgroundUiQTestMain.cpp
-    tests/MapEditorBackgroundRoundTripTest.cpp)
+    tests/MapEditorBackgroundRoundTripTest.cpp
+    tests/MapEditorPointerStatusTest.cpp)
 
 target_link_libraries(MapEditorBackgroundUiQTests PRIVATE
     therion_map_editor_ui_test_support

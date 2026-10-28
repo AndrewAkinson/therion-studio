@@ -270,7 +270,7 @@ Les blocs Therion `area ... endarea` existants qui référencent des bordures `l
 
 Pendant le placement des points ou le dessin des lignes et des aires, les sommets d’objets proches sont mis en évidence comme candidats à l’accrochage. La cible active est accentuée davantage ; les poignées de Bézier restent libres.
 
-Lorsque l’éditeur de dessin est actif, la partie gauche de la barre d’état affiche l’instruction correspondant à l’opération actuelle, notamment les étapes du dessin et les indications de validation avec Enter ou Esc. La pastille compacte du mode emploie `M : Sélection` ou `M : Insertion`.
+Lorsque l’éditeur de dessin est actif, la partie gauche de la barre d’état affiche l’instruction correspondant à l’opération actuelle, notamment les étapes du dessin et les indications de validation avec Enter ou Esc. La pastille compacte du mode emploie `M : Sélection` ou `M : Insertion`. Lorsque le pointeur survole le dessin, la barre d’état affiche sa position en coordonnées de dessin TH2 avant le zoom, sous la même forme que la loupe, par exemple `x 1234.5  y -67.8`. Elle fonctionne même loupe masquée et disparaît lorsque le pointeur quitte le dessin. Dans une fenêtre de dessin détachée, elle apparaît dans la barre d’état de cette fenêtre.
 
 Pendant le dessin d’une ligne ou d’une aire :
 

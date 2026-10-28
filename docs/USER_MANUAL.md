@@ -270,7 +270,7 @@ Existing Therion `area ... endarea` blocks that reference `line -id ...` borders
 
 While placing points or drafting lines and areas, nearby object vertices are highlighted as snap candidates. The active snap target is highlighted more strongly; Bezier control handles remain free-form.
 
-When the map editor is active, the left side of the status bar shows the current workflow instruction, including drawing steps and Enter/Esc completion hints. The compact map mode badge uses `M: Select` or `M: Insert`.
+When the map editor is active, the left side of the status bar shows the current workflow instruction, including drawing steps and Enter/Esc completion hints. The compact map mode badge uses `M: Select` or `M: Insert`. While the pointer is over the map, the status bar shows its position in TH2 drawing coordinates before the zoom, in the same form as the map magnifier, for example `x 1234.5  y -67.8`. It works with the magnifier hidden and clears when the pointer leaves the map. In a detached map window it appears in that window's status bar.
 
 While drafting a line or area:
 

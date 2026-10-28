@@ -240,7 +240,7 @@ Existující Therion bloky `area ... endarea`, které odkazují na hranice `line
 
 Během vkládání bodů nebo kreslení linií a ploch se vertexy blízkého objektu zvýrazní jako kandidáti snapu. Aktivní snap cíl se zvýrazní výrazněji; Bezier kontrolní body zůstávají bez snapu.
 
-Když je aktivní map editor, levá část stavového řádku ukazuje aktuální pokyn workflow, včetně kroků kreslení a nápovědy pro dokončení Enter/Esc. Kompaktní odznak režimu mapy používá `M: Vybrat` nebo `M: Vložit`.
+Když je aktivní map editor, levá část stavového řádku ukazuje aktuální pokyn workflow, včetně kroků kreslení a nápovědy pro dokončení Enter/Esc. Kompaktní odznak režimu mapy používá `M: Vybrat` nebo `M: Vložit`. Když je ukazatel nad mapou, stavový řádek před zoomem ukazuje jeho polohu v souřadnicích výkresu TH2 ve stejném tvaru jako lupa mapy, například `x 1234.5  y -67.8`. Funguje i se skrytou lupou a po opuštění mapy zmizí. V samostatném okně mapy se zobrazuje ve stavovém řádku tohoto okna.
 
 Během kreslení čáry nebo plochy:
 

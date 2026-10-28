@@ -1262,6 +1262,11 @@ Si le fichier est ouvert, il sera d&apos;abord fermé.</translation>
         <translation>Instructions de l&apos;éditeur de dessin</translation>
     </message>
     <message>
+        <location filename="../src/app/MainWindowStatusUi.cpp" line="50"/>
+        <source>Map pointer position</source>
+        <translation>Position du pointeur sur le dessin</translation>
+    </message>
+    <message>
         <location filename="../src/app/MainWindowStatusUi.cpp" line="139"/>
         <source>M: Select</source>
         <translation>M : Sélection</translation>
@@ -2378,6 +2383,11 @@ Source : %2:%3</translation>
         <location filename="../src/app/text_editor/map_editor/MapEditorDetachedPaneWindow.cpp" line="247"/>
         <source>Return Map</source>
         <translation>Réintégrer le dessin</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorDetachedPaneWindow.cpp" line="181"/>
+        <source>Map pointer position</source>
+        <translation>Position du pointeur sur le dessin</translation>
     </message>
     <message>
         <location filename="../src/app/text_editor/map_editor/MapEditorDetachedPaneWindow.cpp" line="204"/>

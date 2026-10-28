@@ -1666,8 +1666,7 @@ void MainWindow::connectMapEditorTabUiSignals(TherionStudio::MapEditorTab *tab)
                     refreshViewMenuActions();
                 }
             });
-    connect(tab, &TherionStudio::MapEditorTab::statusHintChanged, this,
-            [this, tab]() { if (currentDocumentWidget() == tab) { refreshDocumentStatusWidgets(); } });
+    connectMapEditorTabStatusSignals(tab);
     connect(tab, &TherionStudio::MapEditorTab::commandSurfaceStateChanged, this, [this, tab]() {
         if (currentDocumentWidget() == tab) {
             refreshWorkspaceModeSwitcher();

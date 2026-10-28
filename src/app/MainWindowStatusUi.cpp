@@ -19,6 +19,7 @@ void MainWindow::initializeDocumentStatusWidgets()
 {
     if (statusBar() == nullptr
         || statusHintLabel_ != nullptr
+        || statusMapPointerLabel_ != nullptr
         || statusMapZoomLabel_ != nullptr
         || statusMapModeLabel_ != nullptr
         || statusCompilerButton_ != nullptr
@@ -38,6 +39,16 @@ void MainWindow::initializeDocumentStatusWidgets()
     statusDocumentEncodingLabel_->setTextInteractionFlags(Qt::TextSelectableByMouse);
     statusDocumentEncodingLabel_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     statusDocumentEncodingLabel_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+
+    statusMapPointerLabel_ = new QLabel(statusBar());
+    statusMapPointerLabel_->setTextInteractionFlags(Qt::NoTextInteraction);
+    statusMapPointerLabel_->setAlignment(Qt::AlignCenter);
+    statusMapPointerLabel_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+    // Wide enough for any coordinates, so the status bar does not shift as the pointer moves.
+    statusMapPointerLabel_->setMinimumWidth(statusMapPointerLabel_->fontMetrics().horizontalAdvance(
+        TherionStudio::MapEditorTab::pointerStatusWidthSampleText()) + 12);
+    statusMapPointerLabel_->setToolTip(tr("Map pointer position"));
+    statusMapPointerLabel_->setVisible(false);
 
     statusMapZoomLabel_ = new QLabel(statusBar());
     statusMapZoomLabel_->setTextInteractionFlags(Qt::NoTextInteraction);
@@ -75,6 +86,7 @@ void MainWindow::initializeDocumentStatusWidgets()
     });
 
     statusBar()->addWidget(statusHintLabel_, 1);
+    statusBar()->addPermanentWidget(statusMapPointerLabel_, 0);
     statusBar()->addPermanentWidget(statusMapZoomLabel_, 0);
     statusBar()->addPermanentWidget(statusMapModeLabel_, 0);
     statusBar()->addPermanentWidget(statusCompilerButton_, 0);
@@ -144,7 +156,28 @@ void MainWindow::refreshDocumentStatusWidgets()
         statusMapModeLabel_->setVisible(true);
     }
 
+    refreshMapPointerStatusLabel();
     updateDocumentMenuActionState();
+}
+
+void MainWindow::connectMapEditorTabStatusSignals(TherionStudio::MapEditorTab *tab)
+{
+    connect(tab, &TherionStudio::MapEditorTab::statusHintChanged, this,
+            [this, tab]() { if (currentDocumentWidget() == tab) { refreshDocumentStatusWidgets(); } });
+    connect(tab, &TherionStudio::MapEditorTab::pointerStatusChanged, this,
+            [this, tab]() { if (currentDocumentWidget() == tab) { refreshMapPointerStatusLabel(); } });
+}
+
+void MainWindow::refreshMapPointerStatusLabel()
+{
+    if (statusMapPointerLabel_ == nullptr) {
+        return;
+    }
+
+    auto *mapTab = qobject_cast<TherionStudio::MapEditorTab *>(currentDocumentWidget());
+    const bool visible = mapTab != nullptr && !mapTab->isMapPaneDetached();
+    statusMapPointerLabel_->setText(visible ? mapTab->pointerStatusText() : QString());
+    statusMapPointerLabel_->setVisible(visible);
 }
 
 void MainWindow::updateStatusHintLabel(const QString &text)

@@ -437,7 +437,7 @@ The rules below define the expected day-to-day interaction model. If a later req
 - Embedded and detached map presentations shall remain synchronized with the same selection, undo history, and underlying text document.
 - When the map pane is detached, the main tab shall continue showing the raw source editor while the detached map window presents the graphical map plus the same right-side map inspector for the same TH2 session.
 - When the map pane is detached, main-window TH2 map zoom/drawing/selection tool groups shall be hidden because those commands apply to the detached map window; the main document toolbar shall retain only document-level actions and the map-pane return/focus control.
-- When the map pane is detached, map zoom and `M: Select`/`M: Insert` mode indicators shall be shown in the detached map window status bar and shall not remain duplicated in the main-window status area.
+- When the map pane is detached, the map pointer position, map zoom and `M: Select`/`M: Insert` mode indicators shall be shown in the detached map window status bar and shall not remain duplicated in the main-window status area.
 - On first display, scrap nodes shall default to expanded state.
 - If a map object is selected elsewhere in the application, the corresponding scrap shall expand automatically so the object remains visible in the list.
 - Clicking a map object row shall select that object, update the map selection, and reveal the corresponding source location in the text editor when the source line is known.
@@ -460,6 +460,7 @@ The rules below define the expected day-to-day interaction model. If a later req
 - Toolbar actions should present compact icon-first controls, with text equivalents available through tooltips, accessibility names, and automation-stable identifiers.
 - When a map editor tab or detached map window is active, the status bar shall show the current map workflow instruction as the first left-aligned item, before zoom, map mode, compiler, and encoding indicators.
 - When a map editor tab is active, the status bar shall show the current map zoom before the `M: Select`/`M: Insert` mode badge.
+- When a map editor tab or detached map window is active, the status bar shall show the pointer position in TH2 drawing coordinates before the map zoom, using the same text as the map magnifier coordinate readout (one decimal place, `.` as decimal separator in every UI language). The position shall follow the pointer whether or not the magnifier is shown, shall be empty while the pointer is outside the map viewport, and the indicator shall keep a fixed width so the other status bar items do not move.
 - The main-window status bar shall show a compact global compiler indicator prefixed with `C:` and containing the current compiler state and the last run result (`Idle`, `Running`, `OK`, or `Failed`).
 - Activating the compiler status indicator shall toggle the Compiler sidebar: open it when hidden/collapsed or showing another pane, and collapse it when the Compiler pane is already visible.
 - The status bar shall not show the active document file name or path; persistent document identity remains available in the tab title and tooltips.
