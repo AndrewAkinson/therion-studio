@@ -175,9 +175,6 @@ MapEditorDetachedPaneWindow::MapEditorDetachedPaneWindow(MapEditorTab *mapTab, Q
     statusHintLabel_->setContentsMargins(12, 0, 0, 0);
     pointerLabel_ = new QLabel(statusBar());
     pointerLabel_->setAlignment(Qt::AlignCenter);
-    // Wide enough for any coordinates, so the status bar does not shift as the pointer moves.
-    pointerLabel_->setMinimumWidth(pointerLabel_->fontMetrics().horizontalAdvance(
-        MapEditorTab::pointerStatusWidthSampleText()) + 12);
     pointerLabel_->setToolTip(QObject::tr("Map pointer position"));
     zoomLabel_ = new QLabel(statusBar());
     zoomLabel_->setAlignment(Qt::AlignCenter);
@@ -308,6 +305,11 @@ void MapEditorDetachedPaneWindow::refreshPointerStatus()
         return;
     }
 
-    pointerLabel_->setText(mapTab_->pointerStatusText());
+    const bool visible = mapTab_->isPointerStatusEnabled();
+    pointerLabel_->setText(visible ? mapTab_->pointerStatusText() : QString());
+    if (visible) {
+        pointerLabel_->setMinimumWidth(mapTab_->pointerStatusMinimumWidth(pointerLabel_->fontMetrics()));
+    }
+    pointerLabel_->setVisible(visible);
 }
 }

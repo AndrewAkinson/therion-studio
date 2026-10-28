@@ -30,7 +30,7 @@ Scope: show the pointer position and the hovered XVI station in the map editor s
 - No grid-spacing hover.
 - One commit per slice. Ask before each commit.
 
-## Slice 1: Pointer Coordinates
+## Slice 1: Pointer Coordinates (done, d4e53e0)
 
 - The magnifier's throttled pointer tracking becomes the shared pointer readout: one update computes the coordinate
   text and feeds both the magnifier (when enabled) and the new `MapEditorTab::pointerStatusText()` /
@@ -48,14 +48,35 @@ Scope: show the pointer position and the hovered XVI station in the map editor s
 Tests (`MapEditorPointerStatusTest` in `MapEditorBackgroundUiQTests`): formatter (one decimal, `.` under a Czech
 locale); status follows a mouse move and clears on leave, with the magnifier shown and hidden.
 
-## Slice 2: XVI Station On Hover
+## Slice 2: XVI Station On Hover (done)
 
 - While the pointer is within the snap radius of a visible XVI station, append the station to the same label, e.g.
   `x 1234.5  y -67.8   Station: 12.3@cave`.
 - Reuse `xviStationSnapAtScenePosition` (same 12 px radius, same rule for overlapping stations). No new search code.
 - Hidden XVI layers are ignored, as for snapping.
+- The magnifier keeps showing coordinates only.
+- The label may widen while a station name is shown; its fixed minimum width covers coordinates only.
+- The status updates on pointer movement. Hiding a layer while the pointer stays still takes effect on the next move.
 
-Tests: station name shown over a station, absent away from it and when the layer is hidden.
+Tests: label text with and without a station; over a station the name is shown, away from it and with the layer
+hidden it is not.
+
+## Settings (done)
+
+Requested after slice 2, before its commit: both parts are options, off by default so the status bar is unchanged
+unless the user opts in.
+
+- `File -> Settings...` has two independent tick boxes under `Map status bar`: `Show pointer coordinates in the map
+  status bar` and `Show XVI station names in the map status bar`. Stored by `ISessionStore`
+  (`therionMapPointerCoordinatesInStatusBarEnabled`, `therionMapXviStationNamesInStatusBarEnabled`), copied to new
+  windows, applied to open attached and detached map tabs on OK.
+- Each part shows alone or both together. With both off the label is hidden. The XVI lookup only runs when station
+  names are on. The magnifier is not affected.
+- `MainWindow.cpp` was at its line cap, so `showSettingsDialog` moved to `MainWindowSettings.cpp`, as PR 38 also
+  does. Merging into `mostPRs20261022` needs that file's conflict resolved by hand.
+
+Tests: off by default and switching on applies at the current pointer position; label text for each combination;
+XVI hover with both parts, station names only, and coordinates only.
 
 ## Each Slice Also
 

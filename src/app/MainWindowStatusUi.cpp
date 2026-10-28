@@ -44,9 +44,6 @@ void MainWindow::initializeDocumentStatusWidgets()
     statusMapPointerLabel_->setTextInteractionFlags(Qt::NoTextInteraction);
     statusMapPointerLabel_->setAlignment(Qt::AlignCenter);
     statusMapPointerLabel_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
-    // Wide enough for any coordinates, so the status bar does not shift as the pointer moves.
-    statusMapPointerLabel_->setMinimumWidth(statusMapPointerLabel_->fontMetrics().horizontalAdvance(
-        TherionStudio::MapEditorTab::pointerStatusWidthSampleText()) + 12);
     statusMapPointerLabel_->setToolTip(tr("Map pointer position"));
     statusMapPointerLabel_->setVisible(false);
 
@@ -175,8 +172,11 @@ void MainWindow::refreshMapPointerStatusLabel()
     }
 
     auto *mapTab = qobject_cast<TherionStudio::MapEditorTab *>(currentDocumentWidget());
-    const bool visible = mapTab != nullptr && !mapTab->isMapPaneDetached();
+    const bool visible = mapTab != nullptr && !mapTab->isMapPaneDetached() && mapTab->isPointerStatusEnabled();
     statusMapPointerLabel_->setText(visible ? mapTab->pointerStatusText() : QString());
+    if (visible) {
+        statusMapPointerLabel_->setMinimumWidth(mapTab->pointerStatusMinimumWidth(statusMapPointerLabel_->fontMetrics()));
+    }
     statusMapPointerLabel_->setVisible(visible);
 }
 

@@ -395,6 +395,7 @@ set(THERION_APP_SOURCES
     src/app/ProjectFileWatchDelta.h
     src/app/ProjectOutputsScanner.cpp
     src/app/ProjectOutputsScanner.h
+    src/app/MainWindowSettings.cpp
     src/app/ProjectSearchScanner.cpp
     src/app/ProjectSearchScanner.h
     src/app/ProjectValidationController.cpp

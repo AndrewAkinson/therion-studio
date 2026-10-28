@@ -3667,6 +3667,31 @@ Lignes de points : %1</translation>
     </message>
     <message>
         <location filename="../src/app/MainWindowSettingsDialog.cpp" line="89"/>
+        <source>Show pointer coordinates in the map status bar</source>
+        <translation>Afficher les coordonnées du pointeur dans la barre d'état du dessin</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="92"/>
+        <source>Shows the pointer position in TH2 drawing coordinates, as in the map magnifier.</source>
+        <translation>Affiche la position du pointeur en coordonnées de dessin TH2, comme la loupe du dessin.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="93"/>
+        <source>Map status bar</source>
+        <translation>Barre d'état du dessin</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="96"/>
+        <source>Show XVI station names in the map status bar</source>
+        <translation>Afficher les noms des stations XVI dans la barre d'état du dessin</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="99"/>
+        <source>Shows the name of the station in a visible .xvi background under the pointer.</source>
+        <translation>Affiche le nom de la station d'un arrière-plan .xvi visible sous le pointeur.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/MainWindowSettingsDialog.cpp" line="89"/>
         <source>Run full project validation automatically</source>
         <translation>Exécuter automatiquement la validation complète du projet</translation>
     </message>
@@ -5372,6 +5397,11 @@ Supprimer le sommet malgré tout ?</translation>
         <location filename="../src/app/text_editor/map_editor/MapEditorTabControllers.cpp" line="290"/>
         <source>x %1  y %2</source>
         <translation>x %1  y %2</translation>
+    </message>
+    <message>
+        <location filename="../src/app/text_editor/map_editor/MapEditorTabControllers.cpp" line="332"/>
+        <source>Station: %1</source>
+        <translation>Station : %1</translation>
     </message>
     <message>
         <location filename="../src/app/text_editor/map_editor/MapEditorTabDetachedPaneDelegates.cpp" line="21"/>

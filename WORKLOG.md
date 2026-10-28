@@ -312,8 +312,8 @@ Active planning only. Completed history belongs in archive files. Stable archite
 
 ### Map Pointer Status
 
-- Follow `plans/MAP_POINTER_STATUS_PLAN.md`. Pointer TH2 coordinates are in the map status bar; next, slice 2 adds
-  the hovered XVI station name to the same label, as XTherion does.
+- `plans/MAP_POINTER_STATUS_PLAN.md` is implemented on `feature/map-pointer-status` (pointer TH2 coordinates and the
+  hovered XVI station name in the map status bar). Open: push, PR, then archive the plan once merged.
 
 ## Blocked / Needs Input
 

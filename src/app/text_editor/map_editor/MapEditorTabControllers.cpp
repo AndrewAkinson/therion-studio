@@ -1,9 +1,11 @@
 #include "MapEditorTab.h"
 
+#include <QFontMetrics>
 #include <QGraphicsView>
 #include <QPoint>
 #include <QShortcut>
 #include <QSplitter>
+#include <QStringList>
 #include <QTimer>
 
 #include "../../../core/ISessionStore.h"
@@ -121,7 +123,16 @@ void MapEditorTab::updatePointerReadoutFromViewportPosition(const QPoint &viewpo
 
     const QPointF scenePosition = mapView_->mapToScene(viewportPosition);
     const QString coordinateText = pointerCoordinateTextForScenePosition(scenePosition);
-    setPointerStatusText(coordinateText);
+    QString xviStationName;
+    if (sessionStore_ != nullptr && sessionStore_->therionMapXviStationNamesInStatusBarEnabled()) {
+        if (const std::optional<MapEditorXviStationSnapCandidate> xviStation =
+                xviStationSnapAtScenePosition(scenePosition)) {
+            xviStationName = xviStation->name;
+        }
+    }
+    const bool coordinatesEnabled =
+        sessionStore_ != nullptr && sessionStore_->therionMapPointerCoordinatesInStatusBarEnabled();
+    setPointerStatusText(pointerStatusLabelText(coordinatesEnabled ? coordinateText : QString(), xviStationName));
     if (mapMagnifierOverlay_ == nullptr) {
         return;
     }
@@ -311,9 +322,40 @@ QString MapEditorTab::pointerCoordinateText(const QPointF &sourcePosition)
                                 QString::number(sourcePosition.y(), 'f', 1));
 }
 
-QString MapEditorTab::pointerStatusWidthSampleText()
+QString MapEditorTab::pointerStatusLabelText(const QString &coordinateText, const QString &xviStationName)
 {
-    return pointerCoordinateText(QPointF(-99999.9, -99999.9));
+    QStringList parts;
+    if (!coordinateText.isEmpty()) {
+        parts.append(coordinateText);
+    }
+    if (!xviStationName.isEmpty()) {
+        parts.append(tr("Station: %1").arg(xviStationName));
+    }
+    return parts.join(QStringLiteral("   "));
+}
+
+bool MapEditorTab::isPointerStatusEnabled() const
+{
+    return sessionStore_ != nullptr
+        && (sessionStore_->therionMapPointerCoordinatesInStatusBarEnabled()
+            || sessionStore_->therionMapXviStationNamesInStatusBarEnabled());
+}
+
+// Wide enough for any coordinates, so the status bar does not shift as the pointer moves.
+int MapEditorTab::pointerStatusMinimumWidth(const QFontMetrics &metrics) const
+{
+    if (sessionStore_ == nullptr || !sessionStore_->therionMapPointerCoordinatesInStatusBarEnabled()) {
+        return 0;
+    }
+    return metrics.horizontalAdvance(pointerCoordinateText(QPointF(-99999.9, -99999.9))) + 12;
+}
+
+void MapEditorTab::refreshPointerStatusOptions()
+{
+    setPointerStatusText(QString());
+    // Labels re-read the options even when the text was already empty.
+    emit pointerStatusChanged();
+    refreshPointerReadout();
 }
 
 QString MapEditorTab::pointerCoordinateTextForScenePosition(const QPointF &scenePosition) const
